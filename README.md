@@ -27,3 +27,6 @@ Voxe is still very early in development. Current focus/plans of the development,
 3) fully customizable chunks and blocks
 4) LOD
 5..N) we'll think of something
+
+## Note
+Here and there, there might be parts of the code present in Voxe which are originaly not mine but taken from one of a million other voxel frameworks I went through in the past few months. It should be only minor parts of the code and unfortunatelly, I can not possibly remember where they all come from. If you happen to identify them and they are distrubuted only under a strict licence, please, let me know so that I can change the code or ask for approval to use it from the original author.
