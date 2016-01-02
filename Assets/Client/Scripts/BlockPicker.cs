@@ -1,6 +1,7 @@
 ﻿using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Physics;
 using UnityEngine;
+using Assets.Engine.Scripts.Core.Blocks;
 
 namespace Assets.Client.Scripts
 {
@@ -11,14 +12,14 @@ namespace Assets.Client.Scripts
 
         public float PickDistance = 10f;
 
-        private void Awake()
+        private void Start()
         {
             Cursor.lockState = CursorLockMode.Locked;
             m_cursorTransform = CursorRenderer.transform;
             m_cursorTransform.parent = null;
         }
 
-        private void Update()
+        private void FixedUpdate()
         {
             if (Input.GetMouseButtonDown(0))
                 Cursor.lockState = CursorLockMode.Locked;
@@ -33,12 +34,13 @@ namespace Assets.Client.Scripts
 
                 if (Input.GetMouseButtonDown(0))
                 {
-                    Map.Current.DamageBlock(hit.HitBlock.X, hit.HitBlock.Y, hit.HitBlock.Z, 16);
+                    //Map.Current.DamageBlock(hit.HitBlock.X, hit.HitBlock.Y, hit.HitBlock.Z, 16);
+					Map.Current.SetBlock(BlockData.Air, hit.HitBlock.X, hit.HitBlock.Y, hit.HitBlock.Z);
                 }
             }
             else
             {
-                CursorRenderer.enabled = false;
+                //CursorRenderer.enabled = false;
             }
         }
     }

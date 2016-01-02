@@ -30,7 +30,6 @@ namespace Assets.Engine.Scripts.Core
         private ChunkStorage m_chunks;
         private List<Chunk> m_removeList;
 
-
         private Rect m_viewRange;
         private Rect m_cachedRange;
 
@@ -142,14 +141,7 @@ namespace Assets.Engine.Scripts.Core
             int lx = wx&EngineSettings.ChunkConfig.MaskX;
             int lz = wz&EngineSettings.ChunkConfig.MaskZ;
 
-            chunk[lx, wy, lz] = block;
-
-            // Update information about highest solid and lowest empty block offset
-            bool isEmpty = block.IsEmpty();
-            if ((wy>chunk.HighestSolidBlockOffset) && !isEmpty)
-                chunk.HighestSolidBlockOffset = (short)wy;
-            else if ((chunk.LowestEmptyBlockOffset>wy) && isEmpty)
-                chunk.LowestEmptyBlockOffset = (short)wy;
+			chunk.ModifyBlock(lx, wy, lz, block);
         }
 
         // We'll only allow a certain amount of chunks to be created per update
@@ -168,7 +160,7 @@ namespace Assets.Engine.Scripts.Core
             if (chunk.Pos.X>=min.X && chunk.Pos.Z>=min.Z && chunk.Pos.X<=max.X && chunk.Pos.Z<=max.Z)
             {
                 // Check if the chunk lies within camera planes
-                return chunk.CheckFrustum(m_cameraPlanes);
+				return true;//chunk.CheckFrustum(m_cameraPlanes);
             }
 
             return false;
@@ -232,7 +224,7 @@ namespace Assets.Engine.Scripts.Core
                     chunk.UpdateChunk();
 
                     if (
-                        chunk.SectionsBuilt!=chunk.Sections.Length ||
+						!chunk.IsReadyToBeRendered() ||
                         chunksReadyToBatch>MaxChunksPerUpdate
                         )
                         continue;
@@ -242,13 +234,8 @@ namespace Assets.Engine.Scripts.Core
 
                     chunk.Clean();
                     foreach (MiniChunk section in chunk.Sections)
-                    {
                         chunk.Prepare(section);
-                    }
                     chunk.Submit();
-
-                    // Make sure the data is not regenerated all the time
-                    chunk.SectionsBuilt = 0;
 
                     #endregion Process valid chunks in visible range
                 }
@@ -268,6 +255,7 @@ namespace Assets.Engine.Scripts.Core
             }
             ChunkCnt = cnt;
 
+			// Commit collected work items
             WorkPoolManager.Commit();
             IOPoolManager.Commit();
 
@@ -321,6 +309,7 @@ namespace Assets.Engine.Scripts.Core
                 m_chunks[chunk.Pos.X, chunk.Pos.Z] = chunk;
             }
 
+			// Commit collected work items
             WorkPoolManager.Commit();
             IOPoolManager.Commit();
         }
@@ -372,6 +361,7 @@ namespace Assets.Engine.Scripts.Core
                     if (cnt==0)
                         break;
 
+					// Commit collected work items
                     WorkPoolManager.Commit();
                     IOPoolManager.Commit();
 
@@ -499,7 +489,12 @@ namespace Assets.Engine.Scripts.Core
                 if (GetBlock(x, y, z).IsEmpty())
                     continue;
 
-                TileRaycastHit rayhit = new TileRaycastHit {HitBlock = new Vector3Int(x, y, z), HitFace = normal};
+                TileRaycastHit rayhit = new TileRaycastHit
+				{
+					HitBlock = new Vector3Int(x, y, z),
+					HitFace = normal
+				};
+
                 hit = rayhit;
                 return true;
             }

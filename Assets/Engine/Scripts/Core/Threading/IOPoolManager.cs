@@ -32,7 +32,7 @@ namespace Assets.Engine.Scripts.Core.Threading
                 }
             }
 
-            // Clear after all work items are processed
+            // Remove processed work items
             WorkItems.Clear();
         }
     }

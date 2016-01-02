@@ -34,7 +34,7 @@ namespace Assets.Engine.Scripts.Provider
         #region Private vars
 
         // chunk generator
-        public readonly IMiniChunkGenerator ChunkGenerator;
+        public readonly IChunkGenerator ChunkGenerator;
 
         // String builder used in the main thread to determine a file path for a given chunk
         public static readonly StringBuilder FilePathStringBuilder = new StringBuilder(DataPath.Length+21);
@@ -182,9 +182,7 @@ namespace Assets.Engine.Scripts.Provider
                 {
                     if (LoadChunkFromDisk(chunk, filePath))
                     {
-                        foreach (MiniChunk section in chunk.Sections)
-                            section.MarkAsLoaded();
-
+                        chunk.MarkAsLoaded();
                         chunk.RegisterNeighbors();
                         return;
                     }
@@ -202,7 +200,7 @@ namespace Assets.Engine.Scripts.Provider
 
         #region IChunkProvider implementation
 
-        public IMiniChunkGenerator GetGenerator()
+        public IChunkGenerator GetGenerator()
         {
             return ChunkGenerator;
         }

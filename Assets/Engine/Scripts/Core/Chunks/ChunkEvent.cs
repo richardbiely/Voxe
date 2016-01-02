@@ -6,9 +6,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 {
     public class ChunkEvent: IEventBase<ChunkState>
     {
-        //! List of subscribers. Fixed-size with 6 items (bottom-most and upper-most section has only
-        //! 5 neighbors but it does not concern us that much). We want this to be an array so it's
-        //! stored on stack for the maximum performance
+        //! List of subscribers. Fixed-size with 4 items
         protected readonly ChunkEvent[] Subscribers;
         //! Index of greatest usable subscriber index in subscriber array
         protected int SubscribersCurr { get; private set; }
@@ -30,7 +28,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public bool Register(IEventBase<ChunkState> section, bool registerListener)
         {
             // The idea here is to register each neighbor on the main thread. Once a section gathers
-            // 6 notifications (5 depending on its location) from its' neighbors chunk generation can
+            // 4 notifications from its' neighbors chunk generation can
             // be started.
 
             // Expect the input to be correct
@@ -58,7 +56,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 //Assert.IsTrue(section != this, "Trying to register the section to itself");
                 //Assert.IsTrue(SubscribersCurr < Subscribers.Length, string.Format("ChunkEvent.Register: Condition {0} < {1} not met", SubscribersCurr, Subscribers.Length));
                 
-
                 // New registration, remember the subscriber and increase subscriber count
                 Subscribers[firstNullIndex] = (ChunkEvent)section;
 
@@ -96,17 +93,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
             return true;
         }
 
-        public void NotifyAll(ChunkState evt)
+		public void NotifyAll(ChunkState state)
         {
             // Notify each registered listener
             for (int i = 0; i < Subscribers.Length; i++)
             {
                 if (Subscribers[i]!=null)
-                    Subscribers[i].OnNotified(evt);
+					Subscribers[i].OnNotified(state);
             }
         }
 
-        public void NotifyOne(IEventBase<ChunkState> receiver, ChunkState evt)
+		public void NotifyOne(IEventBase<ChunkState> receiver, ChunkState state)
         {
             // Notify one of the listeners
             for (int i = 0; i < Subscribers.Length; i++)
@@ -115,7 +112,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 if (listener==null || listener!=receiver)
                     continue;
 
-                Subscribers[i].OnNotified(evt);
+				Subscribers[i].OnNotified(state);
                 break;
             }
         }
@@ -125,7 +122,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             throw new NotImplementedException();
         }
 
-        public virtual void OnNotified(ChunkState evt)
+        public virtual void OnNotified(ChunkState state)
         {
             throw new NotImplementedException();
         }

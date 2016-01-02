@@ -27,7 +27,7 @@ namespace Assets.Engine.Scripts.Config
         internal WorldConfig()
         {
             VisibleRange = 12;
-            CachedRange = VisibleRange+2;
+			CachedRange = VisibleRange+2;
             Streaming = false;
             Infinite = true;
 
@@ -45,7 +45,7 @@ namespace Assets.Engine.Scripts.Config
 
         public bool Verify()
         {
-            if (VisibleRange>CachedRange)
+            if (CachedRange>1 && VisibleRange>CachedRange)
                 return false;
 
             return true;

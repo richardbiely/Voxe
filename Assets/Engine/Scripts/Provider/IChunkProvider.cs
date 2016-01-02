@@ -4,11 +4,11 @@ using Assets.Engine.Scripts.Generators;
 namespace Assets.Engine.Scripts.Provider
 {
     /// <summary>
-    /// Interface for chunk providers
+    /// 	Interface for chunk providers
     /// </summary>
     public interface IChunkProvider
     {
-        IMiniChunkGenerator GetGenerator();
+        IChunkGenerator GetGenerator();
 
         Chunk RequestChunk(int cx, int cz);
         bool ReleaseChunk(Chunk chunk);

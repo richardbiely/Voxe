@@ -6,47 +6,50 @@ using UnityEngine;
 namespace Assets.Engine.Scripts.Generators.Terrain
 {
     /// <summary>
-    /// Produces a simple Minecraft-like terrain
+    /// 	Produces a simple Minecraft-like terrain
     /// </summary>
-    public class SimpleTerrainGenerator : IMiniChunkGenerator
+    public class SimpleTerrainGenerator : IChunkGenerator
     {
         readonly ValueNoise m_noise = new ValueNoise (0);
 	
         #region IChunkGenerator implementation
-        public void Generate (MiniChunk section)
+        public void Generate (Chunk chunk)
         {
-            for (int z = 0; z < EngineSettings.ChunkConfig.SizeZ; z++)
-            {
-                int wz = z + (section.Pos.Z << EngineSettings.ChunkConfig.LogSizeZ);
-
-                for (int y = 0; y < EngineSettings.ChunkConfig.SizeY; y++)
-                {
-                    int wy = y+section.OffsetY;
+			for (int y = 0; y < EngineSettings.ChunkConfig.SizeYTotal; y++)
+			{
+	            for (int z = 0; z < EngineSettings.ChunkConfig.SizeZ; z++)
+	            {
+					int wz = z + (chunk.Pos.Z << EngineSettings.ChunkConfig.LogSizeZ);
 
                     for (int x = 0; x < EngineSettings.ChunkConfig.SizeX; x++)
                     {
-                        int wx = x + (section.Pos.X << EngineSettings.ChunkConfig.LogSizeX);
+						int wx = x + (chunk.Pos.X << EngineSettings.ChunkConfig.LogSizeX);
 
-                        bool currentPoint = Eval(wx, wy, wz);
-                        bool up = Eval(wx, wy + 1, wz);
+                        bool currentPoint = Eval(wx, y, wz);
+                        bool up = Eval(wx, y + 1, wz);
 					
-                        if (currentPoint) {
-                            if (!up) {
-                                section [x, y, z] = new BlockData (BlockType.Grass);
+                        if (currentPoint)
+						{
+                            if (!up)
+							{
+								chunk[x, y, z] = new BlockData(BlockType.Grass);
                                 // Grass block was placed, lets place a tree blueprint here
-                                if (wy < EngineSettings.ChunkConfig.SizeYTotal)
+                                if (y < EngineSettings.ChunkConfig.SizeYTotal)
                                 {
                                     //int height =
                                 }
-                            } else {
-                                if (wy > 50) {
-                                    section [x, y, z] = new BlockData (BlockType.Dirt);
-                                } else {
-                                    section [x, y, z] = new BlockData (BlockType.Stone);
-                                }
                             }
-                        } else {
-                            section [x, y, z] = BlockData.Air;
+							else
+							{
+                                if (y > 50)
+									chunk[x, y, z] = new BlockData(BlockType.Dirt);
+                                else
+									chunk[x, y, z] = new BlockData(BlockType.Stone);
+                            }
+                        }
+						else
+						{
+							chunk[x, y, z] = BlockData.Air;
                         }
                     }
                 }

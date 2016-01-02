@@ -28,7 +28,7 @@ namespace Assets.Engine.Scripts.Common
         {
             return x +
                 (z << EngineSettings.ChunkConfig.LogSizeX) +
-                ((y << EngineSettings.ChunkConfig.LogSizeX) << EngineSettings.ChunkConfig.LogSizeZ);
+                (y << EngineSettings.ChunkConfig.LogSizeXZ);
         }
 
         public static void GetIndex2DFrom1D(int index, out int x, out int z, int sizeX)
@@ -53,7 +53,7 @@ namespace Assets.Engine.Scripts.Common
         public static void GetIndex3DFrom1D(int index, out int x, out int y, out int z)
         {
             x = index & EngineSettings.ChunkConfig.MaskX;
-            y = index / (EngineSettings.ChunkConfig.SizeX * EngineSettings.ChunkConfig.SizeZ);
+            y = index >> EngineSettings.ChunkConfig.LogSizeXZ;
             z = (index >> EngineSettings.ChunkConfig.LogSizeX) & EngineSettings.ChunkConfig.MaskZ;
         }
 

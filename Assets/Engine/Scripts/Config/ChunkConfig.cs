@@ -25,10 +25,11 @@ namespace Assets.Engine.Scripts.Config
         public int LogSizeX2 { get; private set; }
         public int LogSizeY { get; private set; }
         public int LogSizeZ { get; private set; }
+        public int LogSizeXZ { get; private set; }
         public int MaskX { get; private set; }
         public int MaskY { get; private set; }
+		public int MaskYTotal { get; private set; }
         public int MaskZ { get; private set; }
-
 
         #endregion
 
@@ -49,8 +50,10 @@ namespace Assets.Engine.Scripts.Config
             LogSizeX2 = 2*LogSizeX;
             LogSizeY = Convert.ToInt32(Mathf.Log(SizeY, 2f));
             LogSizeZ = Convert.ToInt32(Mathf.Log(SizeZ, 2f));
+            LogSizeXZ = LogSizeX + LogSizeZ;
             MaskX = SizeX-1;
             MaskY = SizeY-1;
+			MaskYTotal = SizeYTotal-1;
             MaskZ = SizeZ-1;
 
             if(!Verify())
@@ -61,7 +64,7 @@ namespace Assets.Engine.Scripts.Config
         {
             if (!Mathf.IsPowerOfTwo(SizeX))
                 return false;
-            if (!Mathf.IsPowerOfTwo(SizeX))
+            if (!Mathf.IsPowerOfTwo(SizeY))
                 return false;
             if (!Mathf.IsPowerOfTwo(SizeZ))
                 return false;

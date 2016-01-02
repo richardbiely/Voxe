@@ -183,6 +183,10 @@ Prefab:
       propertyPath: ViewerCamera
       value: 
       objectReference: {fileID: 812507054}
+    - target: {fileID: 11455066, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: a4db001565d61294aae75f13fc68c869, type: 2}
   m_IsPrefabParent: 0
@@ -301,6 +305,30 @@ Prefab:
     - target: {fileID: 11400010, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
       propertyPath: m_Enabled
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100008, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
+      propertyPath: m_UseLightProbes
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
+      propertyPath: m_Name
+      value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
+      propertyPath: m_TagString
+      value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400024, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
+      propertyPath: PickDistance
+      value: 20
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}

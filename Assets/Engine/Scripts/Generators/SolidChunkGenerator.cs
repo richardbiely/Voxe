@@ -6,22 +6,16 @@ namespace Assets.Engine.Scripts.Generators
     /// <summary>
     /// Simple generator which produces completely solid chunks
     /// </summary>
-    public class SolidChunkGenerator : IMiniChunkGenerator
+    public class SolidChunkGenerator : IChunkGenerator
     {
         #region IChunkGenerator implementation
-        public void Generate (MiniChunk section)
+
+		public void Generate (Chunk chunk)
         {
-            for (int z = 0; z < EngineSettings.ChunkConfig.SizeZ; z++)
-            {
-                for (int y = 0; y < EngineSettings.ChunkConfig.SizeY; y++)
-                {
-                    for (int x = 0; x < EngineSettings.ChunkConfig.SizeX; x++)
-                    {
-                        section [x, y, z] = new BlockData (BlockType.Dirt);
-                    }
-                }
-            }
+			for (int i = 0; i < EngineSettings.ChunkConfig.VolumeTotal; i++)
+				chunk[i] = new BlockData(BlockType.Dirt);
         }
+
         #endregion
     }
 }

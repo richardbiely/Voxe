@@ -234,8 +234,10 @@ namespace Assets.Engine.Scripts.Builders
         }
 
         public void Build(Map map, RenderBuffer targetBuffer, ref BlockData block, ref Vector3Int worldPos,
-            ref Vector3Int localPos, int lodCurr, int lodPrev)
+            ref Vector3Int localPos)
         {
+            const int lodCurr = 1;
+
             float dmg = block.GetDamagePercent();
             Color32 color = BlockDatabase.GetBlockInfo(block.BlockType).Color;
 

@@ -15,6 +15,6 @@ namespace Assets.Engine.Scripts.Builders
 
         void Build(Map map, RenderBuffer targetMesh, ref BlockData block, int face, bool backFace, ref Vector3[] vecs, ref Vector3Int worldPos);
 
-        void Build(Map map, RenderBuffer targetMesh, ref BlockData block, ref Vector3Int worldPos, ref Vector3Int localPos, int lod, int lod2);
+        void Build(Map map, RenderBuffer targetMesh, ref BlockData block, ref Vector3Int worldPos, ref Vector3Int localPos);
     }
 }
