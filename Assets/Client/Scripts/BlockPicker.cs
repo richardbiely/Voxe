@@ -19,7 +19,7 @@ namespace Assets.Client.Scripts
             m_cursorTransform.parent = null;
         }
 
-        private void FixedUpdate()
+        private void Update()
         {
             if (Input.GetMouseButtonDown(0))
                 Cursor.lockState = CursorLockMode.Locked;

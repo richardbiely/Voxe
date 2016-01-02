@@ -62,11 +62,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         //! Next state after currently finished state
         private ChunkState m_notifyState;
-		//! The state currently being executed - only for debugging purposes
-		private ChunkState m_currentState;
-
 		//! Tasks waiting to be executed
 		private ChunkState m_pendingTasks;
+        //! States to be refreshed
+        private ChunkState m_refreshTasks;
 		//! Tasks already executed
 		private ChunkState m_completedTasks;
 
@@ -198,13 +197,13 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 			RequestedRemoval = false;
 			m_taskRunning = false;
+            
+            m_notifyState = m_notifyState.Reset();            
+			m_pendingTasks = m_pendingTasks.Reset();            
+            m_completedTasks = m_completedTasks.Reset();
+            m_refreshTasks = m_refreshTasks.Reset();
 
-			m_notifyState = m_notifyState.Reset();
-            m_currentState = m_currentState.Reset();
-			m_pendingTasks = m_pendingTasks.Reset();
-			m_completedTasks = m_completedTasks.Reset();
-
-			m_isBuilt = false;
+            m_isBuilt = false;
 
 			for(int i=0; i<EngineSettings.ChunkConfig.StackSize; i++)
 				m_setBlockSections = m_setBlockSections | (1<<i);
@@ -506,7 +505,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			}
 
 			// Queue operation
-			m_pendingTasks = m_pendingTasks.Set(state);
+			m_pendingTasks = m_pendingTasks.Set(state);            
 		}
 
 		#endregion ChunkEvent implementation
@@ -654,8 +653,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		private void GenerateData()
 		{
-            m_currentState = CurrStateGenerateData;
-			m_pendingTasks = m_pendingTasks.Reset(CurrStateGenerateData);
+            m_pendingTasks = m_pendingTasks.Reset(CurrStateGenerateData);
             
 			if (m_completedTasks.Check(CurrStateGenerateData))
 			{
@@ -703,7 +701,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			if (!m_completedTasks.Check(ChunkState.Generate))
 				return;
 
-			m_currentState = CurrStateGenerateBlueprints;
 			m_pendingTasks = m_pendingTasks.Reset(CurrStateGenerateBlueprints);
 
 			if (m_completedTasks.Check(ChunkState.GenerateBlueprints))
@@ -765,19 +762,19 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			if (!m_completedTasks.Check(ChunkState.GenerateBlueprints))
 				return;
 
-			m_currentState = CurrStateFinalizeData;
 			m_pendingTasks = m_pendingTasks.Reset(CurrStateFinalizeData);
 
             // Nothing here for us to do if the chunk was not changed
-            if (!WasModifiedSinceLoaded)
+            if (m_completedTasks.Check(CurrStateFinalizeData) && !m_refreshTasks.Check(CurrStateFinalizeData))
             {
                 OnFinalizeDataDone(this);
                 return;
             }
+            m_refreshTasks = m_refreshTasks.Reset(CurrStateFinalizeData);
 
-			// NOTE: No need to check whether FinalizeData has already been called here.
-			// In fact, we expect that this might happen e.g. when modifying blocks in chunk.
-			m_completedTasks = m_completedTasks.Reset(CurrStateFinalizeData);
+            // NOTE: No need to check whether FinalizeData has already been called here.
+            // In fact, we expect that this might happen e.g. when modifying blocks in chunk.
+            m_completedTasks = m_completedTasks.Reset(CurrStateFinalizeData);
 
             TaskRunning = true;
 			WorkPoolManager.Add(new ThreadItem(
@@ -838,7 +835,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
 					return;
 			}
 
-			m_currentState = CurrStateSerializeChunk;
 			m_pendingTasks = m_pendingTasks.Reset(CurrStateSerializeChunk);
 
 			// Count the nubmer of nonempty blocks in chunk
@@ -967,16 +963,15 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			if (!m_completedTasks.Check(ChunkState.FinalizeData))
 				return;
 
-			m_currentState = CurrStateGenerateVertices;
 			m_pendingTasks = m_pendingTasks.Reset(CurrStateGenerateVertices);
 
             // Nothing here for us to do if the chunk was not changed
-            if (!WasModifiedSinceLoaded)
+            if (m_completedTasks.Check(CurrStateGenerateVertices) && !m_refreshTasks.Check(CurrStateGenerateVertices))
             {
                 OnGenerateVerticesDone(this);
                 return;
             }
-            WasModifiedSinceLoaded = false;
+            m_refreshTasks = m_refreshTasks.Reset(CurrStateGenerateVertices);
 
             // NOTE: No need to check whether GenerateVertices has already been called here.
             // In fact, we expect that this might happen e.g. when modifying blocks in chunk.
@@ -1055,8 +1050,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			if (sectionIndex<0 || sectionIndex>=EngineSettings.ChunkConfig.StackSize)
 				return;
 			
-			m_setBlockSections = m_setBlockSections & (1 << sectionIndex);
+			m_setBlockSections = m_setBlockSections | (1 << sectionIndex);
+
+            // We want this chunk rebuilt
+            RefreshState(ChunkState.BuildVertices);
 		}
+
+        private void RefreshState(ChunkState state)
+        {
+            m_refreshTasks = m_refreshTasks.Set(state);
+            OnNotified(state);
+        }
 
 		private void QueueSetBlock(SetBlockContext context)
 		{
@@ -1101,9 +1105,19 @@ namespace Assets.Engine.Scripts.Core.Chunks
 				}
 			}
 
-			// Queue this block itself as well
-			Sections[sectionIndex].EnqeueSetBlock(context);
-		}
+            // Request update for the block
+            Sections[sectionIndex].EnqeueSetBlock(context);
+
+            // Queue this block itself as well   
+            /*
+                TODO: This can be optimized. There's no need to recompute min/max chunk index
+			    everytime we update a block. An update is only required when we delete/add a block.
+			    The best would be having two 2D [chunkWidth,chunkHeight] arrays storing min and
+			    max height indexes respectively. This would be helpful for other things as well.
+			*/
+            RefreshState(ChunkState.FinalizeData);
+            QueueSection(sectionIndex);
+        }
 
 		public void ProcessSetBlockQueue()
 		{
@@ -1116,21 +1130,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
 				updateNeeded = true;
 			}
 
-			// Update this chunk if necessary
-			if (updateNeeded)
-			{
-				// Recompute data
-				/* TODO: This can be optimized. There's no need to recompute min/max chunk index
-				 * everytime we update a block. An update is only required when we delete/add a block.
-				 * The best would be having two 2D [chunkWidth,chunkHeight] arrays storing min and
-				 * max height indexes respectively. This would be helpful for other things as well.
-				 */
-				OnNotified(ChunkState.FinalizeData);
-				// Build vertices
-				OnNotified(ChunkState.BuildVertices);
-				// Mark chunk as modified so it's properly serialized when necessary
-				WasModifiedSinceLoaded = true;
-			}
+            // Let us know that there was a change in data since the last time the chunk
+            // was loaded so that we enqueue serialization when only if it is necessary.
+            WasModifiedSinceLoaded = WasModifiedSinceLoaded | updateNeeded;
 		}
 
 		#endregion Chunk modification

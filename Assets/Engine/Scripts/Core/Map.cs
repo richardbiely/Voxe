@@ -160,7 +160,7 @@ namespace Assets.Engine.Scripts.Core
             if (chunk.Pos.X>=min.X && chunk.Pos.Z>=min.Z && chunk.Pos.X<=max.X && chunk.Pos.Z<=max.Z)
             {
                 // Check if the chunk lies within camera planes
-				return chunk.CheckFrustum(m_cameraPlanes);
+                return chunk.CheckFrustum(m_cameraPlanes);
             }
 
             return false;
@@ -242,14 +242,15 @@ namespace Assets.Engine.Scripts.Core
                 // Chunk within cached range. Full update except for geometry generation
                 else if (IsWithinCachedRange(chunk))
                 {
-                    chunk.SetVisible(false);
+                    if(EngineSettings.WorldConfig.Infinite)
+                        chunk.SetVisible(false);
+
                     chunk.Restore();
                     chunk.UpdateChunk();
                 }
                 // Make an attempt to unload the chunk
                 else if (EngineSettings.WorldConfig.Infinite && chunk.Finish())
                 {
-                    //chunk.SetVisible(false);
                     m_removeList.Add(chunk);
                 }
             }
