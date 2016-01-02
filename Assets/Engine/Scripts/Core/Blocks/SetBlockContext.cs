@@ -5,22 +5,27 @@ namespace Assets.Engine.Scripts.Core.Blocks
 {
     public struct SetBlockContext: IComparable<SetBlockContext>
     {        
-        // Chunk section coordinates
+        //! Chunk section coordinates
 		public readonly Chunk Chunk;
-        // Block which is to be worked with
+        //! Block which is to be worked with
         public readonly BlockData Block;
-		// Block position within chunk
+		//! Block position within chunk
 		public readonly int BX;
 		public readonly int BY;
 		public readonly int BZ;
+        //! Mask of subscriber indexes to notify
+        public readonly int SubscribersMask;
+        public readonly int SectionsMask;
 
-		public SetBlockContext(Chunk chunk, int bx, int by, int bz, BlockData block)
+		public SetBlockContext(Chunk chunk, int bx, int by, int bz, BlockData block, int subscribersMask, int sectionsMask)
         {
 			Chunk = chunk;
             Block = block;
             BX = bx;
             BY = by;
             BZ = bz;
+            SubscribersMask = subscribersMask;
+            SectionsMask = sectionsMask;
         }
 
         public int CompareTo(SetBlockContext other)

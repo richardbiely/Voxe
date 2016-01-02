@@ -103,8 +103,8 @@ namespace Assets.Engine.Scripts.Rendering
                 m_renderBuffer.CopyToMesh(mesh, false);
 
                 MeshFilter filter = go.GetComponent<MeshFilter>();
-                filter.mesh = null;
-                filter.mesh = mesh;
+                filter.sharedMesh = null;
+                filter.sharedMesh = mesh;
                 filter.transform.position = Pos;
 
                 m_drawCalls.Add(go);

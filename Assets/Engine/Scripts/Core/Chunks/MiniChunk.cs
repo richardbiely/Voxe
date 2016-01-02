@@ -21,8 +21,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         #region Private variabls
 
-        //! Queue of setBlock operations to execute
-	    private readonly List<SetBlockContext> m_setBlockQueue;
+        
 
         private readonly Chunk m_parentChunk;
         
@@ -56,8 +55,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
             m_parentChunk = parentChunk;
             OffsetY = positionY * EngineSettings.ChunkConfig.SizeY;
-
-            m_setBlockQueue = new List<SetBlockContext>();
+            
             SolidRenderBuffer = new RenderBuffer();
 
             Reset();
@@ -84,49 +82,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
             LOD = 0;
             NonEmptyBlocks = 0;
-
-            m_setBlockQueue.Clear();
         }
-
-		public void EnqeueSetBlock(SetBlockContext context)
-		{
-			m_setBlockQueue.Add(context);
-		}
-
-		public bool ProcessSetBlockQueue()
-		{
-			if (m_setBlockQueue.Count<=0)
-				return false;
-
-			// Modify blocks
-			for (int i = 0; i<m_setBlockQueue.Count; i++)
-			{
-				SetBlockContext context = m_setBlockQueue[i];
-
-				int index = Common.Helpers.GetIndex1DFrom3D(context.BX, context.BY, context.BZ);
-				BlockType prevType = m_parentChunk[index].BlockType;
-				m_parentChunk[index] = context.Block;
-
-				/*// Update information about highest solid and lowest empty block offset
-				bool isEmpty = context.Block.IsEmpty();
-				if ((context.BY>m_parentChunk.HighestSolidBlockOffset) && !isEmpty)
-					m_parentChunk.HighestSolidBlockOffset = (short)context.BY;
-				else if ((m_parentChunk.LowestEmptyBlockOffset>context.BY) && isEmpty)
-					m_parentChunk.LowestEmptyBlockOffset = (short)context.BY;*/
-				
-				// If the block type changed we need to update the number of non-empty blocks
-				/*if (prevType!=context.Block.BlockType)
-				{
-					if(context.Block.BlockType==BlockType.None)
-						--NonEmptyBlocks;
-					else
-						++NonEmptyBlocks;
-				}*/
-			}
-			m_setBlockQueue.Clear();
-
-			return true;
-		}
 
         #endregion Public Methods
     }
