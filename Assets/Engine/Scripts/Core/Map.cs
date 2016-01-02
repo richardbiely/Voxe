@@ -160,7 +160,7 @@ namespace Assets.Engine.Scripts.Core
             if (chunk.Pos.X>=min.X && chunk.Pos.Z>=min.Z && chunk.Pos.X<=max.X && chunk.Pos.Z<=max.Z)
             {
                 // Check if the chunk lies within camera planes
-				return true;//chunk.CheckFrustum(m_cameraPlanes);
+				return chunk.CheckFrustum(m_cameraPlanes);
             }
 
             return false;
