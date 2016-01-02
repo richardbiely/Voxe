@@ -285,7 +285,7 @@ namespace Assets.Engine.Scripts.Core
 
             // Take the coordinates and sort them according to their distance from the center
             m_chunksToLoadByPos = chunksToLoad
-                //.Where(pos => Mathf.Abs(pos.X) + Mathf.Abs(pos.Z) < EngineSettings.WorldConfig.CachedRange*1.41f) // Load circle?
+                .Where(pos => Mathf.Abs(pos.X) + Mathf.Abs(pos.Z) < EngineSettings.WorldConfig.CachedRange*1.41f)
                 .OrderBy(pos => Mathf.Abs(pos.X) + Mathf.Abs(pos.Z)) // Vectors with smallest magnitude first
                 .ThenBy(pos => Mathf.Abs(pos.X)) // Beware cases like (-4,0) vs. (2,2). The second one is closer to the center
                 .ThenBy(pos => Mathf.Abs(pos.Z))
