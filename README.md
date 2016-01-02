@@ -10,23 +10,20 @@ I will be more than glad for any contribution be it just a simple idea or a nast
 ## Features
 
 ##### Terrain generation
-Voxe currently sports a few simple terrain generators. One for a simple flat terrain, a perlin noise generator and one generic terrain generator. They all are currently usable mostly for debugging purposes.
+Voxe currently sports a few simple terrain generators. One for a simple flat terrain, a perlin noise generator and one generic terrain generator. They all are currently usable mostly for debugging purposes and will later be replaced with a proper fully configurable terrain generator.
 
 ##### Terrain streaming
 The world is streamed - chunks are loaded and saved as you move. Streaming on a separate thread is supported. RLE compression is used.
 
 ##### Threading
-Using a custom threadpool, chunks are generated on multiple threads taking full advantage of you hardware. Voxe uses an event-driven model for chunk generation. Upon creation, each chunk registers to its neighbors and from this moment on everything is automatic. The system is build in a way
-that no synchronization is necessary.
-There are still some issues with this approach, even when threading is disabled, however, once this is polished, this might become one of Voxe's most powerful assets.
+Using a custom threadpool, chunks are generated on multiple threads taking full advantage of you hardware. Voxe uses an event-driven model for chunk generation. Upon creation, each chunk registers to its neighbors and from this moment on everything is automatic. The system is build in a way that no synchronization is necessary.
 
 ## Development
 Voxe is still very early in development. Current focus/plans of the development, ordered by priority, are:
-######1) fixing the bugs in the event-driven chunk generation
-######2) fully generic terrain generation
-######3) fully customizable chunks and blocks
-######4) LOD
-######5..N) we'll think of something
+######1) fully generic terrain generation
+######2) fully customizable chunks and blocks
+######3) LOD
+######4..N) we'll think of something
 
 ## Note
-Here and there, there might be parts of the code present in Voxe which are originaly not mine but taken from one of a million other voxel frameworks I went through in the past few months. It should be only minor parts of the code and unfortunatelly, I can not possibly remember where they all come from. If you happen to identify them and they are distrubuted only under a strict licence, please, let me know so that I can change the code or ask for approval to use it from the original author.
+Here and there, there might be parts of the code or even assets present in Voxe which are originaly not mine but taken from one of a million other voxel frameworks I went through in the past few months. Unfortunatelly I can not possibly remember where they all come from. If you happen to identify them and know that there is an issue with using them legally under GPL2.1 license, please, let me know so that I can change the code or ask for approval to use it from the original author or give them credit respectively.
