@@ -1051,7 +1051,12 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		private void QueueSetBlock(Chunk chunk, int bx, int by, int bz, BlockData block)
 		{
-			int cx = chunk.Pos.X;
+            // Ignore attempts to change the block into the same one
+            int blockIndex = Common.Helpers.GetIndex1DFrom3D(bx, by, bz);
+            if (block.BlockType == Blocks[blockIndex].BlockType)
+                return;
+
+            int cx = chunk.Pos.X;
 			int cz = chunk.Pos.Z;
 			int sectionIndex = by >> EngineSettings.ChunkConfig.LogSizeY;
 
@@ -1114,7 +1119,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 SetBlockContext context = m_setBlockQueue[i];
 
                 int index = Common.Helpers.GetIndex1DFrom3D(context.BX, context.BY, context.BZ);
-                BlockType prevType = Blocks[index].BlockType;
                 Blocks[index] = context.Block;
                                 
                 int section = context.BY >> EngineSettings.ChunkConfig.LogSizeY;
