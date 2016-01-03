@@ -16,19 +16,19 @@ namespace Assets.Engine.Scripts.Core
     {
         #region Static Fields
 
-        /// <summary>
-        ///     The local instance of the Map.
-        /// </summary>
+        //! The local instance of the Map.
         public static Map Current;
 
         #endregion Static Fields
 
         #region Private vars
-
-        // Circular array containing the currently visible world
+        
         //private BlockStorage m_blocks;
         private ChunkStorage m_chunks;
-        private List<Chunk> m_removeList;
+
+        private List<Chunk> m_chunksToRemove;
+        private List<Chunk> m_chunksToRender;
+        private List<Chunk> m_chunksToHide;
 
         private Rect m_viewRange;
         private Rect m_cachedRange;
@@ -46,7 +46,9 @@ namespace Assets.Engine.Scripts.Core
         {
             //m_blocks = new BlockStorage();
             m_chunks = new ChunkStorage();
-            m_removeList = new List<Chunk>();
+            m_chunksToRemove = new List<Chunk>();
+            m_chunksToRender = new List<Chunk>();
+            m_chunksToHide = new List<Chunk>();
         }
 
         public void Start()
@@ -147,7 +149,7 @@ namespace Assets.Engine.Scripts.Core
         // We'll only allow a certain amount of chunks to be created per update
         // Currently, this number is derived from the visible world size divided by the number of updates per second
         // !TODO: Let this value large for now. Change it back / adjust it later
-        private static readonly int MaxChunksPerUpdate = 10000;//(EngineSettings.WorldConfig.VisibleRange * EngineSettings.WorldConfig.VisibleRange / 20);
+        //private static readonly int MaxChunksPerUpdate = 10000;//(EngineSettings.WorldConfig.VisibleRange * EngineSettings.WorldConfig.VisibleRange / 20);
 
         private bool IsWithinVisibilityRange(Chunk chunk)
         {
@@ -197,7 +199,7 @@ namespace Assets.Engine.Scripts.Core
         }
 
         public static int ChunkCnt = 0;
-
+        
         private void UpdateChunks()
         {
             // Limit the amount of chunks per update. This is necessary due to the GC.
@@ -205,73 +207,77 @@ namespace Assets.Engine.Scripts.Core
             // Until I do not figure out how to handle mesh generation better, this is a necessity
             // !TODO Make this more intelligent. E.g., make this depend on visible world size so
             // !TODO it does not take too long before chunks are displayed on the screen
-            int chunksReadyToBatch = 0;
-
-            #region Update chunks
+            //int chunksReadyToBatch = 0;
 
             // Process loaded chunks
             int cnt = 0;
             foreach (Chunk chunk in m_chunks.Values)
             {
                 cnt++;
-                // Chunk within visibilty range. Full update
+                // Chunk within visibilty range. Full update with geometry generation is possible
                 if (IsWithinVisibilityRange(chunk))
                 {
-                    #region Process valid chunks in visible range
-
-                    chunk.SetVisible(true);
-                    chunk.Restore();
-                    chunk.UpdateChunk();
-
-                    if (
-						!chunk.IsReadyToBeRendered() ||
-                        chunksReadyToBatch>MaxChunksPerUpdate
-                        )
-                        continue;
-
-                    // Once all sections of chunk sections are ready, batch them to reduce the number of drawcalls
-                    ++chunksReadyToBatch;
-
-                    chunk.Clean();
-                    foreach (MiniChunk section in chunk.Sections)
-                        chunk.Prepare(section);
-                    chunk.Submit();
-
-                    #endregion Process valid chunks in visible range
+                    m_chunksToRender.Add(chunk);
                 }
                 // Chunk within cached range. Full update except for geometry generation
                 else if (IsWithinCachedRange(chunk))
                 {
-                    if(EngineSettings.WorldConfig.Infinite)
-                        chunk.SetVisible(false);
-
-                    chunk.Restore();
-                    chunk.UpdateChunk();
+                    m_chunksToHide.Add(chunk);                    
                 }
                 // Make an attempt to unload the chunk
                 else if (EngineSettings.WorldConfig.Infinite && chunk.Finish())
                 {
-                    m_removeList.Add(chunk);
+                    m_chunksToRemove.Add(chunk);
                 }
             }
             ChunkCnt = cnt;
 
-			// Commit collected work items
+            // Commit collected work items
             WorkPoolManager.Commit();
             IOPoolManager.Commit();
 
+            #region Perform occlusion culling
+            
+            // Process visible chunks
+            for (int i=0; i<m_chunksToRender.Count; i++)
+            {
+                Chunk chunk = m_chunksToRender[i];               
+
+                chunk.SetVisible(true);
+                chunk.Restore();
+                chunk.UpdateChunk();
+            }
+            m_chunksToRender.Clear();
+
+            // Process invisible chunks
+            for (int i = 0; i < m_chunksToHide.Count; i++)
+            {
+                Chunk chunk = m_chunksToHide[i];
+
+                if (EngineSettings.WorldConfig.Infinite)
+                    chunk.SetVisible(false);
+
+                chunk.Restore();
+                chunk.UpdateChunk();
+            }
+            m_chunksToHide.Clear();
+            
             #endregion
+
+            // Commit collected work items
+            WorkPoolManager.Commit();
+            IOPoolManager.Commit();
 
             #region Remove unused chunks
 
-            for (int i = 0; i<m_removeList.Count; i++)
+            for (int i = 0; i<m_chunksToRemove.Count; i++)
             {
-                var chunk = m_removeList[i];
+                var chunk = m_chunksToRemove[i];
 
                 // Now that all work is finished, release the chunk
                 ReleaseChunk(chunk);
             }
-            m_removeList.Clear();
+            m_chunksToRemove.Clear();
 
             #endregion
         }
@@ -355,7 +361,7 @@ namespace Assets.Engine.Scripts.Core
                     {
                         ++cnt;
                         if (chunk.Finish())
-                            m_removeList.Add(chunk);
+                            m_chunksToRemove.Add(chunk);
                     }
 
                     // Wait for chunks
@@ -367,12 +373,12 @@ namespace Assets.Engine.Scripts.Core
                     IOPoolManager.Commit();
 
                     // Release chunks which finished their work
-                    for (int i = 0; i<m_removeList.Count; i++)
+                    for (int i = 0; i<m_chunksToRemove.Count; i++)
                     {
-                        var chunk = m_removeList[i];
+                        var chunk = m_chunksToRemove[i];
                         ReleaseChunk(chunk);
                     }
-                    m_removeList.Clear();
+                    m_chunksToRemove.Clear();
                 }
             }
         }

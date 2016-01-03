@@ -8,7 +8,6 @@ using Assets.Engine.Scripts.Core.Blocks;
 using Assets.Engine.Scripts.Core.Threading;
 using Assets.Engine.Scripts.Physics;
 using Assets.Engine.Scripts.Provider;
-using Assets.Engine.Scripts.Rendering;
 using Assets.Engine.Scripts.Utils;
 using Mono.Simd;
 using UnityEngine;
@@ -47,14 +46,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         #region Private variables
 
-        // the draw call batcher for this chunk
-        private readonly DrawCallBatcher m_drawCallBatcher = new DrawCallBatcher();
-
 		private readonly int [] m_eventCnt = new[] {0};
-
-        //! True if chunk has already been built
-        private bool m_isBuilt;
-
+        
         //! Sections queued for building
         // TODO: StackSize can be at most 31 with this approach (32 bits). Implement a generic solution for arbitrary StackSize values
         private int m_setBlockSections;
@@ -186,6 +179,12 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
 			ProcessSetBlockQueue();
 			ProcessPendingTasks(Visible);
+
+            if (m_completedTasks.Check(ChunkState.BuildVertices))
+            {
+                foreach (MiniChunk section in Sections)
+                    section.Build();
+            }
         }
 
         public void Reset(bool canBeLoaded)
@@ -204,8 +203,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
             m_completedTasks = m_completedTasks.Reset();
             m_refreshTasks = m_refreshTasks.Reset();
 
-            m_isBuilt = false;
-
 			for(int i=0; i<EngineSettings.ChunkConfig.StackSize; i++)
 				m_setBlockSections = m_setBlockSections | (1<<i);
             m_setBlockQueue.Clear();
@@ -217,8 +214,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             LowestEmptyBlockOffset = EngineSettings.ChunkConfig.MaskYTotal;
             HighestSolidBlockOffset = 0;
-
-            Clean();
+            
+            // Reset sections
             foreach (MiniChunk section in Sections)
                 section.Reset();
 
@@ -231,7 +228,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public void SetVisible(bool show)
         {
             Visible = show;
-            m_drawCallBatcher.SetVisible(show);
+            foreach (MiniChunk section in Sections)
+                section.SetVisible(show);
         }
 
 		/// <summary>
@@ -417,11 +415,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
             }
         }
 
-        public void Clean()
-        {
-            m_drawCallBatcher.Clear();
-        }
-
         public void Restore()
         {
 			if (!RequestedRemoval)
@@ -452,28 +445,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			// Wait until all work is finished on a given chunk
 			bool isWorking = IsExecutingTask() || !IsFinished();
 			return !isWorking;
-        }
-
-        public void Prepare(MiniChunk section)
-        {
-            if (section.SolidRenderBuffer.Positions.Count<=0)
-                return;
-
-            m_drawCallBatcher.Pos = new Vector3(Pos.X<<EngineSettings.ChunkConfig.LogSizeX, 0, Pos.Z<<EngineSettings.ChunkConfig.LogSizeZ);
-
-            // Batch draw calls
-            m_drawCallBatcher.Batch(section.SolidRenderBuffer);
-
-            // Clear section buffer
-            section.SolidRenderBuffer.Clear();
-        }
-
-        public void Submit()
-        {
-            m_drawCallBatcher.FinalizeDrawCalls();
-
-            // Make sure the data is not regenerated all the time
-            m_isBuilt = true;
         }
 
 		#region ChunkEvent implementation
@@ -509,12 +480,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		#endregion ChunkEvent implementation
 
 		#region Chunk generation
-
-		public bool IsReadyToBeRendered()
-        {
-            return !m_isBuilt && m_completedTasks.Check(ChunkState.BuildVertices);
-        }
-
+        
         public void MarkAsLoaded()
 		{
 			m_completedTasks =
@@ -920,7 +886,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 							}
 
 							Vector3Int worldPos = new Vector3Int(wx, wy, wz);
-							Vector3Int localOffset = new Vector3Int(x, wy, z);
+                            Vector3Int localOffset = new Vector3Int(x, wy, z);
 							builder.Build(Map.Current, section.SolidRenderBuffer, ref block, ref worldPos, ref localOffset);
 						}
 					}
@@ -964,17 +930,20 @@ namespace Assets.Engine.Scripts.Core.Chunks
             m_completedTasks = m_completedTasks.Reset(CurrStateGenerateVertices);
 
 			int nonEmptyBlocks = 0;
-			foreach (MiniChunk section in Sections)
-				nonEmptyBlocks = nonEmptyBlocks + section.NonEmptyBlocks;
+            foreach (MiniChunk section in Sections)
+            {
+                nonEmptyBlocks = nonEmptyBlocks + section.NonEmptyBlocks;
+                if (section.NonEmptyBlocks > 0)
+                    section.IsBuilt = false;
+            }
 			
 			if (nonEmptyBlocks>0)
 			{
 				int lowest = Mathf.Max(LowestEmptyBlockOffset, 0);
 				int highest = Mathf.Min(HighestSolidBlockOffset, EngineSettings.ChunkConfig.SizeYTotal-1);
 				var workItem = new SGenerateVerticesWorkItem(this, m_setBlockSections, lowest, highest);
-
+                
 				m_setBlockSections = 0;
-                m_isBuilt = false;
 
                 TaskRunning = true;
 				WorkPoolManager.Add(new ThreadItem(
@@ -1053,7 +1022,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		{
             // Ignore attempts to change the block into the same one
             int blockIndex = Common.Helpers.GetIndex1DFrom3D(bx, by, bz);
-            if (block.BlockType == Blocks[blockIndex].BlockType)
+            if (block.BlockType==Blocks[blockIndex].BlockType)
                 return;
 
             int cx = chunk.Pos.X;

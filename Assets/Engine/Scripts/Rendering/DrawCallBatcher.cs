@@ -11,7 +11,7 @@ namespace Assets.Engine.Scripts.Rendering
         private readonly RenderBuffer m_renderBuffer;
         private readonly List<GameObject> m_drawCalls;
 
-        public Vector3 Pos;
+        public Vector3 Pos { get; set; }
 
         public DrawCallBatcher()
         {
