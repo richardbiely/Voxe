@@ -31,9 +31,9 @@ namespace Assets.Engine.Scripts.Rendering
                     continue;
 
                 var filter = go.GetComponent<MeshFilter>();
-                filter.mesh.Clear(false);
-                ObjectPoolProvider.Meshes.Push(filter.mesh);
-                filter.mesh = null;
+                filter.sharedMesh.Clear(false);
+                ObjectPoolProvider.Meshes.Push(filter.sharedMesh);
+                filter.sharedMesh = null;
 
                 GameObjectProvider.PushObject(GOPChunk, go);
             }

@@ -379,6 +379,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			LowestEmptyBlockOffset = EngineSettings.ChunkConfig.MaskYTotal;
 			HighestSolidBlockOffset = 0;
 
+            int index = 0;
             for (int y = EngineSettings.ChunkConfig.SizeYTotal-1; y>=0; y--)
             {
                 int sectionIndex = y>>EngineSettings.ChunkConfig.LogSizeY;
@@ -386,25 +387,22 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
                 for (int z = 0; z<EngineSettings.ChunkConfig.SizeZ; z++)
                 {
-                    for (int x = 0; x<EngineSettings.ChunkConfig.SizeX; x++)
+                    for (int x = 0; x<EngineSettings.ChunkConfig.SizeX; x++, index++)
                     {
-                        bool isEmpty = Blocks[x, y, z].IsEmpty();
+                        bool isEmpty = Blocks[index].IsEmpty();
                         if (!isEmpty)
                         {
                             ++nonEmptyBlocks;
 							++section.NonEmptyBlocks;
-                        }
 
-                        if ((y>HighestSolidBlockOffset) && !isEmpty)
-                            HighestSolidBlockOffset = y;
-                        else if ((LowestEmptyBlockOffset>y) && isEmpty)
+                            if (y > HighestSolidBlockOffset)
+                                HighestSolidBlockOffset = y;
+                        }
+                        else if (LowestEmptyBlockOffset>y)
                             LowestEmptyBlockOffset = y;
                     }
                 }
             }
-
-			LowestEmptyBlockOffset = Math.Max(--LowestEmptyBlockOffset, 0);
-			HighestSolidBlockOffset = Math.Min(HighestSolidBlockOffset, EngineSettings.ChunkConfig.MaskYTotal);
 
             // Check for debugging purposes. It will be removed later.
             // With current generators it is almost impossible for a chunk with purly empty blocks to be created

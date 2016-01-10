@@ -13,8 +13,8 @@ namespace Assets.Engine.Scripts.Provider
         private const int ChunkCnt = 4096;
         private const int MeshCnt = 4096;
 #else//if UNITY_WP8
-        private const int ChunkCnt = 200;
-        private const int MESH_CNT = 200;
+        private const int ChunkCnt = 4096;
+        private const int MeshCnt = 4096;
 #endif
 
         public static readonly ObjectPool<Chunk> Chunks = new ObjectPool<Chunk> (() => new Chunk (), ChunkCnt);
