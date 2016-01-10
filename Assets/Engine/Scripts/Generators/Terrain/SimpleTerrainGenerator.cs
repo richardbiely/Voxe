@@ -10,7 +10,7 @@ namespace Assets.Engine.Scripts.Generators.Terrain
     /// </summary>
     public class SimpleTerrainGenerator : IChunkGenerator
     {
-        readonly ValueNoise m_noise = new ValueNoise (0);
+        private readonly ValueNoise m_noise = new ValueNoise (0);
 	
         #region IChunkGenerator implementation
         public void Generate (Chunk chunk)
@@ -56,9 +56,13 @@ namespace Assets.Engine.Scripts.Generators.Terrain
                 }
             }
         }
+        public void OnCalculateProperties(int x, int y, int z, ref BlockData data)
+        {   
+        }
+
         #endregion
 
-        private const float Coef = 0.075f;
+        private const float Coef = 0.015f;
 
         private bool Eval (int x, int y, int z)
         {

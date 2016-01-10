@@ -9,7 +9,6 @@ using Assets.Engine.Scripts.Generators;
 using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Core.Blocks;
 using UnityEngine;
-using UnityEngine.Assertions;
 using Assets.Engine.Scripts.Generators.Terrain;
 
 namespace Assets.Engine.Scripts.Provider
@@ -22,7 +21,7 @@ namespace Assets.Engine.Scripts.Provider
         #region Public Properties
 
         // Persistent data to be stored in <disk>:/Users/<user>/AppData/LocalLow/RBiely/Voxe/VoxelData
-        private static string DataPath = string.Format("{0}/{1}", Application.persistentDataPath, "VoxelData");
+        private static readonly string DataPath = string.Format("{0}/{1}", Application.persistentDataPath, "VoxelData");
 
         /// <summary>
         ///     Gets the local clientside map.
@@ -48,6 +47,7 @@ namespace Assets.Engine.Scripts.Provider
             Map.Current = LocalMap = map;
             map.ChunkProvider = this;
 
+            //ChunkGenerator = new SimplePerlinGenerator();
             //ChunkGenerator = new SolidChunkGenerator();
             ChunkGenerator = new SimpleTerrainGenerator();
         }

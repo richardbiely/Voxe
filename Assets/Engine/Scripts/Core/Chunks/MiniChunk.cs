@@ -1,4 +1,6 @@
-﻿using Assets.Engine.Scripts.Common.DataTypes;
+﻿using System.Collections.Generic;
+using Assets.Engine.Scripts.Builders;
+using Assets.Engine.Scripts.Common.DataTypes;
 using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 using Assets.Engine.Scripts.Rendering;
 using UnityEngine;
@@ -15,6 +17,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
         //! The render buffer used for building MiniChunk geometry
         public RenderBuffer SolidRenderBuffer { get; private set; }
 
+        //! Buffer holding bounding mesh data
+        public List<Vector3> BoundingMeshBuffer { get; private set; }
+
+        #if DEBUG
+        //! Boundaries of the mini chunk
+        public Bounds Bounds;
+        #endif
+
         //! Current LOD level of the chunk. NOTE: Leftover. This needs to be done completely differently
         public int LOD { get; set; }
 
@@ -29,13 +39,15 @@ namespace Assets.Engine.Scripts.Core.Chunks
         //! Number of blocks which not air (non-empty blocks)
         public int NonEmptyBlocks { get; set; }
 
+        public int OffsetY { get; private set; }
+
         #endregion Public Properties
 
         #region Private variabls
 
-        // Chunk owning this section
+        //! Chunk owning this section
         private readonly Chunk m_parentChunk;
-        // Draw call batcher for this chunk
+        //! Draw call batcher for this chunk
         private readonly DrawCallBatcher m_drawCallBatcher;
 
         #endregion Private variabls
@@ -45,9 +57,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public MiniChunk(Chunk parentChunk, int positionY)
         {
             m_parentChunk = parentChunk;
+            OffsetY = positionY * EngineSettings.ChunkConfig.SizeY;
 
             m_drawCallBatcher = new DrawCallBatcher();
             SolidRenderBuffer = new RenderBuffer();
+            BoundingMeshBuffer = new List<Vector3>();
 
             Reset();
         }
@@ -63,6 +77,12 @@ namespace Assets.Engine.Scripts.Core.Chunks
             IsBuilt = false;
 
             m_drawCallBatcher.Clear();
+            BoundingMeshBuffer.Clear();
+        }
+
+        public void ResetBoundingMesh()
+        {
+            BoundingMeshBuffer.Clear();
         }
 
         public void Build()
@@ -80,6 +100,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             // Clear original buffer
             SolidRenderBuffer.Clear();
+        }
+
+        public void BuildBoundingMesh(ref Bounds bounds)
+        {
+            #if DEBUG
+            Bounds = bounds;
+            #endif
+            CubeBuilderSimple.Build(BoundingMeshBuffer, ref bounds);
         }
 
         public void SetVisible(bool visible)

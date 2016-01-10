@@ -236,115 +236,26 @@ namespace Assets.Engine.Scripts.Builders
         public void Build(Map map, RenderBuffer targetBuffer, ref BlockData block, ref Vector3Int worldPos,
             ref Vector3Int localPos)
         {
-            const int lodCurr = 1;
-
             float dmg = block.GetDamagePercent();
             Color32 color = BlockDatabase.GetBlockInfo(block.BlockType).Color;
-
-            int lodShifted = lodCurr>>1;
-
-            // Check neighbor blocks
+            
             for (int i = 0; i<SFaces.Length; i++)
             {
-                int yy = worldPos.Y+SDirections[i].Y*lodCurr;
+                int yy = worldPos.Y+SDirections[i].Y;
                 if (yy<0)
-                    continue;
+                    continue; // Nothing to do at the bottom of the world
 
-                int xx = worldPos.X+SDirections[i].X*lodCurr;
-                int zz = worldPos.Z+SDirections[i].Z*lodCurr;
+                int xx = worldPos.X+SDirections[i].X;
+                int zz = worldPos.Z+SDirections[i].Z;
+                
+                // Building of faces is only necessary if there's solid geometry around
+                BlockData b = map.GetBlock(xx, yy, zz);
+                if (!b.IsAlpha())
+                    continue;
 
                 int iface = (int)SFaces[i];
 
-                // !TODO Only process all LOD block if LOD changes
-                // No change in LOD, check just a single block
-                //if (lodCurr==lodPrev)
-                {
-                    // Only need to build face if there is no solid geometry around
-                    BlockData b = map.GetBlock(xx, yy, zz);
-                    if (!b.IsAlpha())
-                        continue;
-                }
-                /*else
-                // LOD changed, some additional steps need to be done
-                {
-                    // Get neighbor block. Skip visible neighbors (no need to generate geometry for them)
-                    bool foundAlpha = false;
-
-                    // One face is not enough. Check remaining blocks
-                    switch (i)
-                    {
-                        case 0:
-                        case 1: // front, back
-                            {
-                                int minY = Mathf.Max(yy, 0);
-                                int maxY = Mathf.Min(yy + lodCurr, EngineSettings.ChunkConfig.MaskYTotal);
-                                for (int y = minY; y < maxY; y++)
-                                {
-                                    for (int x = xx; x < xx + lodCurr; x++)
-                                    {
-                                        // look for an alpha block
-                                        BlockData b = map.GetBlock(x, y, zz);
-                                        if (!b.IsAlpha())
-                                            continue;
-
-                                        y = maxY;
-                                        foundAlpha = true;
-                                        break;
-                                    }
-                                }
-                                break;
-                            }
-
-                        case 2:
-                        case 3: // left, right
-                            {
-                                int minY = Mathf.Max(yy, 0);
-                                int maxY = Mathf.Min(yy + lodCurr, EngineSettings.ChunkConfig.MaskYTotal);
-                                for (int y = minY; y < maxY; y++)
-                                {
-                                    for (int z = zz; z < zz + lodCurr; z++)
-                                    {
-                                        // look for an alpha block
-                                        BlockData b = map.GetBlock(xx, y, z);
-                                        if (!b.IsAlpha())
-                                            continue;
-
-                                        y = maxY;
-                                        foundAlpha = true;
-                                        break;
-                                    }
-                                }
-                                break;
-                            }
-
-                        case 4:
-                        case 5: // top, bottom
-                            {
-                                for (int z = zz; z < zz + lodCurr; z++)
-                                {
-                                    for (int x = xx; x < xx + lodCurr; x++)
-                                    {
-                                        // look for an alpha block
-                                        BlockData b = map.GetBlock(x, yy, z);
-                                        if (!b.IsAlpha())
-                                            continue;
-
-                                        z = zz + lodCurr;
-                                        foundAlpha = true;
-                                        break;
-                                    }
-                                }
-                                break;
-                            }
-                    }
-
-                    // No air found, do not generate a face
-                    if (!foundAlpha)
-                        continue;
-                }*/
-
                 // Fill buffers with data
-                //lock (targetBuffer)
                 {
                     // Add indices
                     int pom = targetBuffer.Positions.Count;
@@ -356,19 +267,18 @@ namespace Assets.Engine.Scripts.Builders
                     targetBuffer.Triangles.Add(pom+0);
 
                     // Add vertices
-                    pom = lodShifted*6+i;
-                    targetBuffer.Positions.Add(new Vector3(SVertices[pom][0].x+localPos.X,
-                                                           SVertices[pom][0].y+localPos.Y,
-                                                           SVertices[pom][0].z+localPos.Z));
-                    targetBuffer.Positions.Add(new Vector3(SVertices[pom][1].x+localPos.X,
-                                                           SVertices[pom][1].y+localPos.Y,
-                                                           SVertices[pom][1].z+localPos.Z));
-                    targetBuffer.Positions.Add(new Vector3(SVertices[pom][2].x+localPos.X,
-                                                           SVertices[pom][2].y+localPos.Y,
-                                                           SVertices[pom][2].z+localPos.Z));
-                    targetBuffer.Positions.Add(new Vector3(SVertices[pom][3].x+localPos.X,
-                                                           SVertices[pom][3].y+localPos.Y,
-                                                           SVertices[pom][3].z+localPos.Z));
+                    targetBuffer.Positions.Add(new Vector3(SVertices[i][0].x+localPos.X,
+                                                           SVertices[i][0].y+localPos.Y,
+                                                           SVertices[i][0].z+localPos.Z));
+                    targetBuffer.Positions.Add(new Vector3(SVertices[i][1].x+localPos.X,
+                                                           SVertices[i][1].y+localPos.Y,
+                                                           SVertices[i][1].z+localPos.Z));
+                    targetBuffer.Positions.Add(new Vector3(SVertices[i][2].x+localPos.X,
+                                                           SVertices[i][2].y+localPos.Y,
+                                                           SVertices[i][2].z+localPos.Z));
+                    targetBuffer.Positions.Add(new Vector3(SVertices[i][3].x+localPos.X,
+                                                           SVertices[i][3].y+localPos.Y,
+                                                           SVertices[i][3].z+localPos.Z));
 
                     // Add colors
                     targetBuffer.Colors.Add(color);

@@ -97,7 +97,7 @@ namespace Assets.Engine.Scripts.Common
 
         public static float Interpolate(float x0, float x1, float alpha)
         {
-            return (x0 * (1 - alpha)) + (x1 * alpha);
+            return x0  + (x1-x0)*alpha;
         }
 
         public static float IntBound(float s, float ds)
@@ -132,7 +132,7 @@ namespace Assets.Engine.Scripts.Common
             return (x>0) ? 1 : ((x<0) ? -1 : 0);
         }
 
-        // custom modulo, handles negative numbers
+        // Custom modulo. Handles negative numbers.
         public static int Mod(int value, int modulus)
         {
             int r = value%modulus;
@@ -144,12 +144,12 @@ namespace Assets.Engine.Scripts.Common
             return (value%modulus+modulus)%modulus;
         }
 
-        public static T Clamp<T>(this T val, T min, T max) where T: IComparable<T>
+        public static float Clamp(this float val, float min, float max)
         {
-            if (val.CompareTo(min)<0)
+            if (val<min)
                 return min;
 
-            return val.CompareTo(max)>0 ? max : val;
+            return val>0 ? max : val;
         }
     }
 }

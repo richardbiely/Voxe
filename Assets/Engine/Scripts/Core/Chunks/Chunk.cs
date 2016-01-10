@@ -227,9 +227,13 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		/// </summary>
         public void SetVisible(bool show)
         {
-            Visible = show;
             foreach (MiniChunk section in Sections)
                 section.SetVisible(show);
+        }
+
+        public void SetPossiblyVisible(bool show)
+        {
+            Visible = show;
         }
 
 		/// <summary>
@@ -373,13 +377,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		/* TODO: Lowest/highest block can be computed while the terrain is generated. This
 		 * would speed things up for initial chunk generation.
 		*/
-        public void CalculateHeightIndexes()
+        public void CalculateProperties()
         {
             int nonEmptyBlocks = 0;
 			LowestEmptyBlockOffset = EngineSettings.ChunkConfig.MaskYTotal;
 			HighestSolidBlockOffset = 0;
 
-            for (int y = EngineSettings.ChunkConfig.SizeYTotal-1; y>=0; y--)
+            int minX = EngineSettings.ChunkConfig.MaskX, maxX = 0;
+            int minY = EngineSettings.ChunkConfig.MaskYTotal, maxY = 0;
+            int minZ = EngineSettings.ChunkConfig.MaskZ, maxZ = 0;
+            
+            for (int y = EngineSettings.ChunkConfig.MaskYTotal; y>=0; y--)
             {
                 int sectionIndex = y>>EngineSettings.ChunkConfig.LogSizeY;
 				MiniChunk section = Sections[sectionIndex];
@@ -388,30 +396,80 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 {
                     for (int x = 0; x<EngineSettings.ChunkConfig.SizeX; x++)
                     {
-                        bool isEmpty = Blocks[x, y, z].IsEmpty();
+                        bool isEmpty = Blocks[x,y,z].IsEmpty();
                         if (!isEmpty)
                         {
                             ++nonEmptyBlocks;
 							++section.NonEmptyBlocks;
-                        }
 
-                        if ((y>HighestSolidBlockOffset) && !isEmpty)
-                            HighestSolidBlockOffset = y;
-                        else if ((LowestEmptyBlockOffset>y) && isEmpty)
+                            if (x<minX) minX = x;
+                            if (y<minY) minY = y;
+                            if (z<minZ) minZ = z;
+
+                            if (x>maxX) maxX = x;
+                            if (y>maxY) maxY = y;
+                            if (z>maxZ) maxZ = z;
+
+                            if (y > HighestSolidBlockOffset)
+                                HighestSolidBlockOffset = y;
+                        }
+                        else if (LowestEmptyBlockOffset > y)
                             LowestEmptyBlockOffset = y;
                     }
                 }
             }
 
-			LowestEmptyBlockOffset = Math.Max(--LowestEmptyBlockOffset, 0);
-			HighestSolidBlockOffset = Math.Min(HighestSolidBlockOffset, EngineSettings.ChunkConfig.MaskYTotal);
+            LowestEmptyBlockOffset = Math.Max(--LowestEmptyBlockOffset, 0);
+            HighestSolidBlockOffset = Math.Min(HighestSolidBlockOffset, EngineSettings.ChunkConfig.MaskYTotal);
 
-            // Check for debugging purposes. It will be removed later.
-            // With current generators it is almost impossible for a chunk with purly empty blocks to be created
-            if (nonEmptyBlocks==0)
+            if (nonEmptyBlocks > 0)
             {
-				Debug.LogFormat("Only empty blocks in chunk [{0},{1}]. Min={2}, Max={3}",
-					Pos.X, Pos.Z, LowestEmptyBlockOffset, HighestSolidBlockOffset);
+                int posInWorldX = Pos.X<<EngineSettings.ChunkConfig.LogSizeX;
+                int posInWorldZ = Pos.Z<<EngineSettings.ChunkConfig.LogSizeZ;
+
+                // Build bounding mesh for each section
+                float width = (maxX - minX) + 1;
+                float depth = (maxZ - minZ) + 1;
+                int startY = minY;
+                for (int i = 0; i < Sections.Length; i++)
+                {
+                    MiniChunk section = Sections[i];
+                    section.ResetBoundingMesh();
+
+                    if (startY>=maxY)
+                        continue;
+
+                    int sectionMaxY = section.OffsetY + EngineSettings.ChunkConfig.MaskY;
+                    if (startY >= sectionMaxY)
+                        continue;
+
+                    int heightMax = startY+EngineSettings.ChunkConfig.SizeY;
+                    heightMax = Mathf.Min(heightMax, sectionMaxY);
+                    heightMax = Mathf.Min(heightMax, maxY);
+
+                    float height = heightMax - startY;
+
+                    Bounds bounds = new Bounds(
+                        new Vector3(posInWorldX + width*0.5f, startY + height*0.5f + 1, posInWorldZ + depth*0.5f),
+                        new Vector3(width, height, depth)
+                        );
+                    section.BuildBoundingMesh(ref bounds);
+
+                    startY = sectionMaxY;
+                }
+            }
+            else
+            {
+                for (int i = 0; i<Sections.Length; i++)
+                {
+                    MiniChunk section = Sections[i];
+                    section.ResetBoundingMesh();
+                }
+
+                /*// Check for debugging purposes. It will be removed later.
+                // With current generators it is almost impossible for a chunk with purly empty blocks to be created
+                Debug.LogFormat("Only empty blocks in chunk [{0},{1}]. Min={2}, Max={3}",
+				    Pos.X, Pos.Z, LowestEmptyBlockOffset, HighestSolidBlockOffset);*/
             }
         }
 
@@ -486,6 +544,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			m_completedTasks =
 				m_completedTasks.Set(ChunkState.Generate|ChunkState.GenerateBlueprints|ChunkState.FinalizeData);
 		}
+
+        public bool IsFinalized()
+        {
+            return m_completedTasks.Check(ChunkState.FinalizeData);
+        }
 
 		public void RegisterSubscriber(Chunk subscriber)
 		{
@@ -685,7 +748,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		private static void OnFinalizeData(Chunk chunk)
 		{
 			// Generate height limits
-			chunk.CalculateHeightIndexes();
+			chunk.CalculateProperties();
 
 			// Compress chunk data
 			// Only do this when streaming is enabled for now

@@ -16,6 +16,10 @@ namespace Assets.Engine.Scripts.Generators
 				chunk[i] = new BlockData(BlockType.Dirt);
         }
 
+        public void OnCalculateProperties(int x, int y, int z, ref BlockData data)
+        {
+        }
+
         #endregion
     }
 }

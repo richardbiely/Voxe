@@ -29,15 +29,20 @@ namespace Assets.Engine.Scripts.Generators
 	                    if (m_noise.GetValue(new Vector3(wx, y, wz) * 0.1f) > 0f)
 	                    {
 							chunk[index] = new BlockData (BlockType.Dirt);
-	                    }
+                        }
 						else
 						{
 							chunk[index] = BlockData.Air;
 	                    }
-	                }
+                    }
                 }
             }
         }
+
+        public void OnCalculateProperties(int x, int y, int z, ref BlockData data)
+        {
+        }
+
         #endregion
     }
 }

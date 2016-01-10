@@ -12,6 +12,7 @@ namespace Assets.Engine.Scripts.Config
         [DataMember] public int CachedRange { get; set; }
         [DataMember] public bool Streaming { get; set; }
         [DataMember] public bool Infinite { get; set; }
+        [DataMember] public bool OcclusionCulling { get; set; }
 
         #endregion
 
@@ -26,10 +27,11 @@ namespace Assets.Engine.Scripts.Config
 
         internal WorldConfig()
         {
-            VisibleRange = 12;
-			CachedRange = VisibleRange+2;
+            VisibleRange = 6;
+            CachedRange = VisibleRange+1;
             Streaming = false;
             Infinite = true;
+            OcclusionCulling = false;
 
             Init();
         }

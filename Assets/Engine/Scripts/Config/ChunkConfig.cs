@@ -35,8 +35,8 @@ namespace Assets.Engine.Scripts.Config
 
         internal ChunkConfig()
         {
-            SizeX = SizeY = SizeZ = 8;
-            StackSize = 16;
+            SizeX = SizeY = SizeZ = 16;
+            StackSize = 8;
 
             Init();
         }

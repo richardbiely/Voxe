@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using System.Linq;
 using Assets.Engine.Scripts.Core.Threading;
+using Assets.Engine.Scripts.Rendering;
 
 namespace Assets.Engine.Scripts.Core
 {
@@ -25,10 +26,28 @@ namespace Assets.Engine.Scripts.Core
         
         //private BlockStorage m_blocks;
         private ChunkStorage m_chunks;
-
-        private List<Chunk> m_chunksToRemove;
+        
+        //! Chunks to be rendered
         private List<Chunk> m_chunksToRender;
-        private List<Chunk> m_chunksToHide;
+        //! Chunks to be removed
+        private List<Chunk> m_chunksToRemove;
+
+        private struct Visibility
+        {
+            public Chunk Chunk;
+            public MiniChunk Section;
+            public float Distance;
+
+            public Visibility(Chunk chunk, MiniChunk section, float distance)
+            {
+                Chunk = chunk;
+                Section = section;
+                Distance = distance;
+            }
+        }
+
+        private const int RasterSize = 128;
+        private Rasterizer m_rasterizer;
 
         private Rect m_viewRange;
         private Rect m_cachedRange;
@@ -46,15 +65,16 @@ namespace Assets.Engine.Scripts.Core
         {
             //m_blocks = new BlockStorage();
             m_chunks = new ChunkStorage();
-            m_chunksToRemove = new List<Chunk>();
             m_chunksToRender = new List<Chunk>();
-            m_chunksToHide = new List<Chunk>();
+            m_chunksToRemove = new List<Chunk>();
         }
 
         public void Start()
         {
             GameObject cameraGo = GameObject.FindGameObjectWithTag("MainCamera");
             m_camera = cameraGo.GetComponent<Camera>();
+
+            m_rasterizer = new Rasterizer(m_camera, RasterSize);
             
             UpdateRangeRects();
             InitCache();
@@ -208,7 +228,7 @@ namespace Assets.Engine.Scripts.Core
             // !TODO Make this more intelligent. E.g., make this depend on visible world size so
             // !TODO it does not take too long before chunks are displayed on the screen
             //int chunksReadyToBatch = 0;
-
+            
             // Process loaded chunks
             int cnt = 0;
             foreach (Chunk chunk in m_chunks.Values)
@@ -217,12 +237,31 @@ namespace Assets.Engine.Scripts.Core
                 // Chunk within visibilty range. Full update with geometry generation is possible
                 if (IsWithinVisibilityRange(chunk))
                 {
-                    m_chunksToRender.Add(chunk);
+                    chunk.SetPossiblyVisible(true);
+                    chunk.SetVisible(!EngineSettings.WorldConfig.OcclusionCulling);
+                    chunk.Restore();
+                    chunk.UpdateChunk();
+
+                    // If occlusion culling is enabled we need to pass bounding box data to rasterizer
+                    if (EngineSettings.WorldConfig.OcclusionCulling && chunk.IsFinalized())
+                    {
+                        foreach (MiniChunk section in chunk.Sections)
+                        {
+                            if (section.BoundingMeshBuffer.Count<=0)
+                                continue;
+
+                            m_rasterizer.Add(section.BoundingMeshBuffer);
+                            m_chunksToRender.Add(chunk);
+                        }
+                    }
                 }
                 // Chunk within cached range. Full update except for geometry generation
                 else if (IsWithinCachedRange(chunk))
                 {
-                    m_chunksToHide.Add(chunk);                    
+                    chunk.SetPossiblyVisible(false);
+                    chunk.SetVisible(false);
+                    chunk.Restore();
+                    chunk.UpdateChunk();               
                 }
                 // Make an attempt to unload the chunk
                 else if (EngineSettings.WorldConfig.Infinite && chunk.Finish())
@@ -237,36 +276,14 @@ namespace Assets.Engine.Scripts.Core
             IOPoolManager.Commit();
 
             #region Perform occlusion culling
-            
-            // Process visible chunks
-            for (int i=0; i<m_chunksToRender.Count; i++)
+
+            if (EngineSettings.WorldConfig.OcclusionCulling)
             {
-                Chunk chunk = m_chunksToRender[i];               
-
-                chunk.SetVisible(true);
-                chunk.Restore();
-                chunk.UpdateChunk();
+                RasterizeChunks();
+                OcclusionCulling();
             }
-            m_chunksToRender.Clear();
 
-            // Process invisible chunks
-            for (int i = 0; i < m_chunksToHide.Count; i++)
-            {
-                Chunk chunk = m_chunksToHide[i];
-
-                if (EngineSettings.WorldConfig.Infinite)
-                    chunk.SetVisible(false);
-
-                chunk.Restore();
-                chunk.UpdateChunk();
-            }
-            m_chunksToHide.Clear();
-            
             #endregion
-
-            // Commit collected work items
-            WorkPoolManager.Commit();
-            IOPoolManager.Commit();
 
             #region Remove unused chunks
 
@@ -282,6 +299,77 @@ namespace Assets.Engine.Scripts.Core
             #endregion
         }
 
+        private void RasterizeChunks()
+        {
+            Assert.IsTrue(EngineSettings.WorldConfig.OcclusionCulling);
+
+            if (m_chunksToRender.Count > 0)
+                m_rasterizer.Rasterize();
+        }
+
+        private void OcclusionCulling()
+        {
+            Assert.IsTrue(EngineSettings.WorldConfig.OcclusionCulling);
+
+            float xx = (1f/Screen.width)*RasterSize;
+            float yy = (1f/Screen.height)*RasterSize;
+
+            for (int i = 0; i < m_chunksToRender.Count; i++)
+            {
+                Chunk chunk = m_chunksToRender[i];
+                foreach (MiniChunk section in chunk.Sections)
+                {
+                    List<Vector3> vertices = section.BoundingMeshBuffer;
+                    if (vertices.Count <= 0)
+                    {
+                        section.SetVisible(false);
+                        continue;
+                    }
+
+                    float sectionDepth = float.MaxValue;
+                    int pos = -1;
+
+                    for (int j = 0; j < vertices.Count; j += 4)
+                    {
+                        // Vertices converted to screen space
+                        Vector3[] verticesOnScreen =
+                        {
+                            m_camera.WorldToScreenPoint(vertices[j]),
+                            m_camera.WorldToScreenPoint(vertices[j+1]),
+                            m_camera.WorldToScreenPoint(vertices[j+2]),
+                            m_camera.WorldToScreenPoint(vertices[j+3])
+                        };
+
+                        // Find the vertex closest to the camera
+                        for (int v = 0; v < verticesOnScreen.Length; v++)
+                        {
+                            if (verticesOnScreen[v].z < sectionDepth)
+                            {
+                                sectionDepth = verticesOnScreen[v].z;
+                                pos = j + v;
+                            }
+                        }
+                    }
+
+                    // Vertex converted to screen space
+                    Vector3 closestVert = m_camera.WorldToViewportPoint(vertices[pos]);
+
+                    // Vertex converted to depth buffer space
+                    int x = (int)((closestVert.x-0.5f)*xx);
+                    int y = (int)((closestVert.y-0.5f)*yy);
+
+                    x = Mathf.Max(0, Mathf.Min(x, RasterSize-1));
+                    y = Mathf.Max(0, Mathf.Min(y, RasterSize-1));
+
+                    // Section hidden behind raster is hidden
+                    float rasterDepth = m_rasterizer.GetDepth(x, y);
+                    section.SetVisible(!(rasterDepth<sectionDepth));
+                }
+            }
+
+            m_chunksToRender.Clear();
+        }
+
         private void InitCache()
         {
             // Build a list of coordinates
@@ -292,7 +380,7 @@ namespace Assets.Engine.Scripts.Core
 
             // Take the coordinates and sort them according to their distance from the center
             m_chunksToLoadByPos = chunksToLoad
-                .Where(pos => Mathf.Abs(pos.X) + Mathf.Abs(pos.Z) < EngineSettings.WorldConfig.CachedRange*1.41f)
+                //.Where(pos => Mathf.Abs(pos.X) + Mathf.Abs(pos.Z) < EngineSettings.WorldConfig.CachedRange*1.41f)
                 .OrderBy(pos => Mathf.Abs(pos.X) + Mathf.Abs(pos.Z)) // Vectors with smallest magnitude first
                 .ThenBy(pos => Mathf.Abs(pos.X)) // Beware cases like (-4,0) vs. (2,2). The second one is closer to the center
                 .ThenBy(pos => Mathf.Abs(pos.Z))
@@ -552,6 +640,19 @@ namespace Assets.Engine.Scripts.Core
                 {
                     if (chunk==null)
                         continue;
+
+                    if (!chunk.IsFinalized())
+                        continue;
+
+                    #if DEBUG
+                    foreach (MiniChunk section in chunk.Sections)
+                    {
+                        if (section.BoundingMeshBuffer.Count<=0)
+                            continue;
+
+                        Gizmos.DrawWireCube(section.Bounds.center, section.Bounds.size);
+                    }
+                    #endif
 
                     if (IsWithinVisibilityRange(chunk))
                     {

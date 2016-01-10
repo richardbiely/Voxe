@@ -31,9 +31,9 @@ namespace Assets.Engine.Scripts.Rendering
                     continue;
 
                 var filter = go.GetComponent<MeshFilter>();
-                filter.mesh.Clear(false);
-                ObjectPoolProvider.Meshes.Push(filter.mesh);
-                filter.mesh = null;
+                filter.sharedMesh.Clear(false);
+                ObjectPoolProvider.Meshes.Push(filter.sharedMesh);
+                filter.sharedMesh = null;
 
                 GameObjectProvider.PushObject(GOPChunk, go);
             }
@@ -115,8 +115,11 @@ namespace Assets.Engine.Scripts.Rendering
 
         public void SetVisible(bool show)
         {
-            for(int i=0; i<m_drawCalls.Count; i++)
-                m_drawCalls[i].SetActive(show);
+            for (int i = 0; i<m_drawCalls.Count; i++)
+            {
+                if (m_drawCalls[i].activeSelf!=show)
+                    m_drawCalls[i].SetActive(show);
+            }
         }
     }
 }
