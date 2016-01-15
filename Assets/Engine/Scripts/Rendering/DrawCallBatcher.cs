@@ -117,8 +117,8 @@ namespace Assets.Engine.Scripts.Rendering
         {
             for (int i = 0; i<m_drawCalls.Count; i++)
             {
-                if (m_drawCalls[i].activeSelf!=show)
-                    m_drawCalls[i].SetActive(show);
+                Renderer renderer = m_drawCalls[i].GetComponent<Renderer>();
+                renderer.enabled = show;
             }
         }
     }
