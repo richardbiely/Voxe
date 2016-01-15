@@ -29,6 +29,7 @@ namespace Assets.Engine.Scripts.Core
         
         //! Chunks to be rendered
         private List<Chunk> m_chunksToRender;
+        private int m_chunksToRenderCnt;
         //! Chunks to be removed
         private List<Chunk> m_chunksToRemove;
 
@@ -66,6 +67,7 @@ namespace Assets.Engine.Scripts.Core
             //m_blocks = new BlockStorage();
             m_chunks = new ChunkStorage();
             m_chunksToRender = new List<Chunk>();
+            m_chunksToRenderCnt = 0;
             m_chunksToRemove = new List<Chunk>();
         }
 
@@ -251,7 +253,12 @@ namespace Assets.Engine.Scripts.Core
                                 continue;
 
                             m_rasterizer.Add(section.BoundingMeshBuffer);
-                            m_chunksToRender.Add(chunk);
+
+                            if (m_chunksToRenderCnt>=m_chunksToRender.Count)
+                                m_chunksToRender.Add(chunk);
+                            else
+                                m_chunksToRender[m_chunksToRenderCnt] = chunk;
+                            ++m_chunksToRenderCnt;
                         }
                     }
                 }
@@ -303,7 +310,7 @@ namespace Assets.Engine.Scripts.Core
         {
             Assert.IsTrue(EngineSettings.WorldConfig.OcclusionCulling);
 
-            if (m_chunksToRender.Count > 0)
+            if (m_chunksToRenderCnt > 0)
                 m_rasterizer.Rasterize();
         }
 
@@ -314,7 +321,7 @@ namespace Assets.Engine.Scripts.Core
             float xx = (1f/Screen.width)*RasterSize;
             float yy = (1f/Screen.height)*RasterSize;
 
-            for (int i = 0; i < m_chunksToRender.Count; i++)
+            for (int i = 0; i < m_chunksToRenderCnt; i++)
             {
                 Chunk chunk = m_chunksToRender[i];
                 foreach (MiniChunk section in chunk.Sections)
@@ -367,7 +374,7 @@ namespace Assets.Engine.Scripts.Core
                 }
             }
 
-            m_chunksToRender.Clear();
+            m_chunksToRenderCnt = 0;
         }
 
         private void InitCache()

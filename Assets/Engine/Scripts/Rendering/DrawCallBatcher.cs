@@ -10,6 +10,7 @@ namespace Assets.Engine.Scripts.Rendering
 
         private readonly RenderBuffer m_renderBuffer;
         private readonly List<GameObject> m_drawCalls;
+        private readonly List<Renderer> m_drawCallRenderers;
 
         public Vector3 Pos { get; set; }
 
@@ -17,6 +18,7 @@ namespace Assets.Engine.Scripts.Rendering
         {
             m_renderBuffer = new RenderBuffer();
             m_drawCalls = new List<GameObject>();
+            m_drawCallRenderers = new List<Renderer>();
         }
 
         /// <summary>
@@ -40,6 +42,7 @@ namespace Assets.Engine.Scripts.Rendering
 
             m_drawCalls.Clear();
             m_renderBuffer.Clear();
+            m_drawCallRenderers.Clear();
         }
 
         /// <summary>
@@ -108,6 +111,7 @@ namespace Assets.Engine.Scripts.Rendering
                 filter.transform.position = Pos;
 
                 m_drawCalls.Add(go);
+                m_drawCallRenderers.Add(go.GetComponent<Renderer>());
             }
 
             m_renderBuffer.Clear();
@@ -115,10 +119,11 @@ namespace Assets.Engine.Scripts.Rendering
 
         public void SetVisible(bool show)
         {
-            for (int i = 0; i<m_drawCalls.Count; i++)
+            for (int i = 0; i<m_drawCallRenderers.Count; i++)
             {
-                Renderer renderer = m_drawCalls[i].GetComponent<Renderer>();
-                renderer.enabled = show;
+                Renderer renderer = m_drawCallRenderers[i];
+                if (renderer.enabled!=show)
+                    renderer.enabled = show;
             }
         }
     }
