@@ -25,15 +25,19 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 Subscribers[i] = null;
         }
 
+        public bool IsRegistered()
+        {
+            return SubscribersCurr == Subscribers.Length;
+        }
+
         public bool Register(IEventBase<ChunkState> section, bool registerListener)
         {
             // The idea here is to register each neighbor on the main thread. Once a section gathers
-            // 4 notifications from its' neighbors chunk generation can
-            // be started.
+            // 4 notifications from its' neighbors chunk generation can be started.
 
             // Expect the input to be correct
-            //Assert.IsTrue(section!=null);
-            
+            Assert.IsTrue(section!=null);
+
             // Register
             if (registerListener)
             {
@@ -53,8 +57,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
                         return false;
                 }
 
-                //Assert.IsTrue(section != this, "Trying to register the section to itself");
-                //Assert.IsTrue(SubscribersCurr < Subscribers.Length, string.Format("ChunkEvent.Register: Condition {0} < {1} not met", SubscribersCurr, Subscribers.Length));
+                Assert.IsTrue(section != this, "Trying to register the section to itself");
+                Assert.IsTrue(SubscribersCurr < Subscribers.Length, string.Format("ChunkEvent.Register: Condition {0} < {1} not met", SubscribersCurr, Subscribers.Length));
                 
                 // New registration, remember the subscriber and increase subscriber count
                 Subscribers[firstNullIndex] = (ChunkEvent)section;
@@ -79,8 +83,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 if (i >= Subscribers.Length)
                     return false;
 
-                //Assert.IsTrue(section != this, "Trying to unregister the section from itself");
-                //Assert.IsTrue(SubscribersCurr > 0);
+                Assert.IsTrue(section != this, "Trying to unregister the section from itself");
+                Assert.IsTrue(SubscribersCurr > 0, string.Format("ChunkEvent.Unregister: Condition '{0} > 0' not met", SubscribersCurr));
 
                 // Unregister
                 --SubscribersCurr;

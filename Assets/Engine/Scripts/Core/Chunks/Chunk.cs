@@ -46,8 +46,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         #region Private variables
 
-		private readonly int [] m_eventCnt = new[] {0};
-        
+#if ENABLE_BLUEPRINTS
+        //! A list of event requiring counter
+        private readonly int [] m_eventCnt = {0};
+#endif
+
         //! Sections queued for building
         // TODO: StackSize can be at most 31 with this approach (32 bits). Implement a generic solution for arbitrary StackSize values
         private int m_setBlockSections;
@@ -125,13 +128,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         #endregion Accessors
 
-		private void RegisterNeighbor(Chunk neighbor)
-		{
-			if (neighbor == null)
-				return;
-
-			RegisterSubscriber(neighbor);
-		}
 
 		public void RegisterNeighbors()
 		{
@@ -172,11 +168,13 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         public void Reset(bool canBeLoaded)
         {
-            UnregisterFromSubscribers();
+            UnregisterFromNeighbors();
 
-			// Reset chunk events
-			for (int i = 0; i<m_eventCnt.Length; i++)
+#if ENABLE_BLUEPRINTS
+            // Reset chunk events
+            for (int i = 0; i<m_eventCnt.Length; i++)
 				m_eventCnt[i] = 0;
+#endif
 
 			RequestedRemoval = false;
 			m_taskRunning = false;
@@ -488,7 +486,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			return !isWorking;
         }
 
-		#region ChunkEvent implementation
+#region ChunkEvent implementation
 
 		public override void OnRegistered(bool registerListener)
 		{
@@ -535,19 +533,36 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 );
 		}
 
-        public bool IsFinalized()
+		private void RegisterNeighbor(Chunk neighbor)
         {
-            return m_completedTasks.Check(ChunkState.FinalizeData);
+            if (neighbor == null)
+                return;
+
+#if ENABLE_BLUEPRINTS
+            bool neighborWasRegistered = neighbor.IsRegistered();
+#endif
+
+            // Registration needs to be done both ways
+            neighbor.Register(this, true);
+            Register(neighbor, true);
+
+#if ENABLE_BLUEPRINTS
+            // Neighbor just got registered
+            if (neighbor.IsRegistered() && !neighborWasRegistered)
+            {
+                // We have to take a special here for there are events which are distributed to all neighbors once a specific task completes.
+                // For instance, once Generate is finished, GenerateBlueprints is sent to all neighbors. If a chunk gets unregistered
+                // and registered back again, it would no longer receive the event. We therefore need to notify it again
+                if (m_completedTasks.Check(ChunkState.Generate))
+                {
+                    neighbor.OnNotified(ChunkState.GenerateBlueprints);
+                    Debug.Log("notifikujem");
+                }
+            }
+#endif
         }
 
-		public void RegisterSubscriber(Chunk subscriber)
-		{
-			// Registration needs to be done both ways
-			subscriber.Register(this, true);
-			Register(subscriber, true);
-		}
-
-		public void UnregisterFromSubscribers()
+		private void UnregisterFromNeighbors()
 		{
 			// Remove this section from its subscribers
 			foreach (var info in Subscribers)
@@ -564,18 +579,21 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		public bool IsFinished()
 		{
-			if(!m_completedTasks.Check(ChunkState.Remove))
-				return false;
-
-			if (m_pendingTasks != 0)
-			{
-				//Debug.LogFormat("[{0},{1}]: Pending:{0}", Pos.X, Pos.Z, m_pendingTasks);
-			}
-
-			return true;
+		    lock (m_lock)
+		    {
+		        return m_completedTasks.Check(ChunkState.Remove);
+		    }
 		}
 
-		public bool IsExecutingTask()
+        public bool IsFinalized()
+        {
+            lock (m_lock)
+            {
+                return m_completedTasks.Check(ChunkState.FinalizeData);
+            }
+        }
+
+        public bool IsExecutingTask()
 		{
 		    lock (m_lock)
 		    {
