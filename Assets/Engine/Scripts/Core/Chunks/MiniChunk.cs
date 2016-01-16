@@ -10,21 +10,13 @@ namespace Assets.Engine.Scripts.Core.Chunks
     /// <summary>
     ///     Represents one vertical part of a chunk
     /// </summary>
-    public class MiniChunk
+    public class MiniChunk: IOcclusionEntity
     {
         #region Public Properties
 
         //! The render buffer used for building MiniChunk geometry
-        public RenderBuffer SolidRenderBuffer { get; private set; }
-
-        //! Buffer holding bounding mesh data
-        public List<Vector3> BoundingMeshBuffer { get; private set; }
-
-        #if DEBUG
-        //! Boundaries of the mini chunk
-        public Bounds Bounds;
-        #endif
-
+        public RenderBuffer SolidRenderBuffer { get; private set; }        
+        
         //! Current LOD level of the chunk. NOTE: Leftover. This needs to be done completely differently
         public int LOD { get; set; }
 
@@ -61,7 +53,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             m_drawCallBatcher = new DrawCallBatcher();
             SolidRenderBuffer = new RenderBuffer();
-            BoundingMeshBuffer = new List<Vector3>();
+            BBoxVertices = new List<Vector3>();
+            BBoxVerticesTransformed = new List<Vector3>();
 
             Reset();
         }
@@ -77,12 +70,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
             IsBuilt = false;
 
             m_drawCallBatcher.Clear();
-            BoundingMeshBuffer.Clear();
+
+            ResetBoundingMesh();
         }
 
         public void ResetBoundingMesh()
         {
-            BoundingMeshBuffer.Clear();
+            BBoxVertices.Clear();
+            BBoxVerticesTransformed.Clear();
         }
 
         public void Build()
@@ -106,17 +101,41 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         public void BuildBoundingMesh(ref Bounds bounds)
         {
-            #if DEBUG
             Bounds = bounds;
-            #endif
-            CubeBuilderSimple.Build(BoundingMeshBuffer, ref bounds);
-        }
 
-        public void SetVisible(bool visible)
-        {
-            m_drawCallBatcher.SetVisible(visible);
+            // Build a bounding box for the mini chunk
+            CubeBuilderSimple.Build(BBoxVertices, ref bounds);
+
+            // Make a copy of the bounding box
+            BBoxVerticesTransformed.AddRange(BBoxVertices);
         }
 
         #endregion Public Methods
+
+        #region IOcclusionEntity
+        
+        //! Boundaries of the mini chunk
+        public Bounds Bounds { get; set; }
+        //! Make the occluder visible/invisible
+        public bool Visible
+        {
+            get { return m_drawCallBatcher.IsVisible(); }
+            set { m_drawCallBatcher.SetVisible(value); }
+        }
+        public bool IsOccluder()
+        {
+            // For now let's consider all chunks with bounding box as occluders
+            // TODO! Make this inteligent - don't include half empty or transparent chunks
+            return BBoxVertices.Count > 0;
+        }
+
+        #endregion
+
+        #region IRasterizationEntity
+
+        public List<Vector3> BBoxVertices { get; set; }
+        public List<Vector3> BBoxVerticesTransformed { get; set; }
+
+        #endregion
     }
 }

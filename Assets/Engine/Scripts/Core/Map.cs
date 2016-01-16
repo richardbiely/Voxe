@@ -19,17 +19,15 @@ namespace Assets.Engine.Scripts.Core
 
         //! The local instance of the Map.
         public static Map Current;
+        public OcclusionCuller Occlusion;
 
         #endregion Static Fields
 
         #region Private vars
-        
+
         //private BlockStorage m_blocks;
         private ChunkStorage m_chunks;
-        
-        //! Chunks to be rendered
-        private List<Chunk> m_chunksToRender;
-        private int m_chunksToRenderCnt;
+
         //! Chunks to be removed
         private List<Chunk> m_chunksToRemove;
 
@@ -46,10 +44,7 @@ namespace Assets.Engine.Scripts.Core
                 Distance = distance;
             }
         }
-
-        private const int RasterSize = 128;
-        private Rasterizer m_rasterizer;
-
+        
         private Rect m_viewRange;
         private Rect m_cachedRange;
 
@@ -66,8 +61,6 @@ namespace Assets.Engine.Scripts.Core
         {
             //m_blocks = new BlockStorage();
             m_chunks = new ChunkStorage();
-            m_chunksToRender = new List<Chunk>();
-            m_chunksToRenderCnt = 0;
             m_chunksToRemove = new List<Chunk>();
         }
 
@@ -75,8 +68,6 @@ namespace Assets.Engine.Scripts.Core
         {
             GameObject cameraGo = GameObject.FindGameObjectWithTag("MainCamera");
             m_camera = cameraGo.GetComponent<Camera>();
-
-            m_rasterizer = new Rasterizer(m_camera, RasterSize);
             
             UpdateRangeRects();
             InitCache();
@@ -240,27 +231,25 @@ namespace Assets.Engine.Scripts.Core
                 if (IsWithinVisibilityRange(chunk))
                 {
                     chunk.SetPossiblyVisible(true);
-                    chunk.SetVisible(!EngineSettings.WorldConfig.OcclusionCulling);
                     chunk.Restore();
                     chunk.UpdateChunk();
 
                     // If occlusion culling is enabled we need to pass bounding box data to rasterizer
-                    if (EngineSettings.WorldConfig.OcclusionCulling && chunk.IsFinalized())
+                    if (EngineSettings.WorldConfig.OcclusionCulling && Occlusion!=null)
                     {
                         foreach (MiniChunk section in chunk.Sections)
                         {
-                            if (section.BoundingMeshBuffer.Count<=0)
+                            section.Visible = false;
+                            if (!chunk.IsFinalized() || !section.IsOccluder())
                                 continue;
 
-                            m_rasterizer.Add(section.BoundingMeshBuffer);
-
-                            if (m_chunksToRenderCnt>=m_chunksToRender.Count)
-                                m_chunksToRender.Add(chunk);
-                            else
-                                m_chunksToRender[m_chunksToRenderCnt] = chunk;
-                            ++m_chunksToRenderCnt;
+                            Occlusion.RegisterEntity(section);
                         }
                     }
+                    else
+                        chunk.SetVisible(true);
+
+                    chunk.UpdateChunk();
                 }
                 // Chunk within cached range. Full update except for geometry generation
                 else if (IsWithinCachedRange(chunk))
@@ -284,14 +273,12 @@ namespace Assets.Engine.Scripts.Core
 
             #region Perform occlusion culling
 
-            if (EngineSettings.WorldConfig.OcclusionCulling)
+            if (EngineSettings.WorldConfig.OcclusionCulling && Occlusion!=null)
             {
-                RasterizeChunks();
-                OcclusionCulling();
+                Occlusion.PerformOcclusion();
             }
 
             #endregion
-
             #region Remove unused chunks
 
             for (int i = 0; i<m_chunksToRemove.Count; i++)
@@ -304,77 +291,7 @@ namespace Assets.Engine.Scripts.Core
             m_chunksToRemove.Clear();
 
             #endregion
-        }
 
-        private void RasterizeChunks()
-        {
-            Assert.IsTrue(EngineSettings.WorldConfig.OcclusionCulling);
-
-            if (m_chunksToRenderCnt > 0)
-                m_rasterizer.Rasterize();
-        }
-
-        private void OcclusionCulling()
-        {
-            Assert.IsTrue(EngineSettings.WorldConfig.OcclusionCulling);
-
-            float xx = (1f/Screen.width)*RasterSize;
-            float yy = (1f/Screen.height)*RasterSize;
-
-            for (int i = 0; i < m_chunksToRenderCnt; i++)
-            {
-                Chunk chunk = m_chunksToRender[i];
-                foreach (MiniChunk section in chunk.Sections)
-                {
-                    List<Vector3> vertices = section.BoundingMeshBuffer;
-                    if (vertices.Count <= 0)
-                    {
-                        section.SetVisible(false);
-                        continue;
-                    }
-
-                    float sectionDepth = float.MaxValue;
-                    int pos = -1;
-
-                    for (int j = 0; j < vertices.Count; j += 4)
-                    {
-                        // Vertices converted to screen space
-                        Vector3[] verticesOnScreen =
-                        {
-                            m_camera.WorldToScreenPoint(vertices[j]),
-                            m_camera.WorldToScreenPoint(vertices[j+1]),
-                            m_camera.WorldToScreenPoint(vertices[j+2]),
-                            m_camera.WorldToScreenPoint(vertices[j+3])
-                        };
-
-                        // Find the vertex closest to the camera
-                        for (int v = 0; v < verticesOnScreen.Length; v++)
-                        {
-                            if (verticesOnScreen[v].z < sectionDepth)
-                            {
-                                sectionDepth = verticesOnScreen[v].z;
-                                pos = j + v;
-                            }
-                        }
-                    }
-
-                    // Vertex converted to screen space
-                    Vector3 closestVert = m_camera.WorldToViewportPoint(vertices[pos]);
-
-                    // Vertex converted to depth buffer space
-                    int x = (int)((closestVert.x-0.5f)*xx);
-                    int y = (int)((closestVert.y-0.5f)*yy);
-
-                    x = Mathf.Max(0, Mathf.Min(x, RasterSize-1));
-                    y = Mathf.Max(0, Mathf.Min(y, RasterSize-1));
-
-                    // Section hidden behind raster is hidden
-                    float rasterDepth = m_rasterizer.GetDepth(x, y);
-                    section.SetVisible(!(rasterDepth<sectionDepth));
-                }
-            }
-
-            m_chunksToRenderCnt = 0;
         }
 
         private void InitCache()
@@ -654,7 +571,7 @@ namespace Assets.Engine.Scripts.Core
                     #if DEBUG
                     foreach (MiniChunk section in chunk.Sections)
                     {
-                        if (section.BoundingMeshBuffer.Count<=0)
+                        if (section.BBoxVertices.Count<=0)
                             continue;
 
                         Gizmos.DrawWireCube(section.Bounds.center, section.Bounds.size);

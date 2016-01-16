@@ -5,31 +5,38 @@ using UnityEngine;
 
 namespace Assets.Engine.Scripts.Rendering
 {
-    public class Rasterizer
+    public class Rasterizer: MonoBehaviour
     {
-        private readonly Camera m_camera;
-        private readonly int m_size;
-        private readonly int m_sizeMin1;
-        private readonly float[] m_depthBuffer;
+        public Camera RasterizerCamera;
+        public int Width;
+        public int Height;
+
+        private int m_widthMin1;
+        private int m_heightMin1;
+        private float[] m_depthBuffer;
 
         private float m_xx;
         private float m_yy;
 
-        private readonly List<List<Vector3>> m_data;
-        private int m_currBufferIndex;
+        private List<IRasterizationEntity> m_entities;
+        private int m_currEntiesCnt;
 
-        public Rasterizer(Camera camera, int size)
+        private void Awake()
         {
-            m_camera = camera;
-            m_size = size;
-            m_sizeMin1 = m_size-1;
-            m_depthBuffer = Helpers.CreateArray1D<float>(size * size);
+            if (Width<=0)
+                Width = Screen.width;
+            if (Height<=0)
+                Height = Screen.height;
+            m_widthMin1 = Width-1;
+            m_heightMin1 = Height-1;
 
-            m_data = new List<List<Vector3>>();
-            m_currBufferIndex = 0;
+            m_depthBuffer = Helpers.CreateArray1D<float>(Width * Height);
+
+            m_entities = new List<IRasterizationEntity>();
+            m_currEntiesCnt = 0;
         }
-
-        public void Add(List<Vector3> buffer)
+        
+        public void Add(IRasterizationEntity entity)
         {
             // Buffers are added too often and clearing them would result in significant
             // impact on performance due to GC. Therefore, instead of adding and clearing,
@@ -37,45 +44,62 @@ namespace Assets.Engine.Scripts.Rendering
             // Given that it will be at most few tousands objects added (in extreme case)
             // this won't pose a problem (e.g. 10k*4B ~ 40 kiB of memory).
 
-            if (m_currBufferIndex>=m_data.Count)
-                m_data.Add(buffer);
+            if (m_currEntiesCnt>= m_entities.Count)
+                m_entities.Add(entity);
             else
-                m_data[m_currBufferIndex] = buffer;
+                m_entities[m_currEntiesCnt] = entity;
 
-            ++m_currBufferIndex;
+            ++m_currEntiesCnt;
         }
 
-        public void Rasterize()
+        public void PerformRaterization()
         {
-            m_xx = (1f/Screen.width)*m_size;
-            m_yy = (1f/Screen.height)*m_size;
+            Profiler.BeginSample("Rasterization");
 
-            for (int i = 0; i<m_currBufferIndex; i++)
+            m_xx = (1f/Screen.width)*Width;
+            m_yy = (1f/Screen.height)*Height;
+
+            for (int i = 0; i<m_currEntiesCnt; i++)
             {
-                List<Vector3> vertices = m_data[i];
+                List<Vector3> vertices = m_entities[i].BBoxVertices;
+                List<Vector3> verticesTransformed = m_entities[i].BBoxVerticesTransformed;
 
                 for (int j = 0; j<vertices.Count; j += 4)
                 {
-                    // Vertices converted to screen space
+                    Profiler.BeginSample("Sampling");
+                    
+                    for (int k=j; k<j+4; k++)
+                    {
+                        // Transform vertices to screen space
+                        Vector3 screenPos = RasterizerCamera.WorldToScreenPoint(vertices[k]);
+                        // Transform vertices to buffer space
+                        verticesTransformed[k] = new Vector3(screenPos.x * m_xx, screenPos.y * m_yy, screenPos.z);
+                    }
+
                     Vector3[] verts =
                     {
-                        m_camera.WorldToScreenPoint(vertices[j]),
-                        m_camera.WorldToScreenPoint(vertices[j+1]),
-                        m_camera.WorldToScreenPoint(vertices[j+2]),
-                        m_camera.WorldToScreenPoint(vertices[j+3])
+                        verticesTransformed[j  ],
+                        verticesTransformed[j+1],
+                        verticesTransformed[j+2],
+                        verticesTransformed[j+3]
                     };
 
+                    Profiler.EndSample();
+
+                    // Rasterize triangles from transformed vertices
                     ProcessTriangle(ref verts[2], ref verts[1], ref verts[0]);
                     ProcessTriangle(ref verts[3], ref verts[2], ref verts[0]);
                 }
             }
 
-            m_currBufferIndex = 0;
+            m_currEntiesCnt = 0;
+
+            Profiler.EndSample();
         }
 
         public float GetDepth(int x, int y)
         {
-            int index = Helpers.GetIndex1DFrom2D(x, y, m_size);
+            int index = Helpers.GetIndex1DFrom2D(x, y, Width);
             return m_depthBuffer[index];
         }
         
@@ -122,9 +146,9 @@ namespace Assets.Engine.Scripts.Rendering
             int p2Y = (int)p2.y;
 
             minY = Math.Max(0, minY);
-            maxY = Math.Min(maxY, m_sizeMin1);
+            maxY = Math.Min(maxY, m_heightMin1);
             p2Y = Math.Max(0, p2Y);
-            p2Y = Math.Min(p2Y, m_sizeMin1);
+            p2Y = Math.Min(p2Y, m_heightMin1);
             
             int y;
 
@@ -175,6 +199,8 @@ namespace Assets.Engine.Scripts.Rendering
         // papb -> pcpd
         private void ProcessScanLine(int y, ref Vector3 pa, ref Vector3 pb, ref Vector3 pc, ref Vector3 pd, float yBa, float yDc)
         {
+            Profiler.BeginSample("ScanLine");
+
             // Thanks to current y, we can compute the gradient to compute others values like
             // the starting x (sx) and ending x (ex) to draw between
             // if pa.y == pb.y or pc.y == pd.y, gradient is forced to 1
@@ -185,7 +211,7 @@ namespace Assets.Engine.Scripts.Rendering
             int sx = (int)Helpers.Interpolate(pa.x, pb.x, gradient1);
             int ex = (int)Helpers.Interpolate(pc.x, pd.x, gradient2);
             sx = Math.Max(0, sx);
-            ex = Math.Min(ex, m_sizeMin1);
+            ex = Math.Min(ex, m_widthMin1);
 
             // Starting Z and ending Z
             float z1 = Helpers.Interpolate(pa.z, pb.z, gradient1);
@@ -197,12 +223,12 @@ namespace Assets.Engine.Scripts.Rendering
             {
                 float gradient = ((x-sx)*exsx).Clamp(0f, 1f);
                 float z = Helpers.Interpolate(z1, z2, gradient);
-
-                int bufferX = (int)(x * m_xx);
-                int bufferY = (int)(y * m_yy);
-                int index = Helpers.GetIndex1DFrom2D(bufferX, bufferY, m_size);
+                
+                int index = Helpers.GetIndex1DFrom2D(x, y, Width);
                 PutPixel(index, z);
             }
+
+            Profiler.EndSample();
         }
 
         private void PutPixel(int index, float z)

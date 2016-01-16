@@ -40,7 +40,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         public int LowestEmptyBlockOffset;
 
-        public bool Visible;
+        public bool PossiblyVisible;
 
         #endregion Public variables
 
@@ -178,7 +178,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public void UpdateChunk()
         {
 			ProcessSetBlockQueue();
-			ProcessPendingTasks(Visible);
+			ProcessPendingTasks(PossiblyVisible);
 
             if (m_completedTasks.Check(ChunkState.BuildVertices))
             {
@@ -210,7 +210,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             // Reset blocks
             Blocks.Reset();
             
-            Visible = false;
+            PossiblyVisible = false;
 
             LowestEmptyBlockOffset = EngineSettings.ChunkConfig.MaskYTotal;
             HighestSolidBlockOffset = 0;
@@ -228,12 +228,12 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public void SetVisible(bool show)
         {
             foreach (MiniChunk section in Sections)
-                section.SetVisible(show);
+                section.Visible = show;
         }
 
         public void SetPossiblyVisible(bool show)
         {
-            Visible = show;
+            PossiblyVisible = show;
         }
 
 		/// <summary>
