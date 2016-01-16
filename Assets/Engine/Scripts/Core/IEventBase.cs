@@ -2,10 +2,12 @@
 {
 	public interface IEventBase<TEvent>
 	{
-		//! Registers caller for receiving notification from parent
-		bool Register(IEventBase<TEvent> neighbor, bool registerListener);
-		//! Notifies subscribers about something (implementation specific)	
-		void NotifyAll(TEvent evt);
+        //! Registers caller for receiving notification from parent
+        bool Register(IEventBase<TEvent> neighbor, bool registerListener);
+        //! Returns true if an object is registered
+        bool IsRegistered();
+        //! Notifies subscribers about something (implementation specific)	
+        void NotifyAll(TEvent evt);
 		//! Notifies one specific subscriber
 		void NotifyOne(IEventBase<TEvent> receiver, TEvent evt);
 
