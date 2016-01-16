@@ -506,7 +506,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 				// Check completition
 				int cnt = ++m_eventCnt[eventIndex];
-				if (cnt<Subscribers.Length)
+				if (cnt<SubscribersCurr)
 					return;
 
 				// Reset counter and process/queue event
@@ -514,8 +514,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			}
 #endif
 
-			// Queue operation
-			m_pendingTasks = m_pendingTasks.Set(state);            
+            // Queue operation
+            m_pendingTasks = m_pendingTasks.Set(state);            
 		}
 
 #endregion ChunkEvent implementation
