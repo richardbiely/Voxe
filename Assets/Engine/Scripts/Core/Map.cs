@@ -279,6 +279,7 @@ namespace Assets.Engine.Scripts.Core
             }
 
             #endregion
+            
             #region Remove unused chunks
 
             for (int i = 0; i<m_chunksToRemove.Count; i++)

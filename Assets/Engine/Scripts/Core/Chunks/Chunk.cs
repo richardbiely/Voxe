@@ -501,7 +501,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		public override void OnNotified(ChunkState state)
 		{
-			if (state==ChunkState.GenerateBlueprints)
+#if ENABLE_BLUEPRINTS
+            if (state==ChunkState.GenerateBlueprints)
 			{
 				int eventIndex = ((int)state-(int)ChunkState.GenerateBlueprints) >> 1;
 
@@ -513,19 +514,25 @@ namespace Assets.Engine.Scripts.Core.Chunks
 				// Reset counter and process/queue event
 				m_eventCnt[eventIndex] = 0;
 			}
+#endif
 
 			// Queue operation
 			m_pendingTasks = m_pendingTasks.Set(state);            
 		}
 
-		#endregion ChunkEvent implementation
+#endregion ChunkEvent implementation
 
-		#region Chunk generation
+#region Chunk generation
         
         public void MarkAsLoaded()
 		{
-			m_completedTasks =
-				m_completedTasks.Set(ChunkState.Generate|ChunkState.GenerateBlueprints|ChunkState.FinalizeData);
+			m_completedTasks = m_completedTasks.Set(
+                ChunkState.Generate|
+#if ENABLE_BLUEPRINTS
+                ChunkState.GenerateBlueprints|
+#endif
+                ChunkState.FinalizeData
+                );
 		}
 
         public bool IsFinalized()
@@ -581,6 +588,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             if (m_notifyState==ChunkState.Idle)
                 return;
 
+#if ENABLE_BLUEPRINTS
             // Notify neighbors about our state.
             // States after GenerateBlueprints are handled differently because they are related only
             // to the chunk itself rather than chunk's neighbors
@@ -593,6 +601,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     OnNotified(m_notifyState);
                     break;
             }
+#else
+             OnNotified(m_notifyState);
+#endif
 
             m_notifyState = ChunkState.Idle;
         }
@@ -612,10 +623,12 @@ namespace Assets.Engine.Scripts.Core.Chunks
             ProcessNotifyState();
             if (m_pendingTasks.Check(ChunkState.Generate) && GenerateData())
                 return;
-
+            
+#if ENABLE_BLUEPRINTS
             ProcessNotifyState();
             if (m_pendingTasks.Check(ChunkState.GenerateBlueprints) && GenerateBlueprints())
                 return;
+#endif
 
             ProcessNotifyState();
             if (m_pendingTasks.Check(ChunkState.FinalizeData) && FinalizeData())
@@ -638,12 +651,16 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			}
 		}
 
-		#region Generate chunk data
+#region Generate chunk data
 
 		private static readonly ChunkState CurrStateGenerateData = ChunkState.Generate;
+#if ENABLE_BLUEPRINTS
 		private static readonly ChunkState NextStateGenerateData = ChunkState.GenerateBlueprints;
+#else
+        private static readonly ChunkState NextStateGenerateData = ChunkState.FinalizeData;
+#endif
 
-		private static void OnGenerateData(Chunk chunk)
+        private static void OnGenerateData(Chunk chunk)
 		{
 			Map.Current.ChunkProvider.GetGenerator().Generate(chunk);
 
@@ -685,9 +702,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
             return true;
 		}
 
-		#endregion Generate chunk data
+#endregion Generate chunk data
 
-		#region Generate blueprints
+#if ENABLE_BLUEPRINTS
+#region Generate blueprints
 
 		private static readonly ChunkState CurrStateGenerateBlueprints = ChunkState.GenerateBlueprints;
 		private static readonly ChunkState NextStateGenerateBlueprints = ChunkState.FinalizeData;
@@ -738,9 +756,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
             return true;
 		}
 
-		#endregion Generate blueprints
+#endregion Generate blueprints
+#endif
 
-		#region Finalize chunk data
+#region Finalize chunk data
 
 		private static readonly ChunkState CurrStateFinalizeData = ChunkState.FinalizeData;
 		private static readonly ChunkState NextStateFinalizeData = ChunkState.BuildVertices;
@@ -773,13 +792,22 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		private bool FinalizeData()
 		{
-			// All sections must have blueprints generated first
-			Assert.IsTrue(
+#if ENABLE_BLUEPRINTS
+            // All sections must have blueprints generated first
+		    Assert.IsTrue(
 				m_completedTasks.Check(ChunkState.GenerateBlueprints),
 				string.Format("[{0},{1}] - FinalizeData set sooner than GenerateBlueprints completed. Pending:{2}, Completed:{3}", Pos.X, Pos.Z, m_pendingTasks, m_completedTasks)
             );
-            if (!m_completedTasks.Check(ChunkState.GenerateBlueprints))
+		    if (!m_completedTasks.Check(ChunkState.GenerateBlueprints))
                 return true;
+#else
+            Assert.IsTrue(
+                m_completedTasks.Check(ChunkState.Generate),
+                string.Format("[{0},{1}] - FinalizeData set sooner than Generate completed. Pending:{2}, Completed:{3}", Pos.X, Pos.Z, m_pendingTasks, m_completedTasks)
+            );
+            if (!m_completedTasks.Check(ChunkState.Generate))
+                return true;
+#endif
 
 			m_pendingTasks = m_pendingTasks.Reset(CurrStateFinalizeData);
 
@@ -808,9 +836,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
             return true;
 		}
 
-		#endregion Finalize chunk data
+#endregion Finalize chunk data
 
-		#region Serialize chunk
+#region Serialize chunk
 
 		private struct SSerializeWorkItem
 		{
@@ -855,7 +883,12 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			if (m_completedTasks.Check(ChunkState.Generate))
 			{
 				// ...  we need to wait until blueprints are generated and chunk is finalized
-				if (!m_completedTasks.Check(ChunkState.GenerateBlueprints | ChunkState.FinalizeData))
+				if (!m_completedTasks.Check(
+#if ENABLE_BLUEPRINTS
+                    ChunkState.GenerateBlueprints |
+#endif
+                    ChunkState.FinalizeData
+                    ))
 					return true;
 			}
 
@@ -891,9 +924,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
             return true;
 		}
 
-		#endregion Serialize chunk
+#endregion Serialize chunk
 
-		#region Generate vertices
+#region Generate vertices
 
 		private struct SGenerateVerticesWorkItem
 		{
@@ -1033,9 +1066,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			}
 		}
 
-		#endregion Generate vertices
+#endregion Generate vertices
 
-		#region Remove chunk
+#region Remove chunk
 
 		private static readonly ChunkState CurrStateRemoveChunk = ChunkState.Remove;
 
@@ -1044,17 +1077,18 @@ namespace Assets.Engine.Scripts.Core.Chunks
             // If chunk was generated we need to wait for other states with higher priority to finish first
             if (m_completedTasks.Check(ChunkState.Generate))
             {
-                if (SubscribersCurr == Subscribers.Length)
-                {
-                    if (!m_completedTasks.Check(
-                        ChunkState.GenerateBlueprints |
-                        ChunkState.FinalizeData |
-                        // With streaming enabled we have to wait for serialization to finish as well
-                        (EngineSettings.WorldConfig.Streaming ? ChunkState.Serialize : ChunkState.Idle)))
-                        return;
-                }
+                // Blueprints and FinalizeData need to finish first
+                if (!m_completedTasks.Check(
+#if ENABLE_BLUEPRINTS
+                    ChunkState.GenerateBlueprints|
+#endif
+                    ChunkState.FinalizeData
+                    ))
+                    return;
 
-                m_pendingTasks = m_pendingTasks.Reset(CurrStateRemoveChunk);
+                // With streaming enabled we have to wait for serialization to finish as well
+                if (EngineSettings.WorldConfig.Streaming && !m_completedTasks.Check(ChunkState.Serialize))
+                    return;
             }
             else
             // No work on chunk started yet. Reset its' state completely
@@ -1066,11 +1100,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
             m_completedTasks = m_completedTasks.Set(CurrStateRemoveChunk);
         }
 
-		#endregion Remove chunk
+#endregion Remove chunk
 
-		#endregion Chunk generation
+#endregion Chunk generation
 
-		#region Chunk modification
+#region Chunk modification
 
 		private void QueueSection(int sectionIndex)
 		{
@@ -1199,8 +1233,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
             m_setBlockQueue.Clear();
 		}
 
-		#endregion Chunk modification
+#endregion Chunk modification
 
-        #endregion Public Methods
+#endregion Public Methods
     }
 }
