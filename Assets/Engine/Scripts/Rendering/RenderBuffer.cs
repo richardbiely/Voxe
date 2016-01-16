@@ -49,6 +49,8 @@ namespace Assets.Engine.Scripts.Rendering
             if(doTangents)
                 MeshExtensions.GenerateTangents(mesh);
             mesh.triangles = Triangles.ToArray();
+
+            mesh.Optimize();
         }
     }
 }
