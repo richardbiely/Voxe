@@ -65,23 +65,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		//! Specifies whether there's a task running
 		private bool m_taskRunning;
-		public bool TaskRunning
-		{
-			get
-			{
-				lock (m_lock)
-				{
-					return m_taskRunning;
-				}
-			}
-			set
-			{
-				lock (m_lock)
-				{
-					m_taskRunning = value;
-				}
-			}
-		}
 		private readonly object m_lock = new object();
 
 		public bool RequestedRemoval;
@@ -587,53 +570,64 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		public bool IsExecutingTask()
 		{
-			return TaskRunning;
+		    lock (m_lock)
+		    {
+		        return m_taskRunning;
+		    }
 		}
 
-		public void ProcessPendingTasks(bool updateGeometry)
-		{
-			if (
-				// Can't execute the task now, we'll try it later
-				IsExecutingTask() ||
-				// If we're done we're done
-				IsFinished()
-			)
-				return;
-
-			// Notify neighbor chunks that this stage is complete.
-			// We wait until any task associated with this chunk is finished and only after there's no
-			// task running we're allow to get here. Thanks to this, everything is perfectly thread-safe
-			// in exchange for a one frame delay.
-			if (m_notifyState!=ChunkState.Idle)
-			{
-				// Notify neighbors about our state.
-				// States after GenerateBlueprints are handled differently because they are related only
-				// to chunk itself rather than chunk's neighbors
-				switch (m_notifyState)
-				{
-				case ChunkState.GenerateBlueprints:
-					NotifyAll(m_notifyState);
-					break;
-				default:
-					OnNotified(m_notifyState);
-					break;
-				}
-                
-				m_notifyState = ChunkState.Idle;
-			}
-
-			// Go from the least important bit to most important one. If a given bit it set
-			// we execute the task tied with it
-			if (m_pendingTasks.Check(ChunkState.Generate) && GenerateData())
+        private void ProcessNotifyState()
+        {
+            if (m_notifyState==ChunkState.Idle)
                 return;
+
+            // Notify neighbors about our state.
+            // States after GenerateBlueprints are handled differently because they are related only
+            // to the chunk itself rather than chunk's neighbors
+            switch (m_notifyState)
+            {
+                case ChunkState.GenerateBlueprints:
+                    NotifyAll(m_notifyState);
+                    break;
+                default:
+                    OnNotified(m_notifyState);
+                    break;
+            }
+
+            m_notifyState = ChunkState.Idle;
+        }
+
+		public void ProcessPendingTasks(bool updateGeometry)
+        {
+            // We are not allowed to check anything as long as there is a task still running
+            if (IsExecutingTask())
+                return;
+
+            // Once this chunk is marked as finished we stop caring about everything else
+            if (IsFinished())
+                return;
+
+            // Go from the least important bit to most important one. If a given bit it set
+            // we execute the task tied with it
+            ProcessNotifyState();
+            if (m_pendingTasks.Check(ChunkState.Generate) && GenerateData())
+                return;
+
+            ProcessNotifyState();
             if (m_pendingTasks.Check(ChunkState.GenerateBlueprints) && GenerateBlueprints())
                 return;
+
+            ProcessNotifyState();
             if (m_pendingTasks.Check(ChunkState.FinalizeData) && FinalizeData())
                 return;
+
             // TODO: Consider making it possible to serialize section and generate vertices at the same time
+            ProcessNotifyState();
             if (m_pendingTasks.Check(ChunkState.Serialize) && SerializeChunk())
                 return;
-			if (m_pendingTasks.Check(ChunkState.Remove))
+
+            ProcessNotifyState();
+            if (m_pendingTasks.Check(ChunkState.Remove))
 			{
 				RemoveChunk();
 			}
@@ -653,14 +647,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		{
 			Map.Current.ChunkProvider.GetGenerator().Generate(chunk);
 
-			OnGenerateDataDone(chunk);
+		    lock (chunk.m_lock)
+		    {
+		        OnGenerateDataDone(chunk);
+		    }
 		}
 
 		private static void OnGenerateDataDone(Chunk chunk)
 		{
 			chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateGenerateData);
 			chunk.m_notifyState = NextStateGenerateData;
-			chunk.TaskRunning = false;
+			chunk.m_taskRunning = false;
 		}
 
 		private bool GenerateData()
@@ -675,7 +672,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 			m_completedTasks = m_completedTasks.Reset(CurrStateGenerateData);
 
-			TaskRunning = true;
+            m_taskRunning = true;
 			WorkPoolManager.Add(new ThreadItem(
 				arg =>
 				{
@@ -697,14 +694,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		private static void OnGenerateBlueprints(Chunk chunk)
 		{
-			OnGenerateBlueprintsDone(chunk);
+		    lock (chunk.m_lock)
+		    {
+		        OnGenerateBlueprintsDone(chunk);
+		    }
 		}
 
 		private static void OnGenerateBlueprintsDone(Chunk chunk)
 		{
 			chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateGenerateBlueprints);
 			chunk.m_notifyState = NextStateGenerateBlueprints;
-			chunk.TaskRunning = false;
+			chunk.m_taskRunning = false;
 		}
 
 		private bool GenerateBlueprints()
@@ -725,7 +725,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 			m_completedTasks = m_completedTasks.Reset(CurrStateGenerateBlueprints);
 
-			TaskRunning = true;
+            m_taskRunning = true;
 			WorkPoolManager.Add(new ThreadItem(
 				arg =>
 				{
@@ -758,14 +758,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
 				chunk.RLE.Compress(chunk.Blocks.ToArray());
 			}
 
-			OnFinalizeDataDone(chunk);
+		    lock (chunk.m_lock)
+		    {
+		        OnFinalizeDataDone(chunk);
+		    }
 		}
 
 		private static void OnFinalizeDataDone(Chunk chunk)
 		{
 			chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateFinalizeData);
 			chunk.m_notifyState = NextStateFinalizeData;
-			chunk.TaskRunning = false;
+			chunk.m_taskRunning = false;
 		}
 
 		private bool FinalizeData()
@@ -792,7 +795,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             // In fact, we expect that this might happen e.g. when modifying blocks in chunk.
             m_completedTasks = m_completedTasks.Reset(CurrStateFinalizeData);
 
-            TaskRunning = true;
+            m_taskRunning = true;
 			WorkPoolManager.Add(new ThreadItem(
 				arg =>
 				{
@@ -831,13 +834,16 @@ namespace Assets.Engine.Scripts.Core.Chunks
 				filePath
 			);
 
-			OnSerialzeChunkDone(chunk);
+		    lock (chunk.m_lock)
+		    {
+		        OnSerialzeChunkDone(chunk);
+		    }
 		}
 
 		private static void OnSerialzeChunkDone(Chunk chunk)
 		{
 			chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateSerializeChunk);
-			chunk.TaskRunning = false;
+			chunk.m_taskRunning = false;
 		}
 
 		private bool SerializeChunk()
@@ -872,7 +878,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 				LocalChunkProvider.GetFilePathFromIndex(Pos.X, Pos.Z)
 			);
 
-			TaskRunning = true;
+            m_taskRunning = true;
 			IOPoolManager.Add(new ThreadItem(
 				arg =>
 				{
@@ -956,14 +962,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
 				}
 			}
 
-			OnGenerateVerticesDone(chunk);
+		    lock (chunk.m_lock)
+		    {
+		        OnGenerateVerticesDone(chunk);
+		    }
 		}
 
 		private static void OnGenerateVerticesDone(Chunk chunk)
 		{
 			chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateGenerateVertices);
 			chunk.m_notifyState = NextStateGenerateVertices;
-			chunk.TaskRunning = false;
+			chunk.m_taskRunning = false;
 		}
 
 		/// <summary>
@@ -1008,7 +1017,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 
 				m_setBlockSections = 0;
 
-                TaskRunning = true;
+                m_taskRunning = true;
 				WorkPoolManager.Add(new ThreadItem(
 					arg =>
 					{
