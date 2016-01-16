@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Provider;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Assets.Engine.Scripts.Rendering
 {
@@ -12,13 +14,19 @@ namespace Assets.Engine.Scripts.Rendering
         private readonly List<GameObject> m_drawCalls;
         private readonly List<Renderer> m_drawCallRenderers;
 
-        public Vector3 Pos { get; set; }
+        private bool m_visible;
+
+#if DEBUG
+        public Vector3Int Pos { get; set; }
+#endif
 
         public DrawCallBatcher()
         {
             m_renderBuffer = new RenderBuffer();
             m_drawCalls = new List<GameObject>();
             m_drawCallRenderers = new List<Renderer>();
+
+            m_visible = false;
         }
 
         /// <summary>
@@ -43,6 +51,8 @@ namespace Assets.Engine.Scripts.Rendering
             m_drawCalls.Clear();
             m_renderBuffer.Clear();
             m_drawCallRenderers.Clear();
+
+            m_visible = false;
         }
 
         /// <summary>
@@ -99,16 +109,18 @@ namespace Assets.Engine.Scripts.Rendering
             if (go != null)
             {
 #if DEBUG
-                go.name = string.Format("[{0};{1}]", (int)Pos.x>>EngineSettings.ChunkConfig.LogSizeX, (int)Pos.z>>EngineSettings.ChunkConfig.LogSizeZ);
+                // [X, Z, Y]:<part> - name the gameobject so that it can be easily identified with a naked eye
+                go.name = string.Format("[{0},{1},{2}]:{3}", Pos.X, Pos.Z, Pos.Y, m_drawCalls.Count);
 #endif
 
                 Mesh mesh = ObjectPoolProvider.Meshes.Pop();
+                Assert.IsTrue(mesh.vertices.Length<=0);
                 m_renderBuffer.CopyToMesh(mesh, false);
 
                 MeshFilter filter = go.GetComponent<MeshFilter>();
                 filter.sharedMesh = null;
                 filter.sharedMesh = mesh;
-                filter.transform.position = Pos;
+                filter.transform.position = new Vector3(Pos.X << EngineSettings.ChunkConfig.LogSizeX, 0, Pos.Z << EngineSettings.ChunkConfig.LogSizeZ);
 
                 m_drawCalls.Add(go);
                 m_drawCallRenderers.Add(go.GetComponent<Renderer>());
@@ -119,12 +131,20 @@ namespace Assets.Engine.Scripts.Rendering
 
         public void SetVisible(bool show)
         {
+            bool visible = false;
             for (int i = 0; i<m_drawCallRenderers.Count; i++)
             {
                 Renderer renderer = m_drawCallRenderers[i];
-                if (renderer.enabled!=show)
-                    renderer.enabled = show;
+                renderer.enabled = show;
+                visible = visible|show;
             }
+
+            m_visible = visible;
+        }
+
+        public bool IsVisible()
+        {
+            return m_drawCalls.Count>0 && m_visible;
         }
     }
 }

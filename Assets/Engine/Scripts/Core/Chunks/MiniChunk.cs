@@ -91,7 +91,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 return;
 
             m_drawCallBatcher.Clear();
-            m_drawCallBatcher.Pos = new Vector3(Pos.X << EngineSettings.ChunkConfig.LogSizeX, 0, Pos.Z << EngineSettings.ChunkConfig.LogSizeZ);
+#if DEBUG
+            m_drawCallBatcher.Pos = new Vector3Int(Pos.X, OffsetY >> EngineSettings.ChunkConfig.LogSizeY, Pos.Z);
+#endif
             m_drawCallBatcher.Batch(SolidRenderBuffer);
             m_drawCallBatcher.FinalizeDrawCalls();
 
