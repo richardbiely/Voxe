@@ -645,7 +645,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             // Go from the least important bit to most important one. If a given bit it set
             // we execute the task tied with it
             ProcessNotifyState();
-            if (m_pendingTasks.Check(ChunkState.Generate) && GenerateData())
+            if (m_pendingTasks.Check(ChunkState.Generate) && GenerateData(possiblyVisible))
                 return;
 
 #if ENABLE_BLUEPRINTS
@@ -701,16 +701,21 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			chunk.m_taskRunning = false;
 		}
 
-		private bool GenerateData()
+		private bool GenerateData(bool possiblyVisible)
         {
-            m_pendingTasks = m_pendingTasks.Reset(CurrStateGenerateData);
+			if (m_completedTasks.Check(CurrStateGenerateData))
+			{
+                m_pendingTasks = m_pendingTasks.Reset(CurrStateGenerateData);
 
-            if (m_completedTasks.Check(CurrStateGenerateData))
-            {
                 OnGenerateDataDone(this);
                 return false;
             }
 
+            // In order to save performance only generate data on-demand
+            if (!possiblyVisible)
+                return true;
+
+            m_pendingTasks = m_pendingTasks.Reset(CurrStateGenerateData);
             m_completedTasks = m_completedTasks.Reset(CurrStateGenerateData);
 
             m_taskRunning = true;

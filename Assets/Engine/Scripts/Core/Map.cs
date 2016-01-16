@@ -164,6 +164,12 @@ namespace Assets.Engine.Scripts.Core
         // !TODO: Let this value large for now. Change it back / adjust it later
         //private static readonly int MaxChunksPerUpdate = 10000;//(EngineSettings.WorldConfig.VisibleRange * EngineSettings.WorldConfig.VisibleRange / 20);
 
+        private bool IsChunkInViewFrustum(Chunk chunk)
+        {
+            // Check if the chunk lies within camera planes
+            return chunk.CheckFrustum(m_cameraPlanes);
+        }
+
         private bool IsWithinVisibilityRange(Chunk chunk)
         {
             // Chunk is close enough
@@ -172,13 +178,7 @@ namespace Assets.Engine.Scripts.Core
             Vector2Int max = new Vector2Int(ViewerChunkPos.X + EngineSettings.WorldConfig.VisibleRange,
                                             ViewerChunkPos.Z + EngineSettings.WorldConfig.VisibleRange);
 
-            if (chunk.Pos.X>=min.X && chunk.Pos.Z>=min.Z && chunk.Pos.X<=max.X && chunk.Pos.Z<=max.Z)
-            {
-                // Check if the chunk lies within camera planes
-                return chunk.CheckFrustum(m_cameraPlanes);
-            }
-
-            return false;
+            return (chunk.Pos.X>=min.X && chunk.Pos.Z>=min.Z && chunk.Pos.X<=max.X && chunk.Pos.Z<=max.Z);
         }
 
         private bool IsWithinCachedRange(Chunk chunk)
@@ -227,40 +227,69 @@ namespace Assets.Engine.Scripts.Core
             foreach (Chunk chunk in m_chunks.Values)
             {
                 cnt++;
-                // Chunk within visibilty range. Full update with geometry generation is possible
-                if (IsWithinVisibilityRange(chunk))
+
+                bool removeChunk = false;
+
+                // Chunk is within view frustum
+                if (IsChunkInViewFrustum(chunk))
                 {
-                    chunk.SetPossiblyVisible(true);
-                    chunk.Restore();
-                    chunk.UpdateChunk();
-
-                    // If occlusion culling is enabled we need to pass bounding box data to rasterizer
-                    if (EngineSettings.WorldConfig.OcclusionCulling && Occlusion!=null)
+                    // Chunk is within visibilty range. Full update with geometry generation is possible
+                    if (IsWithinVisibilityRange(chunk))
                     {
-                        foreach (MiniChunk section in chunk.Sections)
-                        {
-                            section.Visible = false;
-                            if (!chunk.IsFinalized() || !section.IsOccluder())
-                                continue;
+                        chunk.SetPossiblyVisible(true);
+                        chunk.Restore();
+                        chunk.UpdateChunk();
 
-                            Occlusion.RegisterEntity(section);
+                        // If occlusion culling is enabled we need to pass bounding box data to rasterizer
+                        if (EngineSettings.WorldConfig.OcclusionCulling && Occlusion!=null)
+                        {
+                            foreach (MiniChunk section in chunk.Sections)
+                            {
+                                section.Visible = false;
+                                if (!chunk.IsFinalized() || !section.IsOccluder())
+                                    continue;
+
+                                Occlusion.RegisterEntity(section);
+                            }
                         }
+                        else
+                            chunk.SetVisible(true);
+
+                        chunk.UpdateChunk();
+                    }
+                    // Chunk is within cached range. Full update except for geometry generation
+                    else if (IsWithinCachedRange(chunk))
+                    {
+                        chunk.SetPossiblyVisible(false);
+                        chunk.SetVisible(false);
+                        chunk.Restore();
+                        chunk.UpdateChunk();
                     }
                     else
-                        chunk.SetVisible(true);
-
-                    chunk.UpdateChunk();
+                    // Chunk is too far away. Remove it
+                    {
+                        removeChunk = true;
+                    }
                 }
-                // Chunk within cached range. Full update except for geometry generation
-                else if (IsWithinCachedRange(chunk))
+                else
                 {
-                    chunk.SetPossiblyVisible(false);
-                    chunk.SetVisible(false);
-                    chunk.Restore();
-                    chunk.UpdateChunk();               
+                    // Chunk is not in viewfrustum but still within cached range
+                    if (IsWithinCachedRange(chunk))
+                    {
+                        chunk.SetPossiblyVisible(false);
+                        chunk.SetVisible(false);
+                        chunk.Restore();
+                        chunk.UpdateChunk();
+                    }
+                    else
+                    // Chunk is not visible and too far away. Remote it
+                    {
+                        removeChunk = true;
+                    }
                 }
+
                 // Make an attempt to unload the chunk
-                else if (EngineSettings.WorldConfig.Infinite && chunk.Finish())
+                if (removeChunk && EngineSettings.WorldConfig.Infinite && chunk.Finish())
                 {
                     m_chunksToRemove.Add(chunk);
                 }
