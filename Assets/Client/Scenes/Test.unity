@@ -372,10 +372,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1914990386}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0a32897cde36d424ba2c6aba17519540, type: 3}
+  m_Script: {fileID: 11500000, guid: 74717d5f3b8627f4f9c16fe1a664ed22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Rasterizer: {fileID: 1914990388}
+  RasterizerCamera: {fileID: 829896160}
+  Width: 128
+  Height: 128
 --- !u!114 &1914990388
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -384,12 +386,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1914990386}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 10769875b56783546914ae7fafbc3ec2, type: 3}
+  m_Script: {fileID: 11500000, guid: fc1579e7476b8a84eab212167df5e582, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  RasterizerCamera: {fileID: 829896160}
-  Width: 128
-  Height: 128
+  Rasterizer: {fileID: 1914990387}
 --- !u!4 &1914990389
 Transform:
   m_ObjectHideFlags: 0
