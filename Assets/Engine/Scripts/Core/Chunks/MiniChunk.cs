@@ -86,9 +86,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 return;
 
             m_drawCallBatcher.Clear();
-#if DEBUG
             m_drawCallBatcher.Pos = new Vector3Int(Pos.X, OffsetY >> EngineSettings.ChunkConfig.LogSizeY, Pos.Z);
-#endif
             m_drawCallBatcher.Batch(SolidRenderBuffer);
             m_drawCallBatcher.FinalizeDrawCalls();
 

@@ -15,10 +15,8 @@ namespace Assets.Engine.Scripts.Rendering
         private readonly List<Renderer> m_drawCallRenderers;
 
         private bool m_visible;
-
-#if DEBUG
+        
         public Vector3Int Pos { get; set; }
-#endif
 
         public DrawCallBatcher()
         {
