@@ -45,11 +45,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
         #endregion Public variables
 
         #region Private variables
-
-#if ENABLE_BLUEPRINTS
+        
         //! A list of event requiring counter
-        private readonly int [] m_eventCnt = {0};
-#endif
+        private readonly int [] m_eventCnt = {0, 0};
 
         //! Sections queued for building
         // TODO: StackSize can be at most 31 with this approach (32 bits). Implement a generic solution for arbitrary StackSize values
@@ -169,12 +167,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public void Reset(bool canBeLoaded)
         {
             UnregisterFromNeighbors();
-
-#if ENABLE_BLUEPRINTS
+            
             // Reset chunk events
             for (int i = 0; i<m_eventCnt.Length; i++)
 				m_eventCnt[i] = 0;
-#endif
 
 			RequestedRemoval = false;
 			m_taskRunning = false;
@@ -499,23 +495,32 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		public override void OnNotified(ChunkState state)
 		{
+		    int eventIndex = 0;
+		    switch (state)
+		    {
 #if ENABLE_BLUEPRINTS
-            if (state==ChunkState.GenerateBlueprints)
-			{
-				int eventIndex = ((int)state-(int)ChunkState.GenerateBlueprints) >> 1;
-
-				// Check completition
-				int cnt = ++m_eventCnt[eventIndex];
-				if (cnt<SubscribersCurr)
-					return;
-
-				// Reset counter and process/queue event
-				m_eventCnt[eventIndex] = 0;
-			}
+                case ChunkState.GenerateBlueprints:
+                    eventIndex = 0;
+                break;
 #endif
+                case ChunkState.BuildVertices:
+		            eventIndex = 1;
+                break;
+		    }
+
+		    if (eventIndex>0)
+		    {
+                // Check completition
+                int cnt = ++m_eventCnt[eventIndex];
+                if (cnt < Subscribers.Length)
+                    return;
+
+                // Reset counter and process/queue event
+                m_eventCnt[eventIndex] = 0;
+            }
 
             // Queue operation
-            m_pendingTasks = m_pendingTasks.Set(state);            
+            m_pendingTasks = m_pendingTasks.Set(state);
 		}
 
 #endregion ChunkEvent implementation
@@ -537,29 +542,31 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
             if (neighbor == null)
                 return;
-
-#if ENABLE_BLUEPRINTS
+            
             bool neighborWasRegistered = neighbor.IsRegistered();
-#endif
 
             // Registration needs to be done both ways
             neighbor.Register(this, true);
             Register(neighbor, true);
 
-#if ENABLE_BLUEPRINTS
             // Neighbor just got registered
             if (neighbor.IsRegistered() && !neighborWasRegistered)
             {
+                ChunkState currState;
+                lock (m_lock)
+                {
+                    currState = m_completedTasks;
+                }
                 // We have to take a special here for there are events which are distributed to all neighbors once a specific task completes.
                 // For instance, once Generate is finished, GenerateBlueprints is sent to all neighbors. If a chunk gets unregistered
                 // and registered back again, it would no longer receive the event. We therefore need to notify it again
-                if (m_completedTasks.Check(ChunkState.Generate))
-                {
+#if ENABLE_BLUEPRINTS
+                if (currState.Check(ChunkState.Generate))
                     neighbor.OnNotified(ChunkState.GenerateBlueprints);
-                    Debug.Log("notifikujem");
-                }
-            }
 #endif
+                if (currState.Check(ChunkState.FinalizeData))
+                    neighbor.OnNotified(ChunkState.BuildVertices);
+            }
         }
 
 		private void UnregisterFromNeighbors()
@@ -606,27 +613,26 @@ namespace Assets.Engine.Scripts.Core.Chunks
             if (m_notifyState==ChunkState.Idle)
                 return;
 
-#if ENABLE_BLUEPRINTS
             // Notify neighbors about our state.
             // States after GenerateBlueprints are handled differently because they are related only
             // to the chunk itself rather than chunk's neighbors
             switch (m_notifyState)
             {
+#if ENABLE_BLUEPRINTS
                 case ChunkState.GenerateBlueprints:
+#endif
+                case ChunkState.BuildVertices:
                     NotifyAll(m_notifyState);
                     break;
                 default:
                     OnNotified(m_notifyState);
                     break;
             }
-#else
-             OnNotified(m_notifyState);
-#endif
 
             m_notifyState = ChunkState.Idle;
         }
 
-		public void ProcessPendingTasks(bool updateGeometry)
+        public void ProcessPendingTasks(bool possiblyVisible)
         {
             // We are not allowed to check anything as long as there is a task still running
             if (IsExecutingTask())
@@ -641,7 +647,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             ProcessNotifyState();
             if (m_pendingTasks.Check(ChunkState.Generate) && GenerateData())
                 return;
-            
+
 #if ENABLE_BLUEPRINTS
             ProcessNotifyState();
             if (m_pendingTasks.Check(ChunkState.GenerateBlueprints) && GenerateBlueprints())
@@ -663,7 +669,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 				RemoveChunk();
 			}
 			// Building vertices has the lowest priority for us. It's just the data we see.
-			else if (updateGeometry && m_pendingTasks.Check(ChunkState.BuildVertices))
+			else if (possiblyVisible && m_pendingTasks.Check(ChunkState.BuildVertices))
 			{				
 				GenerateVertices();
 			}
@@ -696,16 +702,16 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		}
 
 		private bool GenerateData()
-		{
+        {
             m_pendingTasks = m_pendingTasks.Reset(CurrStateGenerateData);
-            
-			if (m_completedTasks.Check(CurrStateGenerateData))
-			{
-                OnGenerateDataDone(this);
-				return false;
-			}
 
-			m_completedTasks = m_completedTasks.Reset(CurrStateGenerateData);
+            if (m_completedTasks.Check(CurrStateGenerateData))
+            {
+                OnGenerateDataDone(this);
+                return false;
+            }
+
+            m_completedTasks = m_completedTasks.Reset(CurrStateGenerateData);
 
             m_taskRunning = true;
 			WorkPoolManager.Add(new ThreadItem(
