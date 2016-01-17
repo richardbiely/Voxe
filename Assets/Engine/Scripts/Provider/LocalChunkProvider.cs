@@ -102,8 +102,8 @@ namespace Assets.Engine.Scripts.Provider
                             chunk.Sections[i].NonEmptyBlocks = br.ReadInt16();
 
                         // Read section offsets
-                        chunk.HighestSolidBlockOffset = br.ReadInt16();
-                        chunk.LowestEmptyBlockOffset = br.ReadInt16();
+                        chunk.MaxRenderY = br.ReadInt16();
+                        chunk.MinRenderY = br.ReadInt16();
 
                         // Read chunk data
                         int headerLen = (EngineSettings.ChunkConfig.StackSize << 1) + 4; // Size of previous data
@@ -154,8 +154,8 @@ namespace Assets.Engine.Scripts.Provider
                             bw.Write((short)chunk.Sections[i].NonEmptyBlocks);
 
                         // Store chunk offsets
-                        bw.Write((short)chunk.HighestSolidBlockOffset);
-                        bw.Write((short)chunk.LowestEmptyBlockOffset);
+                        bw.Write((short)chunk.MaxRenderY);
+                        bw.Write((short)chunk.MinRenderY);
 
                         // Store block data
                         bw.Write(buff);
@@ -209,7 +209,7 @@ namespace Assets.Engine.Scripts.Provider
         public Chunk RequestChunk(int cx, int cz)
         {
             Chunk chunk = ObjectPoolProvider.Chunks.Pop();
-            chunk.Pos = new Vector2Int(cx, cz);
+            chunk.Init(cx, cz);
             
             if (EngineSettings.WorldConfig.Streaming)
             {

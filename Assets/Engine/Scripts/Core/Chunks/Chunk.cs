@@ -30,17 +30,20 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public readonly MiniChunk[] Sections;
 
         // Bounding box of this chunk
-        public Bounds ChunkBounds;
+        public Bounds ChunkBounds { get; }
 
         // Chunk coordinates
-        public Vector2Int Pos;
+        public Vector2Int Pos { get; private set; }
 
-        // Helpers offsets
-        public int HighestSolidBlockOffset;
+        // Chunk bound in terms of geometry
+        public int MaxRenderY { get; set; }
+        public int MinRenderY { get; set; }
+        public int MaxRenderX { get; private set; }
+        public int MinRenderX { get; private set; }
+        public int MinRenderZ { get; private set; }
+        public int MaxRenderZ { get; private set; }
 
-        public int LowestEmptyBlockOffset;
-
-        public bool PossiblyVisible;
+        public bool PossiblyVisible { get; private set; }
 
         #endregion Public variables
 
@@ -127,6 +130,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
         #endregion Accessors
 
 
+        public void Init(int cx, int cz)
+        {
+            Pos = new Vector2Int(cx, cz);
+        }
+
 		public void RegisterNeighbors()
 		{
 			Chunk left = Map.Current.GetChunk(Pos.X - 1, Pos.Z);
@@ -189,8 +197,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
             
             PossiblyVisible = false;
 
-            LowestEmptyBlockOffset = EngineSettings.ChunkConfig.MaskYTotal;
-            HighestSolidBlockOffset = 0;
+            MinRenderY = EngineSettings.ChunkConfig.MaskYTotal;
+            MaxRenderY = 0;
             
             // Reset sections
             foreach (MiniChunk section in Sections)
@@ -357,13 +365,16 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public void CalculateProperties()
         {
             int nonEmptyBlocks = 0;
-			LowestEmptyBlockOffset = EngineSettings.ChunkConfig.MaskYTotal;
-			HighestSolidBlockOffset = 0;
 
-            int minX = EngineSettings.ChunkConfig.MaskX, maxX = 0;
+            MinRenderY = EngineSettings.ChunkConfig.MaskYTotal;
+			MaxRenderY = 0;
+            MinRenderX = EngineSettings.ChunkConfig.MaskX;
+            MaxRenderX = 0;
+            MinRenderZ = EngineSettings.ChunkConfig.MaskZ;
+            MaxRenderX = 0;
+
             int minY = EngineSettings.ChunkConfig.MaskYTotal, maxY = 0;
-            int minZ = EngineSettings.ChunkConfig.MaskZ, maxZ = 0;
-            
+
             for (int y = EngineSettings.ChunkConfig.MaskYTotal; y>=0; y--)
             {
                 int sectionIndex = y>>EngineSettings.ChunkConfig.LogSizeY;
@@ -379,25 +390,25 @@ namespace Assets.Engine.Scripts.Core.Chunks
                             ++nonEmptyBlocks;
 							++section.NonEmptyBlocks;
 
-                            if (x<minX) minX = x;
+                            if (x<MinRenderX) MinRenderX = x;
                             if (y<minY) minY = y;
-                            if (z<minZ) minZ = z;
+                            if (z< MinRenderZ) MinRenderZ = z;
 
-                            if (x>maxX) maxX = x;
+                            if (x> MaxRenderX) MaxRenderX = x;
                             if (y>maxY) maxY = y;
-                            if (z>maxZ) maxZ = z;
+                            if (z> MaxRenderZ) MaxRenderZ = z;
 
-                            if (y > HighestSolidBlockOffset)
-                                HighestSolidBlockOffset = y;
+                            if (y > MaxRenderY)
+                                MaxRenderY = y;
                         }
-                        else if (LowestEmptyBlockOffset > y)
-                            LowestEmptyBlockOffset = y;
+                        else if (MinRenderY > y)
+                            MinRenderY = y;
                     }
                 }
             }
 
-            LowestEmptyBlockOffset = Math.Max(--LowestEmptyBlockOffset, 0);
-            HighestSolidBlockOffset = Math.Min(HighestSolidBlockOffset, EngineSettings.ChunkConfig.MaskYTotal);
+            MinRenderY = Math.Max(MinRenderY-1, 0);
+            MaxRenderY = Math.Min(MaxRenderY+1, EngineSettings.ChunkConfig.MaskYTotal);
 
             if (nonEmptyBlocks > 0)
             {
@@ -405,8 +416,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 int posInWorldZ = Pos.Z<<EngineSettings.ChunkConfig.LogSizeZ;
 
                 // Build bounding mesh for each section
-                float width = (maxX - minX) + 1;
-                float depth = (maxZ - minZ) + 1;
+                float width = (MaxRenderX - MinRenderX) + 1;
+                float depth = (MaxRenderX - MinRenderZ) + 1;
                 int startY = minY;
                 for (int i = 0; i < Sections.Length; i++)
                 {
@@ -442,11 +453,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     MiniChunk section = Sections[i];
                     section.ResetBoundingMesh();
                 }
-
-                /*// Check for debugging purposes. It will be removed later.
-                // With current generators it is almost impossible for a chunk with purly empty blocks to be created
-                Debug.LogFormat("Only empty blocks in chunk [{0},{1}]. Min={2}, Max={3}",
-				    Pos.X, Pos.Z, LowestEmptyBlockOffset, HighestSolidBlockOffset);*/
             }
         }
 
@@ -993,17 +999,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
 				MiniChunk section = chunk.Sections[sectionIndex];
 				section.SolidRenderBuffer.Clear();
 
-				int offsetX = chunk.Pos.X*EngineSettings.ChunkConfig.SizeX;
-				int offsetZ = chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ;
+				int offsetX = chunk.Pos.X*EngineSettings.ChunkConfig.SizeX + chunk.MinRenderX;
+				int offsetZ = chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ + chunk.MinRenderZ;
 
 				int sectionMinY = Mathf.Max(minY, sectionIndex*EngineSettings.ChunkConfig.SizeY);
 				int sectionMaxY = Mathf.Min(maxY, sectionIndex*EngineSettings.ChunkConfig.SizeY + EngineSettings.ChunkConfig.MaskY);
                 
 				for (int wy=sectionMinY; wy<=sectionMaxY; wy++)
 				{
-					for (int z=0, wz=offsetZ; z<EngineSettings.ChunkConfig.SizeZ; z++, wz++)
+					for (int z=chunk.MinRenderZ, wz=offsetZ; z<=chunk.MaxRenderZ; z++, wz++)
 					{
-						for (int x=0, wx=offsetX; x<EngineSettings.ChunkConfig.SizeX; x++, wx++)
+						for (int x=chunk.MinRenderX, wx=offsetX; x<=chunk.MaxRenderX; x++, wx++)
 						{
 							BlockData block = chunk.Blocks[x, wy, z];
 							if (block.IsEmpty())
@@ -1073,8 +1079,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			
 			if (nonEmptyBlocks>0)
 			{
-				int lowest = Mathf.Max(LowestEmptyBlockOffset, 0);
-				int highest = Mathf.Min(HighestSolidBlockOffset, EngineSettings.ChunkConfig.SizeYTotal-1);
+				int lowest = Mathf.Max(MinRenderY, 0);
+				int highest = Mathf.Min(MaxRenderY, EngineSettings.ChunkConfig.SizeYTotal-1);
 				var workItem = new SGenerateVerticesWorkItem(this, m_setBlockSections, lowest, highest);
                 
 				m_setBlockSections = 0;
