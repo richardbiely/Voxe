@@ -190,7 +190,7 @@ Prefab:
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: Occlusion
       value: 
-      objectReference: {fileID: 1914990387}
+      objectReference: {fileID: 1914990388}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: a4db001565d61294aae75f13fc68c869, type: 2}
   m_IsPrefabParent: 0
@@ -357,6 +357,7 @@ GameObject:
   - 4: {fileID: 1914990389}
   - 114: {fileID: 1914990388}
   - 114: {fileID: 1914990387}
+  - 131: {fileID: 1914990390}
   m_Layer: 0
   m_Name: OcclusionCulling
   m_TagString: Untagged
@@ -402,6 +403,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 4
+--- !u!131 &1914990390
+GUITexture:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1914990386}
+  m_Enabled: 1
+  m_Texture: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_PixelInset:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 128
+    height: 128
+  m_LeftBorder: 0
+  m_RightBorder: 0
+  m_TopBorder: 0
+  m_BottomBorder: 0
 --- !u!114 &2034794714 stripped
 MonoBehaviour:
   m_PrefabParentObject: {fileID: 11400010, guid: 276ec6ff205a51947bd7ffda6065715a,

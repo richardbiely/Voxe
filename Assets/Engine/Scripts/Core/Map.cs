@@ -167,7 +167,7 @@ namespace Assets.Engine.Scripts.Core
         private bool IsChunkInViewFrustum(Chunk chunk)
         {
             // Check if the chunk lies within camera planes
-            return chunk.CheckFrustum(m_cameraPlanes);
+            return true;//chunk.CheckFrustum(m_cameraPlanes);
         }
 
         private bool IsWithinVisibilityRange(Chunk chunk)

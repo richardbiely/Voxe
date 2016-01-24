@@ -11,6 +11,10 @@ namespace Assets.Engine.Scripts.Rendering
         public int Width;
         public int Height;
 
+#if DEBUG
+        private Texture2D m_texture;
+#endif
+
         private int m_widthMin1;
         private int m_heightMin1;
         private float[] m_depthBuffer;
@@ -34,6 +38,10 @@ namespace Assets.Engine.Scripts.Rendering
 
             m_entities = new List<IRasterizationEntity>();
             m_currEntiesCnt = 0;
+
+#if DEBUG
+            m_texture = new Texture2D(128, 128, TextureFormat.ARGB32, false);
+#endif
         }
         
         public void Add(IRasterizationEntity entity)
@@ -59,6 +67,10 @@ namespace Assets.Engine.Scripts.Rendering
             m_xx = (1f/Screen.width)*Width;
             m_yy = (1f/Screen.height)*Height;
 
+            // Clean up old data
+            Array.Clear(m_depthBuffer, 0, m_depthBuffer.Length);
+
+            // Fill buffer with new data
             for (int i = 0; i<m_currEntiesCnt; i++)
             {
                 List<Vector3> vertices = m_entities[i].BBoxVertices;
@@ -95,7 +107,29 @@ namespace Assets.Engine.Scripts.Rendering
             m_currEntiesCnt = 0;
 
             Profiler.EndSample();
+
+            #if DEBUG
+            for (int j = 0; j<Height; j++)
+            {
+                for (int i = 0; i<Width; i++)
+                {
+                    float depth = GetDepth(i, j) / 256;
+                    m_texture.SetPixel(i, j, new Color(depth, depth, depth));
+                }
+            }
+            m_texture.Apply();
+            #endif
         }
+
+#if DEBUG
+        void OnGUI()
+        {
+            if (m_texture!=null)
+            {
+                GUI.DrawTexture(new Rect(0, 0, Width, Height), m_texture, ScaleMode.ScaleToFit, false, 0);
+            }
+        }
+#endif
 
         public float GetDepth(int x, int y)
         {
