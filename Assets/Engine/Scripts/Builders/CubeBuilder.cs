@@ -33,19 +33,10 @@ namespace Assets.Engine.Scripts.Builders
         }
 
         #endregion Constructor
-
-        #region Private methods
-
-        public Rect GetTexture(int face)
-        {
-            return m_faceTextures[face];
-        }
-
-        #endregion Private methods
-
+        
         #region Public Statics
 
-        private static readonly CubeFace[] SFaces =
+        public static readonly CubeFace[] SFaces =
         {
             CubeFace.Front,
             CubeFace.Back,
@@ -55,7 +46,7 @@ namespace Assets.Engine.Scripts.Builders
             CubeFace.Bottom
         };
 
-        private static readonly Vector3Int[] SDirections =
+        public static readonly Vector3Int[] SDirections =
         {
             Vector3Int.Back,
             Vector3Int.Forward,
@@ -65,118 +56,43 @@ namespace Assets.Engine.Scripts.Builders
             Vector3Int.Down
         };
 
-        private static readonly Vector3[][] SVertices =
+        public static readonly Vector3[][] SVertices =
         {
-            // Level of detail - normal
             //Front
             new[]
             {
-                new Vector3(1.0f, 0.0f, 0.0f), new Vector3(1.0f, 1.0f, 0.0f), new Vector3(0.0f, 1.0f, 0.0f),
-                new Vector3(0.0f, 0.0f, 0.0f)
+                new Vector3(1.0f, 0.0f, 0.0f), new Vector3(1.0f, 1.0f, 0.0f),
+                new Vector3(0.0f, 1.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f)
             },
             //Back
             new[]
             {
-                new Vector3(0.0f, 0.0f, 1.0f), new Vector3(0.0f, 1.0f, 1.0f), new Vector3(1.0f, 1.0f, 1.0f),
-                new Vector3(1.0f, 0.0f, 1.0f)
+                new Vector3(0.0f, 0.0f, 1.0f), new Vector3(0.0f, 1.0f, 1.0f),
+                new Vector3(1.0f, 1.0f, 1.0f), new Vector3(1.0f, 0.0f, 1.0f)
             },
             //Right
             new[]
             {
-                new Vector3(1.0f, 0.0f, 1.0f), new Vector3(1.0f, 1.0f, 1.0f), new Vector3(1.0f, 1.0f, 0.0f),
-                new Vector3(1.0f, 0.0f, 0.0f)
+                new Vector3(1.0f, 0.0f, 1.0f), new Vector3(1.0f, 1.0f, 1.0f),
+                new Vector3(1.0f, 1.0f, 0.0f), new Vector3(1.0f, 0.0f, 0.0f)
             },
             //Left
             new[]
             {
-                new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 1.0f, 0.0f), new Vector3(0.0f, 1.0f, 1.0f),
-                new Vector3(0.0f, 0.0f, 1.0f)
+                new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 1.0f, 0.0f),
+                new Vector3(0.0f, 1.0f, 1.0f), new Vector3(0.0f, 0.0f, 1.0f)
             },
             //Top
             new[]
             {
-                new Vector3(1.0f, 1.0f, 0.0f), new Vector3(1.0f, 1.0f, 1.0f), new Vector3(0.0f, 1.0f, 1.0f),
-                new Vector3(0.0f, 1.0f, 0.0f)
+                new Vector3(1.0f, 1.0f, 0.0f), new Vector3(1.0f, 1.0f, 1.0f),
+                new Vector3(0.0f, 1.0f, 1.0f), new Vector3(0.0f, 1.0f, 0.0f)
             },
             //Bottom
             new[]
             {
-                new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 1.0f), new Vector3(1.0f, 0.0f, 1.0f),
-                new Vector3(1.0f, 0.0f, 0.0f)
-            },
-            // Level of detail - double size
-            //Front
-            new[]
-            {
-                new Vector3(2.0f, 0.0f, 0.0f), new Vector3(2.0f, 2.0f, 0.0f), new Vector3(0.0f, 2.0f, 0.0f),
-                new Vector3(0.0f, 0.0f, 0.0f)
-            },
-            //Back
-            new[]
-            {
-                new Vector3(0.0f, 0.0f, 2.0f), new Vector3(0.0f, 2.0f, 2.0f), new Vector3(2.0f, 2.0f, 2.0f),
-                new Vector3(2.0f, 0.0f, 2.0f)
-            },
-            //Right
-            new[]
-            {
-                new Vector3(2.0f, 0.0f, 2.0f), new Vector3(2.0f, 2.0f, 2.0f), new Vector3(2.0f, 2.0f, 0.0f),
-                new Vector3(2.0f, 0.0f, 0.0f)
-            },
-            //Left
-            new[]
-            {
-                new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 2.0f, 0.0f), new Vector3(0.0f, 2.0f, 2.0f),
-                new Vector3(0.0f, 0.0f, 2.0f)
-            },
-            //Top
-            new[]
-            {
-                new Vector3(2.0f, 2.0f, 0.0f), new Vector3(2.0f, 2.0f, 2.0f), new Vector3(0.0f, 2.0f, 2.0f),
-                new Vector3(0.0f, 2.0f, 0.0f)
-            },
-            //Bottom
-            new[]
-            {
-                new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 2.0f), new Vector3(2.0f, 0.0f, 2.0f),
-                new Vector3(2.0f, 0.0f, 0.0f)
-            },
-            // Level of detail - quadruple size
-            //Front
-            new[]
-            {
-                new Vector3(4.0f, 0.0f, 0.0f), new Vector3(4.0f, 4.0f, 0.0f), new Vector3(0.0f, 4.0f, 0.0f),
-                new Vector3(0.0f, 0.0f, 0.0f)
-            },
-            //Back
-            new[]
-            {
-                new Vector3(0.0f, 0.0f, 4.0f), new Vector3(0.0f, 4.0f, 4.0f), new Vector3(4.0f, 4.0f, 4.0f),
-                new Vector3(4.0f, 0.0f, 4.0f)
-            },
-            //Right
-            new[]
-            {
-                new Vector3(4.0f, 0.0f, 4.0f), new Vector3(4.0f, 4.0f, 4.0f), new Vector3(4.0f, 4.0f, 0.0f),
-                new Vector3(4.0f, 0.0f, 0.0f)
-            },
-            //Left
-            new[]
-            {
-                new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 4.0f, 0.0f), new Vector3(0.0f, 4.0f, 4.0f),
-                new Vector3(0.0f, 0.0f, 4.0f)
-            },
-            //Top
-            new[]
-            {
-                new Vector3(4.0f, 4.0f, 0.0f), new Vector3(4.0f, 4.0f, 4.0f), new Vector3(0.0f, 4.0f, 4.0f),
-                new Vector3(0.0f, 4.0f, 0.0f)
-            },
-            //Bottom
-            new[]
-            {
-                new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 4.0f), new Vector3(4.0f, 0.0f, 4.0f),
-                new Vector3(4.0f, 0.0f, 0.0f)
+                new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 1.0f),
+                new Vector3(1.0f, 0.0f, 1.0f), new Vector3(1.0f, 0.0f, 0.0f)
             }
         };
 
@@ -211,6 +127,11 @@ namespace Assets.Engine.Scripts.Builders
         #endregion Public Statics
 
         #region IBlockBuilder implementation
+
+        public Rect GetTexture(int face)
+        {
+            return m_faceTextures[face];
+        }
 
         public void Build(Map map, RenderBuffer targetBuffer, ref BlockData block, int face, bool backFace,
             ref Vector3[] vecs, ref Vector3Int worldPos)

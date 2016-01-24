@@ -30,7 +30,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public readonly MiniChunk[] Sections;
 
         // Bounding box of this chunk
-        public Bounds ChunkBounds { get; }
+        public Bounds ChunkBounds { get; private set; }
 
         // Chunk coordinates
         public Vector2Int Pos { get; private set; }

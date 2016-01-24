@@ -4,8 +4,8 @@ namespace Assets.Engine.Scripts.Utils
     {
         Front,
         Back,
-        Left,
         Right,
+        Left,
         Top,
         Bottom
     }
