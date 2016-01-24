@@ -29,13 +29,13 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         public readonly MiniChunk[] Sections;
 
-        // Bounding box of this chunk
-        public Bounds ChunkBounds { get; private set; }
+        //! Bounding box in world coordinates
+        public Bounds WorldBounds { get; private set; }
 
         // Chunk coordinates
         public Vector2Int Pos { get; private set; }
 
-        // Chunk bound in terms of geometry
+        //! Chunk bound in terms of geometry
         public int MaxRenderY { get; set; }
         public int MinRenderY { get; set; }
         public int MaxRenderX { get; private set; }
@@ -86,10 +86,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             Sections = new MiniChunk[EngineSettings.ChunkConfig.StackSize];
             for (int i = 0; i<Sections.Length; i++)
                 Sections[i] = new MiniChunk(this, i);
-
-            ChunkBounds = new Bounds();
-            ChunkBounds.SetMinMax(Vector3.zero, new Vector3(EngineSettings.ChunkConfig.SizeX, EngineSettings.ChunkConfig.SizeYTotal, EngineSettings.ChunkConfig.SizeZ));
-
+            
             Reset(false);
         }
 
@@ -133,6 +130,19 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public void Init(int cx, int cz)
         {
             Pos = new Vector2Int(cx, cz);
+
+            WorldBounds = new Bounds(
+                new Vector3(EngineSettings.ChunkConfig.SizeX*(cx+0.5f), EngineSettings.ChunkConfig.SizeYTotal*0.5f, EngineSettings.ChunkConfig.SizeZ*(cz+0.5f)),
+                new Vector3(EngineSettings.ChunkConfig.SizeX, EngineSettings.ChunkConfig.SizeYTotal, EngineSettings.ChunkConfig.SizeZ)
+                );
+
+            foreach (MiniChunk section in Sections)
+            {
+                section.WorldBounds = new Bounds(
+                    new Vector3(EngineSettings.ChunkConfig.SizeX*(cx+0.5f), section.OffsetY + EngineSettings.ChunkConfig.SizeY*0.5f, EngineSettings.ChunkConfig.SizeZ*(cz+0.5f)),
+                    new Vector3(EngineSettings.ChunkConfig.SizeX, EngineSettings.ChunkConfig.SizeY, EngineSettings.ChunkConfig.SizeZ)
+                    );
+            }
         }
 
 		public void RegisterNeighbors()
@@ -272,10 +282,13 @@ namespace Assets.Engine.Scripts.Core.Chunks
         /// </summary>
         public bool CheckFrustum(Plane[] frustum)
         {
-            Bounds bounds = ChunkBounds;
-            bounds.center += new Vector3(Pos.X*EngineSettings.ChunkConfig.SizeX, 0f, Pos.Z*EngineSettings.ChunkConfig.SizeZ);
-
-            return GeometryUtility.TestPlanesAABB(frustum, bounds);
+            foreach (MiniChunk section in Sections)
+            {
+                if (GeometryUtility.TestPlanesAABB(frustum, section.WorldBounds))
+                    return true;
+            }
+            
+            return false;
         }
 
         /// <summary>
@@ -283,10 +296,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         /// </summary>
         public bool Intersects(Bounds aabb)
         {
-            Bounds bounds = ChunkBounds;
-            bounds.center += new Vector3(Pos.X*EngineSettings.ChunkConfig.SizeX, 0f, Pos.Z*EngineSettings.ChunkConfig.SizeZ);
-
-            return bounds.Intersects(aabb) && CheckBlocksAABB(aabb);
+            return WorldBounds.Intersects(aabb) && CheckBlocksAABB(aabb);
         }
 
         // Compares chunk's blocks against a given AABB

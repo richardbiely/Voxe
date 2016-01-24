@@ -334,7 +334,7 @@ namespace Assets.Engine.Scripts.Core
 
             // Take the coordinates and sort them according to their distance from the center
             m_chunksToLoadByPos = chunksToLoad
-                //.Where(pos => Mathf.Abs(pos.X) + Mathf.Abs(pos.Z) < EngineSettings.WorldConfig.CachedRange*1.41f)
+                .Where(pos => Mathf.Abs(pos.X) + Mathf.Abs(pos.Z) < EngineSettings.WorldConfig.CachedRange*1.41f)
                 .OrderBy(pos => Mathf.Abs(pos.X) + Mathf.Abs(pos.Z)) // Vectors with smallest magnitude first
                 .ThenBy(pos => Mathf.Abs(pos.X)) // Beware cases like (-4,0) vs. (2,2). The second one is closer to the center
                 .ThenBy(pos => Mathf.Abs(pos.Z))
@@ -595,16 +595,21 @@ namespace Assets.Engine.Scripts.Core
                     if (chunk==null)
                         continue;
 
-                    if (!chunk.IsFinalized())
-                        continue;
-
-                    #if DEBUG
-                    foreach (MiniChunk section in chunk.Sections)
+                    /*foreach (MiniChunk section in chunk.Sections)
                     {
-                        if (section.BBoxVertices.Count<=0)
-                            continue;
-
                         Gizmos.DrawWireCube(section.Bounds.center, section.Bounds.size);
+                    }*/
+                    
+                    #if DEBUG
+                    if (chunk.IsFinalized())
+                    {
+                        foreach (MiniChunk section in chunk.Sections)
+                        {
+                            if (section.BBoxVertices.Count<=0)
+                                continue;
+
+                            Gizmos.DrawWireCube(section.WorldBounds.center, section.WorldBounds.size);
+                        }
                     }
                     #endif
 

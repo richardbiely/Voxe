@@ -33,6 +33,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         public int OffsetY { get; private set; }
 
+        //! Bounding box in world coordinates
+        public Bounds WorldBounds { get; set; }
+
         #endregion Public Properties
 
         #region Private variabls
@@ -99,7 +102,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         public void BuildBoundingMesh(ref Bounds bounds)
         {
-            Bounds = bounds;
+            GeometryBounds = bounds;
 
             // Build a bounding box for the mini chunk
             CubeBuilderSimple.Build(BBoxVertices, ref bounds);
@@ -113,7 +116,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         #region IOcclusionEntity
         
         //! Boundaries of the mini chunk
-        public Bounds Bounds { get; set; }
+        public Bounds GeometryBounds { get; set; }
         //! Make the occluder visible/invisible
         public bool Visible
         {
