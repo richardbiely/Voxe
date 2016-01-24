@@ -126,7 +126,7 @@ namespace Assets.Engine.Scripts.Rendering
         {
             if (m_texture!=null)
             {
-                GUI.DrawTexture(new Rect(0, 0, Width, Height), m_texture, ScaleMode.ScaleToFit, false, 0);
+                GUI.DrawTexture(new Rect(0, Screen.height-256, 256, 256), m_texture, ScaleMode.ScaleToFit, false, 0);
             }
         }
 #endif
