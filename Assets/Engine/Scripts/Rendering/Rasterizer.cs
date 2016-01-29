@@ -18,10 +18,7 @@ namespace Assets.Engine.Scripts.Rendering
         private int m_widthMin1;
         private int m_heightMin1;
         private float[] m_depthBuffer;
-
-        private float m_xx;
-        private float m_yy;
-
+		
         private List<IRasterizationEntity> m_entities;
         private int m_currEntiesCnt;
 
@@ -63,10 +60,7 @@ namespace Assets.Engine.Scripts.Rendering
         public void PerformRaterization()
         {
             Profiler.BeginSample("Rasterization");
-
-            m_xx = (1f/Screen.width)*Width;
-            m_yy = (1f/Screen.height)*Height;
-
+			
             // Clean up old data
             Array.Clear(m_depthBuffer, 0, m_depthBuffer.Length);
 
@@ -83,9 +77,9 @@ namespace Assets.Engine.Scripts.Rendering
                     for (int k=j; k<j+4; k++)
                     {
                         // Transform vertices to screen space
-                        Vector3 screenPos = RasterizerCamera.WorldToScreenPoint(vertices[k]);
+                        Vector3 screenPos = RasterizerCamera.WorldToViewportPoint(vertices[k]);
                         // Transform vertices to buffer space
-                        verticesTransformed[k] = new Vector3(screenPos.x * m_xx, screenPos.y * m_yy, screenPos.z);
+                        verticesTransformed[k] = new Vector3(screenPos.x * Width, screenPos.y * Height, screenPos.z);
                     }
 
                     Vector3[] verts =
@@ -257,6 +251,10 @@ namespace Assets.Engine.Scripts.Rendering
             {
                 float gradient = ((x-sx)*exsx).Clamp(0f, 1f);
                 float z = Helpers.Interpolate(z1, z2, gradient);
+
+				// Skip points behind camera
+				if (z < 0.0f)
+					continue;
                 
                 int index = Helpers.GetIndex1DFrom2D(x, y, Width);
                 PutPixel(index, z);

@@ -55,21 +55,33 @@ namespace Assets.Engine.Scripts.Rendering
                 }
 
                 float sectionDepth = float.MaxValue;
+				float sectionDepthMax = float.MinValue;
                 int pos = -1;
 
                 // Iterate over vertices as quads
                 for (int j = 0; j < vertices.Count; j += 4)
                 {
-                    // Find the vertex closest to the camera
                     for (int v = j; v < j+4; v++)
                     {
+						// Find the vertex closest to the camera
                         if (vertices[v].z < sectionDepth)
                         {
                             sectionDepth = vertices[v].z;
                             pos = v;
                         }
+
+						// Find the vertex furthest from the camera
+						if (vertices[v].z > sectionDepthMax)
+							sectionDepthMax = vertices[v].z;
                     }
                 }
+
+				// If the furthest point of an entity lies behind camera the entity is invisible
+				if (sectionDepthMax < 0.0f)
+				{
+					entity.Visible = false;
+					continue;
+				}
 
                 // Vertex converted to screen space
                 Vector3 closestVert = vertices[pos];
@@ -81,7 +93,7 @@ namespace Assets.Engine.Scripts.Rendering
                 x = Mathf.Max(0, Mathf.Min(x, Rasterizer.Width - 1));
                 y = Mathf.Max(0, Mathf.Min(y, Rasterizer.Height - 1));
 
-                // Section hidden behind raster is hidden
+                // An entity covered by raster is considered hidden
                 float rasterDepth = Rasterizer.GetDepth(x, y);
                 entity.Visible = !(rasterDepth < sectionDepth);
             }
