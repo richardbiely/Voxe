@@ -42,7 +42,7 @@ namespace Assets.Engine.Scripts.Builders
                 new Vector3(bounds.max.x, bounds.min.y, bounds.min.z)
             };
 
-            for (int i = 0; i < 6; i+=4)
+            for (int i = 0; i < vertices.Length; i+=4)
             {
                 targetBuffer.Add(vertices[i]);
                 targetBuffer.Add(vertices[i+1]);
