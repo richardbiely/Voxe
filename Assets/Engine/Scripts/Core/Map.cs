@@ -18,8 +18,7 @@ namespace Assets.Engine.Scripts.Core
         #region Static Fields
 
         //! The local instance of the Map.
-        public static Map Current;
-        public OcclusionCuller Occlusion;
+        public static Map Current;        
 
         #endregion Static Fields
 
@@ -82,6 +81,11 @@ namespace Assets.Engine.Scripts.Core
 
         // Position of viewer in chunk coordinates
         public Vector2Int ViewerChunkPos;
+
+        public OcclusionCuller Occlusion;
+
+        public bool GizmoGeometryBounds;
+        public bool GizmoMapBounds;
 
         #endregion Public Fields
 
@@ -594,80 +598,81 @@ namespace Assets.Engine.Scripts.Core
                 {
                     if (chunk==null)
                         continue;
-
-                    /*foreach (MiniChunk section in chunk.Sections)
-                    {
-                        Gizmos.DrawWireCube(section.Bounds.center, section.Bounds.size);
-                    }*/
                     
-                    #if DEBUG
-                    if (chunk.IsFinalized())
+                    if (GizmoGeometryBounds && chunk.IsFinalized())
                     {
+                        Gizmos.color = Color.white;
                         foreach (MiniChunk section in chunk.Sections)
                         {
                             if (section.BBoxVertices.Count<=0)
                                 continue;
 
-                            Gizmos.DrawWireCube(section.WorldBounds.center, section.WorldBounds.size);
+                            Gizmos.DrawWireCube(section.GeometryBounds.center, section.GeometryBounds.size);
                         }
                     }
-                    #endif
 
-                    if (IsWithinVisibilityRange(chunk))
+                    if (GizmoMapBounds)
                     {
-                        Gizmos.color = Color.green;
-                        Gizmos.DrawWireCube(
-                            new Vector3(
-                                chunk.Pos.X*EngineSettings.ChunkConfig.SizeX+EngineSettings.ChunkConfig.SizeX/2,
-                                EngineSettings.ChunkConfig.SizeY+0.15f,
-                                chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ+EngineSettings.ChunkConfig.SizeZ/2),
-                            new Vector3(EngineSettings.ChunkConfig.SizeX-0.5f, 0,
-                                        EngineSettings.ChunkConfig.SizeZ-0.5f)
-                            );
-                    }
-                    else if(IsWithinCachedRange(chunk))
-                    {
-                        Gizmos.color = Color.yellow;
-                        Gizmos.DrawWireCube(
-                            new Vector3(
-                                chunk.Pos.X*EngineSettings.ChunkConfig.SizeX+EngineSettings.ChunkConfig.SizeX/2,
-                                EngineSettings.ChunkConfig.SizeY+0.15f,
-                                chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ+EngineSettings.ChunkConfig.SizeZ/2),
-                            new Vector3(EngineSettings.ChunkConfig.SizeX-0.5f, 0,
-                                        EngineSettings.ChunkConfig.SizeZ-0.5f)
-                            );
-                    }
-                    else
-                    {
-                        Gizmos.color = Color.red;
-                        Gizmos.DrawWireCube(
-                            new Vector3(chunk.Pos.X * EngineSettings.ChunkConfig.SizeX + EngineSettings.ChunkConfig.SizeX / 2,
-                                        EngineSettings.ChunkConfig.SizeY + 0.1f,
-                                        chunk.Pos.Z * EngineSettings.ChunkConfig.SizeZ + EngineSettings.ChunkConfig.SizeZ / 2),
-                            new Vector3(EngineSettings.ChunkConfig.SizeX-0.5f, 0,
-                                        EngineSettings.ChunkConfig.SizeZ-0.5f)
-                            );
+                        if (IsWithinVisibilityRange(chunk))
+                        {
+                            Gizmos.color = Color.green;
+                            Gizmos.DrawWireCube(
+                                new Vector3(
+                                    chunk.Pos.X*EngineSettings.ChunkConfig.SizeX+EngineSettings.ChunkConfig.SizeX/2,
+                                    EngineSettings.ChunkConfig.SizeY+0.15f,
+                                    chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ+EngineSettings.ChunkConfig.SizeZ/2),
+                                new Vector3(EngineSettings.ChunkConfig.SizeX-0.5f, 0,
+                                            EngineSettings.ChunkConfig.SizeZ-0.5f)
+                                );
+                        }
+                        else if (IsWithinCachedRange(chunk))
+                        {
+                            Gizmos.color = Color.yellow;
+                            Gizmos.DrawWireCube(
+                                new Vector3(
+                                    chunk.Pos.X*EngineSettings.ChunkConfig.SizeX+EngineSettings.ChunkConfig.SizeX/2,
+                                    EngineSettings.ChunkConfig.SizeY+0.15f,
+                                    chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ+EngineSettings.ChunkConfig.SizeZ/2),
+                                new Vector3(EngineSettings.ChunkConfig.SizeX-0.5f, 0,
+                                            EngineSettings.ChunkConfig.SizeZ-0.5f)
+                                );
+                        }
+                        else
+                        {
+                            Gizmos.color = Color.red;
+                            Gizmos.DrawWireCube(
+                                new Vector3(
+                                    chunk.Pos.X*EngineSettings.ChunkConfig.SizeX+EngineSettings.ChunkConfig.SizeX/2,
+                                    EngineSettings.ChunkConfig.SizeY+0.1f,
+                                    chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ+EngineSettings.ChunkConfig.SizeZ/2),
+                                new Vector3(EngineSettings.ChunkConfig.SizeX-0.5f, 0,
+                                            EngineSettings.ChunkConfig.SizeZ-0.5f)
+                                );
+                        }
                     }
                 }
             }
 
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireCube(
-                new Vector3(ViewerChunkPos.X*EngineSettings.ChunkConfig.SizeX+EngineSettings.ChunkConfig.SizeX/2,
-                            EngineSettings.ChunkConfig.SizeY+0.15f,
-                            ViewerChunkPos.Z*EngineSettings.ChunkConfig.SizeZ+EngineSettings.ChunkConfig.SizeZ/2),
-                new Vector3((EngineSettings.WorldConfig.VisibleRange*2+1)*EngineSettings.ChunkConfig.SizeX, 0,
-                            (EngineSettings.WorldConfig.VisibleRange*2+1)*EngineSettings.ChunkConfig.SizeZ)
-                );
+            if (GizmoMapBounds)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawWireCube(
+                    new Vector3(ViewerChunkPos.X*EngineSettings.ChunkConfig.SizeX+EngineSettings.ChunkConfig.SizeX/2,
+                                EngineSettings.ChunkConfig.SizeY+0.15f,
+                                ViewerChunkPos.Z*EngineSettings.ChunkConfig.SizeZ+EngineSettings.ChunkConfig.SizeZ/2),
+                    new Vector3((EngineSettings.WorldConfig.VisibleRange*2+1)*EngineSettings.ChunkConfig.SizeX, 0,
+                                (EngineSettings.WorldConfig.VisibleRange*2+1)*EngineSettings.ChunkConfig.SizeZ)
+                    );
 
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireCube(
-                new Vector3(ViewerChunkPos.X*EngineSettings.ChunkConfig.SizeX+EngineSettings.ChunkConfig.SizeX/2,
-                            EngineSettings.ChunkConfig.SizeY+0.15f,
-                            ViewerChunkPos.Z*EngineSettings.ChunkConfig.SizeZ+EngineSettings.ChunkConfig.SizeZ/2),
-                new Vector3((EngineSettings.WorldConfig.CachedRange*2+1)*EngineSettings.ChunkConfig.SizeX, 0,
-                            (EngineSettings.WorldConfig.CachedRange*2+1)*EngineSettings.ChunkConfig.SizeZ)
-                );
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireCube(
+                    new Vector3(ViewerChunkPos.X*EngineSettings.ChunkConfig.SizeX+EngineSettings.ChunkConfig.SizeX/2,
+                                EngineSettings.ChunkConfig.SizeY+0.15f,
+                                ViewerChunkPos.Z*EngineSettings.ChunkConfig.SizeZ+EngineSettings.ChunkConfig.SizeZ/2),
+                    new Vector3((EngineSettings.WorldConfig.CachedRange*2+1)*EngineSettings.ChunkConfig.SizeX, 0,
+                                (EngineSettings.WorldConfig.CachedRange*2+1)*EngineSettings.ChunkConfig.SizeZ)
+                    );
+            }
         }
     }
 }
