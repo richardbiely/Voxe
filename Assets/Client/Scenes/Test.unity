@@ -376,8 +376,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   RasterizerCamera: {fileID: 829896160}
-  Width: 128
-  Height: 128
+  Width: 64
+  Height: 64
+  ShowDepthBuffer: 1
 --- !u!114 &1914990388
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -12,6 +12,7 @@ namespace Assets.Engine.Scripts.Rendering
         public int Height;
 
 #if DEBUG
+        public bool ShowDepthBuffer;
         private Texture2D m_texture;
 #endif
 
@@ -35,10 +36,6 @@ namespace Assets.Engine.Scripts.Rendering
 
             m_entities = new List<IRasterizationEntity>();
             m_currEntiesCnt = 0;
-
-#if DEBUG
-            m_texture = new Texture2D(128, 128, TextureFormat.ARGB32, false);
-#endif
         }
         
         public void Add(IRasterizationEntity entity)
@@ -103,24 +100,30 @@ namespace Assets.Engine.Scripts.Rendering
             Profiler.EndSample();
 
             #if DEBUG
-            for (int j = 0; j<Height; j++)
+            if (ShowDepthBuffer)
             {
-                for (int i = 0; i<Width; i++)
+                if (m_texture==null)
+                    m_texture = new Texture2D(Width, Height, TextureFormat.ARGB32, false);
+
+                for (int j = 0; j<Height; j++)
                 {
-                    float depth = GetDepth(i, j) / 256;
-                    m_texture.SetPixel(i, j, new Color(depth, depth, depth));
+                    for (int i = 0; i<Width; i++)
+                    {
+                        float depth = GetDepth(i, j)/256;
+                        m_texture.SetPixel(i, j, new Color(depth, depth, depth));
+                    }
                 }
+                m_texture.Apply();
             }
-            m_texture.Apply();
-            #endif
+#endif
         }
 
 #if DEBUG
         void OnGUI()
         {
-            if (m_texture!=null)
+            if (ShowDepthBuffer && m_texture != null)
             {
-                GUI.DrawTexture(new Rect(0, Screen.height-256, 256, 256), m_texture, ScaleMode.ScaleToFit, false, 0);
+                GUI.DrawTexture(new Rect(0, Screen.height-256, 256, 256), m_texture, ScaleMode.StretchToFill, false, 0);
             }
         }
 #endif
