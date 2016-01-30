@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Text;
-using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Common.IO;
 using Assets.Engine.Scripts.Common.IO.RLE;
 using Assets.Engine.Scripts.Core.Chunks;

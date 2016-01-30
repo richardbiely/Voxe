@@ -83,12 +83,7 @@ namespace Assets.Engine.Scripts.Provider
             public string Name;
             public GameObject Prefab;
 
-            public int PreloadCount =
-#if UNITY_STANDALONE_WIN
-                2000;
-#else //if UNITY_WP8
-					200;
-#endif
+            public int PreloadCount = 2000;
 
             [HideInInspector] public int PolledCount;
             [HideInInspector] public GameObject[] Cache;

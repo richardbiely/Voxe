@@ -9,7 +9,6 @@ using Assets.Engine.Scripts.Core.Threading;
 using Assets.Engine.Scripts.Physics;
 using Assets.Engine.Scripts.Provider;
 using Assets.Engine.Scripts.Utils;
-using Mono.Simd;
 using UnityEngine;
 using Assert = UnityEngine.Assertions.Assert;
 using System.Collections.Generic;
@@ -163,13 +162,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		}
 
         #region Public Methods
-
-#if UNITY_STANDALONE_WIN
-        public static readonly Vector4i Vec5 = new Vector4i(5, 5, 5, 0);
-        public static readonly Vector4i VecSize = new Vector4i(EngineSettings.ChunkConfig.SizeX, EngineSettings.ChunkConfig.SizeY, EngineSettings.ChunkConfig.SizeZ, 0);
-        public static readonly Vector4i VecSize1 = new Vector4i(EngineSettings.ChunkConfig.MaskX, EngineSettings.ChunkConfig.SizeYTotal-1, EngineSettings.ChunkConfig.MaskZ, 0);
-#endif
-
+        
         public void UpdateChunk()
         {
 			ProcessSetBlockQueue();
@@ -302,7 +295,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
         // Compares chunk's blocks against a given AABB
         public bool CheckBlocksAABB(Bounds bounds)
         {
-            // Non-SIMD
             Vector3Int pom = new Vector3Int(Pos.X*EngineSettings.ChunkConfig.SizeX, 0, Pos.Z*EngineSettings.ChunkConfig.SizeZ);
 
             int minX = Mathf.Clamp(Mathf.FloorToInt(bounds.min.x) - pom.X - 5, 0, EngineSettings.ChunkConfig.MaskX);
@@ -315,23 +307,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
             int maxZ = Mathf.Clamp((int)(bounds.max.z) - pom.Z + 5, 0, EngineSettings.ChunkConfig.MaskZ);
             Vector3Int bMax = new Vector3Int(maxX, maxY, maxZ);
 
-            /*
-            // SIMD
-            Vector4f bMinf = new Vector4f(bounds.min.x, bounds.min.y, bounds.min.z, 0f);
-            Vector4i bMin = bMinf.ConvertToIntTruncated();
-            Vector4f bMaxf = new Vector4f(bounds.max.x, bounds.max.y, bounds.max.z, 0f);
-            Vector4i bMax = bMaxf.ConvertToInt();
-
-            Vector4i pom = new Vector4i(Pos.X, 0, Pos.Z, 0) * VecSize;
-            bMin -= pom;
-            bMax -= pom;
-
-            bMin -= Vec5;
-            bMax += Vec5;
-
-            bMin = bMin.Max(Vector4i.Zero).Min(VecSize1); // Clamp to 0..size (x,z) or 0..height (y) respectively
-            bMax = bMax.Max(Vector4i.Zero).Min(VecSize1); // Clamp to 0..size (x,z) or 0..height (y) respectively
-            */
             for (int y = bMin.Y; y<=bMax.Y; y++)
             {
                 for (int z = bMin.Z; z<=bMax.Z; z++)
