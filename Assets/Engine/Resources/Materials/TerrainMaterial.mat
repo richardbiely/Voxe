@@ -6,9 +6,9 @@ Material:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_Name: TestTerrainMaterial
+  m_Name: TerrainMaterial
   m_Shader: {fileID: 4800000, guid: 5ec0290748b5d7a40883f5d42b70b292, type: 3}
-  m_ShaderKeywords: _NORMALMAP
+  m_ShaderKeywords: 
   m_LightmapFlags: 5
   m_CustomRenderQueue: 2000
   stringTagMap: {}
@@ -137,7 +137,7 @@ Material:
       data:
         first:
           name: _SunAmount
-        second: 0.221
+        second: 1
     m_Colors:
       data:
         first:

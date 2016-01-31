@@ -15,23 +15,23 @@ namespace Assets.Engine.Scripts.Common.Extensions
 
             if (backFace)
             {
-                target.Triangles.Add(offset + 2);
-                target.Triangles.Add(offset + 0);
-                target.Triangles.Add(offset + 1);
+                target.Triangles.Add(offset + 2);//2
+                target.Triangles.Add(offset + 0);//0
+                target.Triangles.Add(offset + 1);//1
 
-                target.Triangles.Add(offset + 3);
-                target.Triangles.Add(offset + 0);
-                target.Triangles.Add(offset + 2);
+                target.Triangles.Add(offset + 3);//3
+                target.Triangles.Add(offset + 0);//0
+                target.Triangles.Add(offset + 2);//2
             }
             else
             {
-                target.Triangles.Add(offset + 2);
-                target.Triangles.Add(offset + 1);
-                target.Triangles.Add(offset + 0);
+                target.Triangles.Add(offset + 2);//2
+                target.Triangles.Add(offset + 1);//1
+                target.Triangles.Add(offset + 0);//0
 
-                target.Triangles.Add(offset + 3);
-                target.Triangles.Add(offset + 2);
-                target.Triangles.Add(offset + 0);
+                target.Triangles.Add(offset + 3);//3
+                target.Triangles.Add(offset + 2);//2
+                target.Triangles.Add(offset + 0);//0
             }
         }
 

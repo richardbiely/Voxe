@@ -134,13 +134,9 @@ namespace Assets.Engine.Scripts.Builders
         }
 
         public void Build(Map map, RenderBuffer targetBuffer, ref BlockData block, int face, bool backFace,
-            ref Vector3[] vecs, ref Vector3Int worldPos)
+            ref Vector3[] vecs)
         {
-            if (worldPos.Y<0)
-                return;
-
-            int i = face;
-            int iface = (int)SFaces[i];
+            int iface = (int)SFaces[face];
 
             float dmg = block.GetDamagePercent();
             Color32 color = BlockDatabase.GetBlockInfo(block.BlockType).Color;
@@ -171,7 +167,7 @@ namespace Assets.Engine.Scripts.Builders
                 
                 // Building of faces is only necessary if there's solid geometry around
                 BlockData b = map.GetBlock(xx, yy, zz);
-                if (!b.IsAlpha())
+                if (!b.IsEmpty())
                     continue;
 
                 int iface = (int)SFaces[i];

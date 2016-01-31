@@ -12,6 +12,7 @@ using Assets.Engine.Scripts.Utils;
 using UnityEngine;
 using Assert = UnityEngine.Assertions.Assert;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Assets.Engine.Scripts.Core.Chunks
 {
@@ -967,53 +968,267 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		private static readonly ChunkState CurrStateGenerateVertices = ChunkState.BuildVertices;
 		private static readonly ChunkState NextStateGenerateVertices = ChunkState.Idle;
 
+        private static int GetBlockType(Chunk chunk, int x, int y, int z)
+        {
+            return (int)chunk.Blocks[x, y, z].BlockType;
+        }
+
 		private static void OnGenerateVerices(Chunk chunk, int setBlockSections, int minY, int maxY)
 		{
 			int minSection = minY >> EngineSettings.ChunkConfig.LogSizeY;
 			int maxSection = maxY >> EngineSettings.ChunkConfig.LogSizeY;
 
-			for (int sectionIndex=minSection; sectionIndex <= maxSection; sectionIndex++)
-			{
-				// Only rebuild sections which requested it
-				// E.g. 00100110b means that sections 1,2 and 5 need to be rebuild
-				int sectionIndexBit = 1<<sectionIndex;
-				if((setBlockSections & sectionIndexBit)==0)
-					continue;
-				setBlockSections = setBlockSections & (~sectionIndexBit);
+		    for (int sectionIndex=minSection; sectionIndex<=maxSection; sectionIndex++)
+		    {
+		        // Only rebuild sections which requested it
+		        // E.g. 00100110b means that sections 1,2 and 5 need to be rebuilt
+		        int sectionIndexBit = 1<<sectionIndex;
+		        if ((setBlockSections&sectionIndexBit)==0)
+		            continue;
+		        setBlockSections = setBlockSections&(~sectionIndexBit);
 
-				MiniChunk section = chunk.Sections[sectionIndex];
-				section.SolidRenderBuffer.Clear();
+		        MiniChunk section = chunk.Sections[sectionIndex];
+		        section.SolidRenderBuffer.Clear();
 
-				int offsetX = chunk.Pos.X*EngineSettings.ChunkConfig.SizeX + chunk.MinRenderX;
-				int offsetZ = chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ + chunk.MinRenderZ;
+		        /*int sectionMinY = Mathf.Max(minY, sectionIndex*EngineSettings.ChunkConfig.SizeY);
+		        int sectionMaxY = Mathf.Min(maxY,
+		                                    sectionIndex*EngineSettings.ChunkConfig.SizeY+EngineSettings.ChunkConfig.MaskY);
 
-				int sectionMinY = Mathf.Max(minY, sectionIndex*EngineSettings.ChunkConfig.SizeY);
-				int sectionMaxY = Mathf.Min(maxY, sectionIndex*EngineSettings.ChunkConfig.SizeY + EngineSettings.ChunkConfig.MaskY);
-                
-				for (int wy=sectionMinY; wy<=sectionMaxY; wy++)
-				{
-					for (int z=chunk.MinRenderZ, wz=offsetZ; z<=chunk.MaxRenderZ; z++, wz++)
-					{
-						for (int x=chunk.MinRenderX, wx=offsetX; x<=chunk.MaxRenderX; x++, wx++)
-						{
-							BlockData block = chunk.Blocks[x, wy, z];
-							if (block.IsEmpty())
-								continue;
+                int offsetX = chunk.Pos.X * EngineSettings.ChunkConfig.SizeX + chunk.MinRenderX;
+                int offsetZ = chunk.Pos.Z * EngineSettings.ChunkConfig.SizeZ + chunk.MinRenderZ;
 
-							IBlockBuilder builder = BlockDatabase.GetBlockBuilder(block.BlockType);
-							if (builder==null)
-							{
-								Assert.IsTrue(false, string.Format("No builder exists for blockType={0}", block.BlockType));
-								continue;
-							}
+                for (int wy = sectionMinY; wy <= sectionMaxY; wy++)
+                {
+                    for (int z=chunk.MinRenderZ, wz=offsetZ; z<=chunk.MaxRenderZ; z++, wz++)
+                    {
+                        for (int x=chunk.MinRenderX, wx=offsetX; x<=chunk.MaxRenderX; x++, wx++)
+                        {
+                            BlockData block = chunk.Blocks[x, wy, z];
+                            if (block.IsEmpty())
+                                continue;
 
-							Vector3Int worldPos = new Vector3Int(wx, wy, wz);
+                            IBlockBuilder builder = BlockDatabase.GetBlockBuilder(block.BlockType);
+                            if (builder == null)
+                            {
+                                Assert.IsTrue(false, string.Format("No builder exists for blockType={0}", block.BlockType));
+                                continue;
+                            }
+
+                            Vector3Int worldPos = new Vector3Int(wx, wy, wz);
                             Vector3Int localOffset = new Vector3Int(x, wy, z);
-							builder.Build(Map.Current, section.SolidRenderBuffer, ref block, ref worldPos, ref localOffset);
-						}
-					}
-				}
-			}
+                            builder.Build(Map.Current, section.SolidRenderBuffer, ref block, ref worldPos, ref localOffset);
+                        }
+                    }
+                }*/
+
+                int offsetX = chunk.Pos.X*EngineSettings.ChunkConfig.SizeX;
+		        int offsetZ = chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ;
+
+		        int i, j, k, l, w, h, u, v, n;
+		        int side = 0;
+
+		        int[] mins =
+		        {
+		            0,
+		            0,
+		            0
+		        };
+		        int[] maxes =
+		        {
+		            EngineSettings.ChunkConfig.SizeX,
+		            EngineSettings.ChunkConfig.SizeY,
+		            EngineSettings.ChunkConfig.SizeZ
+		        };
+
+		        int[] x = {0, 0, 0};
+		        int[] q = {0, 0, 0}; // Direction in which we compare neighbors when building mask (q[d] is current direction)
+		        int[] du = {0, 0, 0}; // Width in a given dimension (du[u] is current dimension)
+		        int[] dv = {0, 0, 0}; // Height in a given dimension (dv[v] is current dimension)
+
+		        int max1 = Math.Max(EngineSettings.ChunkConfig.SizeX, EngineSettings.ChunkConfig.SizeY);
+		        int max2 = Math.Max(EngineSettings.ChunkConfig.SizeZ, EngineSettings.ChunkConfig.SizeY);
+		        BlockData[] mask = new BlockData[max1*max2];
+                
+		        // Iterate over 3 dimensions. Once for front faces, once for back faces
+		        for (int dd = 0; dd<2*3; dd++)
+		        {
+		            int d = dd%3;
+		            u = (d+1)%3;
+		            v = (d+2)%3;
+
+		            x[0] = 0;
+		            x[1] = 0;
+		            x[2] = 0;
+
+		            q[0] = 0;
+		            q[1] = 0;
+		            q[2] = 0;
+		            q[d] = 1;
+
+		            // Determine which side we're meshing
+		            bool backFace = dd<3;
+		            switch (dd)
+		            {
+		                case 0: side = (int)CubeFace.Left; break;
+                        case 3: side = (int)CubeFace.Right; break;
+
+                        case 1: side = (int)CubeFace.Bottom; break;
+                        case 4: side = (int)CubeFace.Top; break;
+
+                        case 2: side = (int)CubeFace.Back; break;
+                        case 5: side = (int)CubeFace.Front; break;
+		            }
+
+		            // Move through the dimension from front to back
+		            for (x[d] = mins[d]-1; x[d]<maxes[d];)
+		            {
+		                // Compute the mask
+		                n = 0;
+
+		                for (x[v] = mins[v]; x[v]<maxes[v]; x[v]++)
+		                {
+		                    for (x[u] = mins[u]; x[u]<maxes[u]; x[u]++)
+		                    {
+		                        BlockData voxelFace0 = Map.Current.GetBlock(
+		                            x[0]+offsetX,
+		                            x[1]+section.OffsetY,
+		                            x[2]+offsetZ
+		                            );
+		                        BlockData voxelFace1 = Map.Current.GetBlock(
+		                            x[0]+q[0]+offsetX,
+		                            x[1]+q[1]+section.OffsetY,
+		                            x[2]+q[2]+offsetZ
+		                            );
+                                    
+		                        mask[n++] = (!voxelFace0.IsEmpty() && !voxelFace1.IsEmpty())
+		                                        ? BlockData.Air
+		                                        : (backFace ? voxelFace1 : voxelFace0);
+		                    }
+		                }
+
+		                x[d]++;
+		                n = 0;
+
+                        // Build faces from the mask if it's possible
+                        for (j = 0; j<EngineSettings.ChunkConfig.SizeY; j++)
+		                {
+		                    for (i = 0; i<EngineSettings.ChunkConfig.SizeX;)
+		                    {
+		                        if (mask[n].BlockType==BlockType.None)
+		                        {
+		                            i++;
+		                            n++;
+		                        }
+		                        else
+		                        {
+		                            // Compute width
+		                            for (w = 1;
+		                                    i+w<EngineSettings.ChunkConfig.SizeX && mask[n+w].BlockType==mask[n].BlockType;
+		                                    w++)
+		                            {
+		                            }
+
+		                            // Compute height
+		                            bool done = false;
+		                            for (h = 1; j+h<EngineSettings.ChunkConfig.SizeY; h++)
+		                            {
+		                                for (k = 0; k<w; k++)
+		                                {
+		                                    if (
+		                                        mask[n+k+h*(EngineSettings.ChunkConfig.SizeX)].BlockType==BlockType.None ||
+		                                        mask[n+k+h*(EngineSettings.ChunkConfig.SizeX)].BlockType!=
+		                                        mask[n].BlockType
+		                                        )
+		                                    {
+		                                        done = true;
+		                                        break;
+		                                    }
+		                                }
+
+		                                if (done)
+		                                {
+		                                    break;
+		                                }
+		                            }
+
+		                            // Determine whether we really want to build this face
+		                            bool buildFace = true;
+		                            if (buildFace)
+		                            {
+		                                BlockType type = mask[n].BlockType;
+
+		                                x[u] = i;
+		                                x[v] = j;
+
+		                                du[0] = 0;
+		                                du[1] = 0;
+		                                du[2] = 0;
+		                                du[u] = w;
+
+		                                dv[0] = 0;
+		                                dv[1] = 0;
+		                                dv[2] = 0;
+		                                dv[v] = h;
+
+		                                Vector3Int v1 = new Vector3Int(
+		                                    x[0], x[1], x[2]
+		                                    );
+		                                Vector3Int v2 = new Vector3Int(
+		                                    x[0]+du[0], x[1]+du[1], x[2]+du[2]
+		                                    );
+		                                Vector3Int v3 = new Vector3Int(
+		                                    x[0]+du[0]+dv[0], x[1]+du[1]+dv[1], x[2]+du[2]+dv[2]
+		                                    );
+		                                Vector3Int v4 = new Vector3Int(
+		                                    x[0]+dv[0], x[1]+dv[1], x[2]+dv[2]
+		                                    );
+
+		                                Vector3[] vecs =
+		                                {
+		                                    new Vector3(
+		                                        (float)v4.X,
+		                                        (float)v4.Y+section.OffsetY,
+		                                        (float)v4.Z
+		                                        ),
+		                                    new Vector3(
+		                                        (float)v3.X,
+		                                        (float)v3.Y+section.OffsetY,
+		                                        (float)v3.Z
+		                                        ),
+		                                    new Vector3(
+		                                        (float)v2.X,
+		                                        (float)v2.Y+section.OffsetY,
+		                                        (float)v2.Z
+		                                        ),
+		                                    new Vector3(
+		                                        (float)v1.X,
+		                                        (float)v1.Y+section.OffsetY,
+		                                        (float)v1.Z
+		                                        )
+		                                };
+
+		                                IBlockBuilder builder = BlockDatabase.GetBlockBuilder(type);
+		                                builder.Build(Map.Current, section.SolidRenderBuffer, ref mask[n], side, backFace,
+		                                                ref vecs);
+		                            }
+
+		                            // Zero out the mask
+		                            for (l = 0; l<h; ++l)
+		                            {
+		                                for (k = 0; k<w; ++k)
+		                                {
+		                                    mask[n+k+l*(EngineSettings.ChunkConfig.SizeX)] = BlockData.Air;
+		                                }
+		                            }
+
+		                            i += w;
+		                            n += w;
+		                        }
+		                    }
+		                }
+		            }
+		        }
+		    }
 
 		    lock (chunk.m_lock)
 		    {

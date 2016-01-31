@@ -95,14 +95,6 @@ namespace Assets.Engine.Scripts.Core.Blocks
             return BlockType == BlockType.None;
         }
 
-        /// <summary>
-        /// Whether this block permits light
-        /// </summary>
-        public bool IsAlpha ()
-        {
-            return BlockType == BlockType.None;
-        }
-
         #region IComparable implementation
 
         public int CompareTo(BlockData data)
