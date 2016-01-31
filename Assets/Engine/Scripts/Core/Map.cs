@@ -244,13 +244,13 @@ namespace Assets.Engine.Scripts.Core
                         chunk.Restore();
                         chunk.UpdateChunk();
 
-                        // If occlusion culling is enabled we need to pass bounding box data to rasterizer
+                        // If occlusion culling is enabled we need to register it
                         if (EngineSettings.WorldConfig.OcclusionCulling && Occlusion!=null)
                         {
                             foreach (MiniChunk section in chunk.Sections)
                             {
                                 section.Visible = false;
-                                if (!chunk.IsFinalized() || !section.IsOccluder())
+                                if (!chunk.IsFinalized())
                                     continue;
 
                                 Occlusion.RegisterEntity(section);

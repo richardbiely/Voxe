@@ -15,9 +15,7 @@ namespace Assets.Engine.Scripts.Rendering
         public bool ShowDepthBuffer;
         private Texture2D m_texture;
 #endif
-
-        private int m_widthMin1;
-        private int m_heightMin1;
+        
         private float[] m_depthBuffer;
 		
         private List<IRasterizationEntity> m_entities;
@@ -29,8 +27,6 @@ namespace Assets.Engine.Scripts.Rendering
                 Width = Screen.width;
             if (Height<=0)
                 Height = Screen.height;
-            m_widthMin1 = Width-1;
-            m_heightMin1 = Height-1;
 
             m_depthBuffer = Helpers.CreateArray1D<float>(Width * Height);
 
@@ -88,7 +84,7 @@ namespace Assets.Engine.Scripts.Rendering
                     };
 
                     Profiler.EndSample();
-
+                    
                     // Rasterize triangles from transformed vertices
                     ProcessTriangle(ref verts[2], ref verts[1], ref verts[0]);
                     ProcessTriangle(ref verts[3], ref verts[2], ref verts[0]);
@@ -177,9 +173,9 @@ namespace Assets.Engine.Scripts.Rendering
             int p2Y = (int)p2.y;
 
             minY = Math.Max(0, minY);
-            maxY = Math.Min(maxY, m_heightMin1);
+            maxY = Math.Min(maxY, Height-1);
             p2Y = Math.Max(0, p2Y);
-            p2Y = Math.Min(p2Y, m_heightMin1);
+            p2Y = Math.Min(p2Y, Height-1);
             
             int y;
 
@@ -196,13 +192,9 @@ namespace Assets.Engine.Scripts.Rendering
             if (dP1P2 > dP1P3)
             {
                 for (y = minY; y < p2Y; y++)
-                {
                     ProcessScanLine(y, ref p1, ref p3, ref p1, ref p2, y31Inv, y21Inv);
-                }
                 for (y = p2Y; y <= maxY; y++)
-                {
                     ProcessScanLine(y, ref p1, ref p3, ref p2, ref p3, y31Inv, y32Inv);
-                }
             }
 
             //       P1
@@ -217,10 +209,8 @@ namespace Assets.Engine.Scripts.Rendering
             //       P3
             else
             {
-                // ProcessScanLine(y, p1, p2, p1, p3)
                 for (y = minY; y < p2Y; y++)
                     ProcessScanLine(y, ref p1, ref p2, ref p1, ref p3, y21Inv, y31Inv);
-                // ProcessScanLine(y, p2, p3, p1, p3)
                 for (y = p2Y; y <= maxY; y++)
                     ProcessScanLine(y, ref p2, ref p3, ref p1, ref p3, y32Inv, y31Inv);
             }
@@ -235,14 +225,14 @@ namespace Assets.Engine.Scripts.Rendering
             // Thanks to current y, we can compute the gradient to compute others values like
             // the starting x (sx) and ending x (ex) to draw between
             // if pa.y == pb.y or pc.y == pd.y, gradient is forced to 1
-            float gradient1 = (pa.y != pb.y ? ((float)y - pa.y) * yBa : 1f).Clamp(0f, 1f);
-            float gradient2 = (pc.y != pd.y ? ((float)y - pc.y) * yDc : 1f).Clamp(0f, 1f);
+            float gradient1 = (pa.y != pb.y ? (y - pa.y) * yBa : 1f).Clamp(0f, 1f);
+            float gradient2 = (pc.y != pd.y ? (y - pc.y) * yDc : 1f).Clamp(0f, 1f);
             
             // Starting X and ending X
             int sx = (int)Helpers.Interpolate(pa.x, pb.x, gradient1);
             int ex = (int)Helpers.Interpolate(pc.x, pd.x, gradient2);
             sx = Math.Max(0, sx);
-            ex = Math.Min(ex, m_widthMin1);
+            ex = Math.Min(ex, Width-1);
 
             // Starting Z and ending Z
             float z1 = Helpers.Interpolate(pa.z, pb.z, gradient1);
@@ -250,7 +240,7 @@ namespace Assets.Engine.Scripts.Rendering
             
             // Draw a horizontal line
             float exsx = 1f / (ex - sx);
-            for (int x = sx; x < ex; x++)
+            for (int x = sx; x <= ex; x++)
             {
                 float gradient = ((x-sx)*exsx).Clamp(0f, 1f);
                 float z = Helpers.Interpolate(z1, z2, gradient);
@@ -260,16 +250,11 @@ namespace Assets.Engine.Scripts.Rendering
 					continue;
                 
                 int index = Helpers.GetIndex1DFrom2D(x, y, Width);
-                PutPixel(index, z);
+                if (m_depthBuffer[index] < z)
+                    m_depthBuffer[index] = z;
             }
 
             Profiler.EndSample();
-        }
-
-        private void PutPixel(int index, float z)
-        {
-            if (m_depthBuffer[index] < z)
-                m_depthBuffer[index] = z;
         }
     }
 }

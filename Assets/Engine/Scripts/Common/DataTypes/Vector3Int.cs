@@ -35,6 +35,13 @@ namespace Assets.Engine.Scripts.Common.DataTypes
             Z = z;
         }
 
+        public Vector3Int(Vector3 vec)
+        {
+            X = (int)vec.x;
+            Y = (int)vec.y;
+            Z = (int)vec.z;
+        }
+
         #endregion
 
         #region Operators
