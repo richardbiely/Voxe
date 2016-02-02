@@ -3,7 +3,6 @@ using System.Collections;
 using Assets.Engine.Scripts;
 using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Core;
-using Assets.Engine.Scripts.Physics;
 using Assets.Engine.Scripts.Provider;
 using UnityEngine;
 
@@ -11,7 +10,6 @@ namespace Assets.Client.Scripts
 {
     public class GameDriver: MonoBehaviour
     {
-        public TileCharacterController CharacterController;
         public Map GameMap;
         public Transform ViewerCamera;
 

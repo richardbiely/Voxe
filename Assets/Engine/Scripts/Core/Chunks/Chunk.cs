@@ -6,13 +6,11 @@ using Assets.Engine.Scripts.Common.IO.RLE;
 using Assets.Engine.Scripts.Common.Threading;
 using Assets.Engine.Scripts.Core.Blocks;
 using Assets.Engine.Scripts.Core.Threading;
-using Assets.Engine.Scripts.Physics;
 using Assets.Engine.Scripts.Provider;
 using Assets.Engine.Scripts.Utils;
 using UnityEngine;
 using Assert = UnityEngine.Assertions.Assert;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace Assets.Engine.Scripts.Core.Chunks
 {
@@ -21,8 +19,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
     /// </summary>
 	public class Chunk: ChunkEvent
     {
-        #region Public variables
-        
+        #region Public variables        
+
         public readonly RLE<BlockData> RLE;
 
         public readonly IBlockStorage Blocks;
@@ -45,10 +43,12 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         public bool PossiblyVisible { get; private set; }
 
+        public bool RequestedRemoval;
+
         #endregion Public variables
 
         #region Private variables
-        
+
         //! A list of event requiring counter
         private readonly int [] m_eventCnt = {0, 0};
 
@@ -71,12 +71,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		private bool m_taskRunning;
 		private readonly object m_lock = new object();
 
-		public bool RequestedRemoval;
-
         #endregion Private variables
 
         #region Constructors
-        
+
         public Chunk():
 			base(4)
         {
@@ -125,8 +123,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         }
 
         #endregion Accessors
-
-
+        
         public void Init(int cx, int cz)
         {
             Pos = new Vector2Int(cx, cz);
@@ -283,65 +280,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
             }
             
             return false;
-        }
-
-        /// <summary>
-        ///     Tells whether any block in a chunk intersects a given AABB
-        /// </summary>
-        public bool Intersects(Bounds aabb)
-        {
-            return WorldBounds.Intersects(aabb) && CheckBlocksAABB(aabb);
-        }
-
-        // Compares chunk's blocks against a given AABB
-        public bool CheckBlocksAABB(Bounds bounds)
-        {
-            Vector3Int pom = new Vector3Int(Pos.X*EngineSettings.ChunkConfig.SizeX, 0, Pos.Z*EngineSettings.ChunkConfig.SizeZ);
-
-            int minX = Mathf.Clamp(Mathf.FloorToInt(bounds.min.x) - pom.X - 5, 0, EngineSettings.ChunkConfig.MaskX);
-            int minY = Mathf.Clamp(Mathf.FloorToInt(bounds.min.y) - 5, 0, EngineSettings.ChunkConfig.SizeYTotal - 1);
-            int minZ = Mathf.Clamp(Mathf.FloorToInt(bounds.min.z) - pom.Z - 5, 0, EngineSettings.ChunkConfig.MaskZ);
-            Vector3Int bMin = new Vector3Int(minX, minY, minZ);
-
-            int maxX = Mathf.Clamp((int)(bounds.max.x) - pom.X + 5, 0, EngineSettings.ChunkConfig.MaskX);
-            int maxY = Mathf.Clamp((int)(bounds.max.y) + 5, 0, EngineSettings.ChunkConfig.SizeYTotal - 1);
-            int maxZ = Mathf.Clamp((int)(bounds.max.z) - pom.Z + 5, 0, EngineSettings.ChunkConfig.MaskZ);
-            Vector3Int bMax = new Vector3Int(maxX, maxY, maxZ);
-
-            for (int y = bMin.Y; y<=bMax.Y; y++)
-            {
-                for (int z = bMin.Z; z<=bMax.Z; z++)
-                {
-                    for (int x = bMin.X; x<=bMax.X; x++)
-                    {
-                        if (CheckBlockAABB(new Vector3Int(x, y, z), bounds))
-                            return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        // test a specific block against the given AABB
-        public bool CheckBlockAABB(Vector3Int blockPos, Bounds bounds)
-        {
-            BlockInfo info = BlockDatabase.GetBlockInfo(this[blockPos.X, blockPos.Y, blockPos.Z].BlockType);
-            if (info.Physics!=PhysicsType.Solid && info.Physics!=PhysicsType.Fence)
-                return false;
-
-            Bounds blockBounds = new Bounds(Vector3.zero, Vector3.one);
-            blockBounds.center = new Vector3(
-                blockBounds.center.x+blockPos.X+(Pos.X*EngineSettings.ChunkConfig.SizeX),
-                blockBounds.center.y+blockPos.Y,
-                blockBounds.center.z+blockPos.Z+(Pos.Z*EngineSettings.ChunkConfig.SizeZ)
-                );
-
-            // fence block - bounds are twice as high
-            if (info.Physics==PhysicsType.Fence)
-                blockBounds.max = new Vector3(blockBounds.max.x, blockBounds.max.y+Vector3.up.y, blockBounds.max.z);
-
-            return blockBounds.Intersects(bounds);
         }
 
         // Calculate lowest empty and highest solid block position
@@ -989,38 +927,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		        MiniChunk section = chunk.Sections[sectionIndex];
 		        section.SolidRenderBuffer.Clear();
-
-		        /*int sectionMinY = Mathf.Max(minY, sectionIndex*EngineSettings.ChunkConfig.SizeY);
-		        int sectionMaxY = Mathf.Min(maxY,
-		                                    sectionIndex*EngineSettings.ChunkConfig.SizeY+EngineSettings.ChunkConfig.MaskY);
-
-                int offsetX = chunk.Pos.X * EngineSettings.ChunkConfig.SizeX + chunk.MinRenderX;
-                int offsetZ = chunk.Pos.Z * EngineSettings.ChunkConfig.SizeZ + chunk.MinRenderZ;
-
-                for (int wy = sectionMinY; wy <= sectionMaxY; wy++)
-                {
-                    for (int z=chunk.MinRenderZ, wz=offsetZ; z<=chunk.MaxRenderZ; z++, wz++)
-                    {
-                        for (int x=chunk.MinRenderX, wx=offsetX; x<=chunk.MaxRenderX; x++, wx++)
-                        {
-                            BlockData block = chunk.Blocks[x, wy, z];
-                            if (block.IsEmpty())
-                                continue;
-
-                            IBlockBuilder builder = BlockDatabase.GetBlockBuilder(block.BlockType);
-                            if (builder == null)
-                            {
-                                Assert.IsTrue(false, string.Format("No builder exists for blockType={0}", block.BlockType));
-                                continue;
-                            }
-
-                            Vector3Int worldPos = new Vector3Int(wx, wy, wz);
-                            Vector3Int localOffset = new Vector3Int(x, wy, z);
-                            builder.Build(Map.Current, section.SolidRenderBuffer, ref block, ref worldPos, ref localOffset);
-                        }
-                    }
-                }*/
-
+                
                 int offsetX = chunk.Pos.X*EngineSettings.ChunkConfig.SizeX;
 		        int offsetZ = chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ;
 
@@ -1100,7 +1007,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		                            x[2]+q[2]+offsetZ
 		                            );
                                     
-		                        mask[n++] = (!voxelFace0.IsEmpty() && !voxelFace1.IsEmpty())
+		                        mask[n++] = (voxelFace0.IsSolid() && voxelFace1.IsSolid())
 		                                        ? BlockData.Air
 		                                        : (backFace ? voxelFace1 : voxelFace0);
 		                    }
@@ -1114,19 +1021,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		                {
 		                    for (i = 0; i<EngineSettings.ChunkConfig.SizeX;)
 		                    {
-		                        if (mask[n].BlockType==BlockType.None)
+		                        if (mask[n].IsEmpty())
 		                        {
 		                            i++;
 		                            n++;
 		                        }
 		                        else
 		                        {
-		                            // Compute width
-		                            for (w = 1;
-		                                    i+w<EngineSettings.ChunkConfig.SizeX && mask[n+w].BlockType==mask[n].BlockType;
-		                                    w++)
-		                            {
-		                            }
+                                    BlockType type = mask[n].BlockType;
+
+                                    // Compute width
+		                            for (w = 1; i+w<EngineSettings.ChunkConfig.SizeX && mask[n+w].BlockType==type; w++);
 
 		                            // Compute height
 		                            bool done = false;
@@ -1135,9 +1040,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		                                for (k = 0; k<w; k++)
 		                                {
 		                                    if (
-		                                        mask[n+k+h*(EngineSettings.ChunkConfig.SizeX)].BlockType==BlockType.None ||
-		                                        mask[n+k+h*(EngineSettings.ChunkConfig.SizeX)].BlockType!=
-		                                        mask[n].BlockType
+		                                        mask[n+k+h*(EngineSettings.ChunkConfig.SizeX)].IsEmpty() ||
+		                                        mask[n+k+h*(EngineSettings.ChunkConfig.SizeX)].BlockType!=type
 		                                        )
 		                                    {
 		                                        done = true;
@@ -1146,17 +1050,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		                                }
 
 		                                if (done)
-		                                {
 		                                    break;
-		                                }
 		                            }
 
-		                            // Determine whether we really want to build this face
-		                            bool buildFace = true;
+                                    // Determine whether we really want to build this face
+                                    // TODO: Skip bottom faces at the bottom of the world
+                                    bool buildFace = true;
 		                            if (buildFace)
 		                            {
-		                                BlockType type = mask[n].BlockType;
-
 		                                x[u] = i;
 		                                x[v] = j;
 
@@ -1170,6 +1071,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		                                dv[2] = 0;
 		                                dv[v] = h;
 
+		                                // Face vertices
 		                                Vector3Int v1 = new Vector3Int(
 		                                    x[0], x[1], x[2]
 		                                    );
@@ -1183,6 +1085,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		                                    x[0]+dv[0], x[1]+dv[1], x[2]+dv[2]
 		                                    );
 
+		                                // Face vertices transformed to world coordinates
 		                                Vector3[] vecs =
 		                                {
 		                                    new Vector3(
@@ -1207,9 +1110,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		                                        )
 		                                };
 
+		                                // Build the face
 		                                IBlockBuilder builder = BlockDatabase.GetBlockBuilder(type);
 		                                builder.Build(Map.Current, section.SolidRenderBuffer, ref mask[n], side, backFace,
-		                                                ref vecs);
+		                                              ref vecs);
 		                            }
 
 		                            // Zero out the mask

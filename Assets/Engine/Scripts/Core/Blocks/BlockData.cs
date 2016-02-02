@@ -2,6 +2,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using Assets.Engine.Scripts.Common.IO;
+using Assets.Engine.Scripts.Utils;
 
 namespace Assets.Engine.Scripts.Core.Blocks
 {
@@ -90,9 +91,14 @@ namespace Assets.Engine.Scripts.Core.Blocks
         /// <summary>
         /// Whether this block is empty
         /// </summary>
-        public bool IsEmpty ()
+        public bool IsEmpty()
         {
             return BlockType == BlockType.None;
+        }
+
+        public bool IsSolid()
+        {
+            return BlockDatabase.GetBlockInfo(BlockType).IsSolid;
         }
 
         #region IComparable implementation

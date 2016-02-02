@@ -14,7 +14,5 @@ namespace Assets.Engine.Scripts.Builders
         Rect GetTexture(int face);
 
         void Build(Map map, RenderBuffer targetMesh, ref BlockData block, int face, bool backFace, ref Vector3[] vecs);
-
-        void Build(Map map, RenderBuffer targetMesh, ref BlockData block, ref Vector3Int worldPos, ref Vector3Int localPos);
     }
 }

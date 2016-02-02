@@ -1,7 +1,6 @@
 using Assets.Engine.Scripts.Atlas;
 using Assets.Engine.Scripts.Builders;
 using Assets.Engine.Scripts.Core.Blocks;
-using Assets.Engine.Scripts.Physics;
 using UnityEngine;
 
 namespace Assets.Engine.Scripts.Utils
@@ -47,13 +46,13 @@ namespace Assets.Engine.Scripts.Utils
         private static readonly BlockInfo[] SBlockInfo =
         {
             // AIR
-            new BlockInfo(false, PhysicsType.None, new Color32(0xFF, 0xFF, 0xFF, 0xFf)),
+            new BlockInfo(false, new Color32(0xFF, 0xFF, 0xFF, 0xFF)),
             // DIRT
-            new BlockInfo(true, PhysicsType.Solid, new Color32(0x5C, 0x3B, 0x00, 0xFf)),
+            new BlockInfo(true, new Color32(0x5C, 0x3B, 0x00, 0xFF)),
             // GRASS
-            new BlockInfo(true, PhysicsType.Solid, new Color32(0x00, 0x80, 0x00, 0xFf)),
+            new BlockInfo(true, new Color32(0x00, 0x80, 0x00, 0xFF)),
             // STONE
-            new BlockInfo(true, PhysicsType.Solid, new Color32(0xA9, 0xA9, 0xA9, 0xFf))
+            new BlockInfo(true, new Color32(0xA9, 0xA9, 0xA9, 0xFF))
         };
 
         /// <summary>

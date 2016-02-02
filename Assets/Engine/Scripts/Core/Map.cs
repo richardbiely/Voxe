@@ -78,7 +78,7 @@ namespace Assets.Engine.Scripts.Core
         #region Public Fields
 
         public IChunkProvider ChunkProvider;
-
+        
         // Position of viewer in chunk coordinates
         public Vector2Int ViewerChunkPos;
 
@@ -176,24 +176,12 @@ namespace Assets.Engine.Scripts.Core
 
         private bool IsWithinVisibilityRange(Chunk chunk)
         {
-            // Chunk is close enough
-            Vector2Int min = new Vector2Int(ViewerChunkPos.X - EngineSettings.WorldConfig.VisibleRange,
-                                            ViewerChunkPos.Z - EngineSettings.WorldConfig.VisibleRange);
-            Vector2Int max = new Vector2Int(ViewerChunkPos.X + EngineSettings.WorldConfig.VisibleRange,
-                                            ViewerChunkPos.Z + EngineSettings.WorldConfig.VisibleRange);
-
-            return (chunk.Pos.X>=min.X && chunk.Pos.Z>=min.Z && chunk.Pos.X<=max.X && chunk.Pos.Z<=max.Z);
+            return chunk.Pos.X>=m_viewRange.xMin && chunk.Pos.Z>=m_viewRange.yMin && chunk.Pos.X<=m_viewRange.xMax && chunk.Pos.Z<=m_viewRange.yMax;
         }
 
         private bool IsWithinCachedRange(Chunk chunk)
         {
-            // Chunk is close enough
-            Vector2Int min = new Vector2Int(ViewerChunkPos.X - EngineSettings.WorldConfig.CachedRange,
-                                            ViewerChunkPos.Z - EngineSettings.WorldConfig.CachedRange);
-            Vector2Int max = new Vector2Int(ViewerChunkPos.X + EngineSettings.WorldConfig.CachedRange,
-                                            ViewerChunkPos.Z + EngineSettings.WorldConfig.CachedRange);
-
-            return (chunk.Pos.X>=min.X && chunk.Pos.Z>=min.Z && chunk.Pos.X<=max.X && chunk.Pos.Z<=max.Z);
+            return chunk.Pos.X>=m_cachedRange.xMin && chunk.Pos.Z>=m_cachedRange.yMin && chunk.Pos.X<=m_cachedRange.xMax && chunk.Pos.Z<=m_cachedRange.yMax;
         }
 
         private void UpdateRangeRects()
@@ -555,39 +543,7 @@ namespace Assets.Engine.Scripts.Core
             hit = new TileRaycastHit();
             return false;
         }
-
-        // test the blocks in the world against the given AABB
-        public bool TestBlocksAABB(Bounds bounds, int radius)
-        {
-            if (radius<0 || radius>EngineSettings.WorldConfig.CachedRange)
-                radius = EngineSettings.WorldConfig.CachedRange;
-
-            int min = (EngineSettings.WorldConfig.CachedRange-radius)>>1;
-            int max = min+radius;
-
-            int offsetX = ViewerChunkPos.X;
-            int offsetZ = ViewerChunkPos.Z;
-
-            for (int z = min; z<max; z++)
-            {
-                int realZ = z+offsetZ;
-
-                for (int x = min; x<max; x++)
-                {
-                    int realX = x+offsetX;
-
-                    Chunk chunk = m_chunks[realX, realZ];
-                    if (chunk==null)
-                        continue;
-
-                    if (chunk.Intersects(bounds))
-                        return true;
-                }
-            }
-
-            return false;
-        }
-
+        
         #endregion Public Methods
 
         private void OnDrawGizmosSelected()
