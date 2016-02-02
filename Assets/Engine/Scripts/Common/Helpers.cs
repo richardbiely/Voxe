@@ -126,9 +126,14 @@ namespace Assets.Engine.Scripts.Common
             }
         }
 
-        public static int Signum(float x)
+        public static int SigNum(float x)
         {
             return (x>0) ? 1 : ((x<0) ? -1 : 0);
+        }
+
+        public static int FastFloor(float val)
+        {
+            return (val>0) ? (int)val : (int)val-1;
         }
 
         // Custom modulo. Handles negative numbers.

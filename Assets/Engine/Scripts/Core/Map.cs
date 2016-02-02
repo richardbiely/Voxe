@@ -417,33 +417,17 @@ namespace Assets.Engine.Scripts.Core
             }
         }
 
+        
+
         /// <summary>
         ///     Perform a raycast against the map blocks
         /// </summary>
         public bool Raycast(Ray ray, float distance, out TileRaycastHit hit)
         {
-            // block containing origin point
-            int x = Mathf.FloorToInt(ray.origin.x);
-            int y = Mathf.FloorToInt(ray.origin.y);
-            int z = Mathf.FloorToInt(ray.origin.z);
-
             // break out direction vector
             float dx = ray.direction.x;
             float dy = ray.direction.y;
             float dz = ray.direction.z;
-
-            // direction to increment x,y,z when stepping
-            int stepX = Helpers.Signum(dx);
-            int stepY = Helpers.Signum(dy);
-            int stepZ = Helpers.Signum(dz);
-
-            float tMaxX = Helpers.IntBound(ray.origin.x, dx);
-            float tMaxY = Helpers.IntBound(ray.origin.y, dy);
-            float tMaxZ = Helpers.IntBound(ray.origin.z, dz);
-
-            float tDeltaX = stepX/dx;
-            float tDeltaY = stepY/dy;
-            float tDeltaZ = stepZ/dz;
 
             // avoid infinite loop
             if (Mathf.Approximately(dx, 0f) &&
@@ -454,6 +438,24 @@ namespace Assets.Engine.Scripts.Core
                 hit = new TileRaycastHit();
                 return false;
             }
+
+            // block containing origin point
+            int x = Helpers.FastFloor(ray.origin.x);
+            int y = Helpers.FastFloor(ray.origin.y);
+            int z = Helpers.FastFloor(ray.origin.z);
+
+            // direction to increment x,y,z when stepping
+            int stepX = Helpers.SigNum(dx);
+            int stepY = Helpers.SigNum(dy);
+            int stepZ = Helpers.SigNum(dz);
+
+            float tMaxX = Helpers.IntBound(ray.origin.x, dx);
+            float tMaxY = Helpers.IntBound(ray.origin.y, dy);
+            float tMaxZ = Helpers.IntBound(ray.origin.z, dz);
+
+            float tDeltaX = stepX/dx;
+            float tDeltaY = stepY/dy;
+            float tDeltaZ = stepZ/dz;
 
             Vector3 normal = new Vector3();
 

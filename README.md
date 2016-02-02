@@ -12,14 +12,31 @@ Main focus of Voxe will be put on technology and extensibility. I want this to b
 
 ## Features
 
+### World management
+
 ##### Terrain generation
 Voxe currently sports a few simple terrain generators. One for a simple flat terrain, a perlin noise generator and one generic terrain generator. They all are currently usable mostly for debugging purposes and will later be replaced with a proper fully configurable terrain generator.
 
 ##### Terrain streaming
 The world is streamed - chunks are loaded and saved as you move. Streaming on a separate thread is supported. RLE compression is used.
 
+##### Neighbor face merging
+In order to minimize the amount of data passed to GPU and to minimize the amount of memory used by Unity when building geometry (not to mention this being a performance improvement with regards to GC), Voxe supports merging of adjacent faces for blocks of the same type.
+NOTE: Shader handling texture wrapping for merged faces is WIP.
+
+### Special features
+
 ##### Threading
 Using a custom threadpool, chunks are generated on multiple threads taking full advantage of you hardware. Voxe uses an event-driven model for chunk generation. Upon creation, each chunk registers to its neighbors and from this moment on everything is automatic. The system is build in a way that no synchronization is necessary.
+
+##### Memory pooling
+Voxe tries to waste as little memory as possible. It sports a memory pool manager that stores and reuses objects as necessary to improve performance.
+
+### Utilities
+
+##### Occlusion culling
+Voxe has support for culling geometry which is covered by another geometry. This helps optimize performance in cases when, for instance, the camera is in a cave or looking at a mountain behind which there is another mountain.
+NOTE: This feature is currently disabled by default for performance reasons. More efficient version is WIP.
 
 ## Development
 Voxe is still very early in development. Current focus/plans ordered by priority are:
