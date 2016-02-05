@@ -72,7 +72,7 @@ namespace Assets.Engine.Scripts.Builders
             return m_faceTextures[face];
         }
 
-        public void Build(Map map, RenderBuffer targetBuffer, ref BlockData block, BlockFace face, bool backFace,
+        public void Build(RenderBuffer targetBuffer, ref BlockData block, BlockFace face, bool backFace,
             ref Vector3[] vecs)
         {
             int iface = (int)face;

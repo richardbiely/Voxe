@@ -1112,8 +1112,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		                                // Build the face
 		                                IBlockBuilder builder = BlockDatabase.GetBlockBuilder(type);
-		                                builder.Build(Map.Current, section.SolidRenderBuffer, ref mask[n], face, backFace,
-		                                              ref vecs);
+		                                builder.Build(section.SolidRenderBuffer, ref mask[n], face, backFace, ref vecs);
 		                            }
 
 		                            // Zero out the mask
