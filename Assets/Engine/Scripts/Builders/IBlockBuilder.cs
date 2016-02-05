@@ -1,6 +1,7 @@
 using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Core.Blocks;
+using Assets.Engine.Scripts.Utils;
 using UnityEngine;
 using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
@@ -13,6 +14,6 @@ namespace Assets.Engine.Scripts.Builders
     {
         Rect GetTexture(int face);
 
-        void Build(Map map, RenderBuffer targetMesh, ref BlockData block, int face, bool backFace, ref Vector3[] vecs);
+        void Build(Map map, RenderBuffer targetMesh, ref BlockData block, BlockFace face, bool backFace, ref Vector3[] vecs);
     }
 }

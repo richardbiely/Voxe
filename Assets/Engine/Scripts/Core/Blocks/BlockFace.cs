@@ -1,8 +1,8 @@
 namespace Assets.Engine.Scripts.Utils
 {
-    public enum CubeFace
+    public enum BlockFace: byte
     {
-        Front,
+        Front = 0,
         Back,
         Right,
         Left,

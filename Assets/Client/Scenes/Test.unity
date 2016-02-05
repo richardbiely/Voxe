@@ -178,7 +178,7 @@ Prefab:
     - target: {fileID: 11415314, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: CharacterController
       value: 
-      objectReference: {fileID: 2034794714}
+      objectReference: {fileID: 0}
     - target: {fileID: 11415314, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: ViewerCamera
       value: 
@@ -315,41 +315,9 @@ Prefab:
       propertyPath: m_RootOrder
       value: 3
       objectReference: {fileID: 0}
-    - target: {fileID: 11400024, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
-      propertyPath: CursorRenderer
-      value: 
-      objectReference: {fileID: 1645071061}
-    - target: {fileID: 11400002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 11400010, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100008, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2300002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
-      propertyPath: m_UseLightProbes
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2300002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
       propertyPath: m_Name
       value: Player
-      objectReference: {fileID: 0}
-    - target: {fileID: 100002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
-      propertyPath: m_TagString
-      value: Player
-      objectReference: {fileID: 0}
-    - target: {fileID: 11400024, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
-      propertyPath: PickDistance
-      value: 20
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
@@ -415,9 +383,3 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 4
---- !u!114 &2034794714 stripped
-MonoBehaviour:
-  m_PrefabParentObject: {fileID: 11400010, guid: 276ec6ff205a51947bd7ffda6065715a,
-    type: 2}
-  m_PrefabInternal: {fileID: 1324421060}
-  m_Script: {fileID: 11500000, guid: 63d53e4a0d763044da767e0e247e598d, type: 3}

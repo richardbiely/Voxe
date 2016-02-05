@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Assets.Engine.Scripts.Atlas;
-using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Common.Extensions;
 using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Core.Blocks;
@@ -35,67 +34,7 @@ namespace Assets.Engine.Scripts.Builders
         #endregion Constructor
         
         #region Public Statics
-
-        public static readonly CubeFace[] SFaces =
-        {
-            CubeFace.Front,
-            CubeFace.Back,
-            CubeFace.Right,
-            CubeFace.Left,
-            CubeFace.Top,
-            CubeFace.Bottom
-        };
-
-        public static readonly Vector3Int[] SDirections =
-        {
-            Vector3Int.Back,
-            Vector3Int.Forward,
-            Vector3Int.Right,
-            Vector3Int.Left,
-            Vector3Int.Up,
-            Vector3Int.Down
-        };
-
-        public static readonly Vector3[][] SVertices =
-        {
-            //Front
-            new[]
-            {
-                new Vector3(1.0f, 0.0f, 0.0f), new Vector3(1.0f, 1.0f, 0.0f),
-                new Vector3(0.0f, 1.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f)
-            },
-            //Back
-            new[]
-            {
-                new Vector3(0.0f, 0.0f, 1.0f), new Vector3(0.0f, 1.0f, 1.0f),
-                new Vector3(1.0f, 1.0f, 1.0f), new Vector3(1.0f, 0.0f, 1.0f)
-            },
-            //Right
-            new[]
-            {
-                new Vector3(1.0f, 0.0f, 1.0f), new Vector3(1.0f, 1.0f, 1.0f),
-                new Vector3(1.0f, 1.0f, 0.0f), new Vector3(1.0f, 0.0f, 0.0f)
-            },
-            //Left
-            new[]
-            {
-                new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 1.0f, 0.0f),
-                new Vector3(0.0f, 1.0f, 1.0f), new Vector3(0.0f, 0.0f, 1.0f)
-            },
-            //Top
-            new[]
-            {
-                new Vector3(1.0f, 1.0f, 0.0f), new Vector3(1.0f, 1.0f, 1.0f),
-                new Vector3(0.0f, 1.0f, 1.0f), new Vector3(0.0f, 1.0f, 0.0f)
-            },
-            //Bottom
-            new[]
-            {
-                new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 1.0f),
-                new Vector3(1.0f, 0.0f, 1.0f), new Vector3(1.0f, 0.0f, 0.0f)
-            }
-        };
-
+      
         private static readonly Vector3[][] SNormals =
         {
             new[]
@@ -133,10 +72,10 @@ namespace Assets.Engine.Scripts.Builders
             return m_faceTextures[face];
         }
 
-        public void Build(Map map, RenderBuffer targetBuffer, ref BlockData block, int face, bool backFace,
+        public void Build(Map map, RenderBuffer targetBuffer, ref BlockData block, BlockFace face, bool backFace,
             ref Vector3[] vecs)
         {
-            int iface = (int)SFaces[face];
+            int iface = (int)face;
 
             float dmg = block.GetDamagePercent();
             Color32 color = BlockDatabase.GetBlockInfo(block.BlockType).Color;

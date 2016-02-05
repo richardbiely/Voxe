@@ -932,7 +932,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		        int offsetZ = chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ;
 
 		        int i, j, k, l, w, h, u, v, n;
-		        int side = 0;
+		        BlockFace face = 0;
 
 		        int[] mins =
 		        {
@@ -976,14 +976,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		            bool backFace = dd<3;
 		            switch (dd)
 		            {
-		                case 0: side = (int)CubeFace.Left; break;
-                        case 3: side = (int)CubeFace.Right; break;
+		                case 0: face = BlockFace.Left; break;
+                        case 3: face = BlockFace.Right; break;
 
-                        case 1: side = (int)CubeFace.Bottom; break;
-                        case 4: side = (int)CubeFace.Top; break;
+                        case 1: face = BlockFace.Bottom; break;
+                        case 4: face = BlockFace.Top; break;
 
-                        case 2: side = (int)CubeFace.Back; break;
-                        case 5: side = (int)CubeFace.Front; break;
+                        case 2: face = BlockFace.Back; break;
+                        case 5: face = BlockFace.Front; break;
 		            }
 
 		            // Move through the dimension from front to back
@@ -1112,7 +1112,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		                                // Build the face
 		                                IBlockBuilder builder = BlockDatabase.GetBlockBuilder(type);
-		                                builder.Build(Map.Current, section.SolidRenderBuffer, ref mask[n], side, backFace,
+		                                builder.Build(Map.Current, section.SolidRenderBuffer, ref mask[n], face, backFace,
 		                                              ref vecs);
 		                            }
 
