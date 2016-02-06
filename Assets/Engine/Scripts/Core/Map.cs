@@ -29,26 +29,12 @@ namespace Assets.Engine.Scripts.Core
 
         //! Chunks to be removed
         private List<Chunk> m_chunksToRemove;
-
-        private struct Visibility
-        {
-            public Chunk Chunk;
-            public MiniChunk Section;
-            public float Distance;
-
-            public Visibility(Chunk chunk, MiniChunk section, float distance)
-            {
-                Chunk = chunk;
-                Section = section;
-                Distance = distance;
-            }
-        }
+        
         
         private Rect m_viewRange;
         private Rect m_cachedRange;
 
         private Camera m_camera;
-        private Plane[] m_cameraPlanes;
 
         private Vector2Int[] m_chunksToLoadByPos;
 
@@ -170,8 +156,8 @@ namespace Assets.Engine.Scripts.Core
 
         private bool IsChunkInViewFrustum(Chunk chunk)
         {
-            // Check if the chunk lies within camera planes
-            return chunk.CheckFrustum(m_cameraPlanes);
+            Vector3 screenPoint = m_camera.WorldToViewportPoint(chunk.WorldBounds.center);
+            return screenPoint.x>0 && screenPoint.x<1 && screenPoint.y>0 && screenPoint.y<1;
         }
 
         private bool IsWithinVisibilityRange(Chunk chunk)
@@ -186,8 +172,6 @@ namespace Assets.Engine.Scripts.Core
 
         private void UpdateRangeRects()
         {
-            m_cameraPlanes = GeometryUtility.CalculateFrustumPlanes(m_camera);
-
             m_viewRange = new Rect(
                 ViewerChunkPos.X-EngineSettings.WorldConfig.VisibleRange,
                 ViewerChunkPos.Z-EngineSettings.WorldConfig.VisibleRange,
