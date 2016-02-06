@@ -15,7 +15,7 @@ namespace Assets.Engine.Scripts.Provider
     /// <summary>
     ///     A purely local chunk provider
     /// </summary>
-    public class LocalChunkProvider: IChunkProvider
+    public class ChunkProvider: IChunkProvider
     {
         #region Public Properties
 
@@ -41,7 +41,7 @@ namespace Assets.Engine.Scripts.Provider
 
         #region Constructor
 
-        public LocalChunkProvider(Map map)
+        public ChunkProvider(Map map)
         {
             Map.Current = LocalMap = map;
             map.ChunkProvider = this;

@@ -816,7 +816,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		private static void OnSerializeChunk(Chunk chunk, string filePath)
 		{
 			// !TODO: Handle failure
-			LocalChunkProvider.StoreChunkToDisk(
+			ChunkProvider.StoreChunkToDisk(
 				chunk,
 				filePath
 			);
@@ -867,7 +867,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 			SSerializeWorkItem workItem = new SSerializeWorkItem(
 				this,
-				LocalChunkProvider.GetFilePathFromIndex(Pos.X, Pos.Z)
+				ChunkProvider.GetFilePathFromIndex(Pos.X, Pos.Z)
 			);
 
             m_taskRunning = true;

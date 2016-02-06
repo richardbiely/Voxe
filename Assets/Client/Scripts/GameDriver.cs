@@ -13,12 +13,12 @@ namespace Assets.Client.Scripts
         public Map GameMap;
         public Transform ViewerCamera;
 
-        private LocalChunkProvider m_gameServer;
+        private ChunkProvider m_gameServer;
         private bool m_stop;
 
         private void Start()
         {
-            m_gameServer = new LocalChunkProvider(GameMap);
+            m_gameServer = new ChunkProvider(GameMap);
 
             //StartCoroutine(OnActivateGC());
         }
