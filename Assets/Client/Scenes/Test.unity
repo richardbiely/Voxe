@@ -116,10 +116,7 @@ MonoBehaviour:
   ObjectPools:
   - Name: Chunk
     Prefab: {fileID: 100000, guid: 43f51657c7dfcca4abbf5dd47eee066a, type: 2}
-    PreloadCount: 4096
-    PolledCount: 0
-    Cache: []
-    Go: {fileID: 0}
+    InitialSize: 128
 --- !u!4 &288781660
 Transform:
   m_ObjectHideFlags: 0

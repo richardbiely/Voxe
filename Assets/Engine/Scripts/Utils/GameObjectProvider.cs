@@ -1,5 +1,6 @@
 ﻿using System;
 using Assets.Engine.Scripts.Common;
+using Assets.Engine.Scripts.Common.Collections;
 using UnityEngine;
 
 namespace Assets.Engine.Scripts.Provider
@@ -24,10 +25,8 @@ namespace Assets.Engine.Scripts.Provider
                     Debug.LogError("No prefab specified in one of the object pool's entries");
                     continue;
                 }
-
-                pool.Go = m_go;
-
-                BuildPool(pool, pool.PreloadCount);
+                
+                pool.Init(m_go, pool.Prefab);
             }
         }
 
@@ -40,20 +39,6 @@ namespace Assets.Engine.Scripts.Provider
                     return pool;
             }
             return null;
-        }
-
-        private static void BuildPool(ObjectPoolEntry pool, int requestedSize)
-        {
-            pool.Cache = new GameObject[pool.PreloadCount];
-
-            for (int i = 0; i<pool.PreloadCount; i++)
-            {
-                GameObject go = Instantiate(pool.Prefab);
-                go.name = pool.Name;
-                go.SetActive(false);
-
-                PushObject(pool.Name, go);
-            }
         }
 
         public static void PushObject(string poolName, GameObject go)
@@ -82,58 +67,59 @@ namespace Assets.Engine.Scripts.Provider
         {
             public string Name;
             public GameObject Prefab;
+            public int InitialSize = 128;
 
-            public int PreloadCount = 2000;
+            [HideInInspector] public ObjectPool<GameObject> Cache;
 
-            [HideInInspector] public int PolledCount;
-            [HideInInspector] public GameObject[] Cache;
-            [HideInInspector] public GameObject Go;
+            private GameObject m_parentGo;
 
-            private ObjectPoolEntry()
+            public ObjectPoolEntry()
             {
-            } // Do not allow default contructor
+                //Name = "";
+                //InitialSize = 0;
+                m_parentGo = null;
+                Prefab = null;
+                Cache = null;
+            }
 
-            public ObjectPoolEntry(GameObject go, int size)
+            public void Init(GameObject parentGo, GameObject prefab)
             {
-                Go = go;
-                PreloadCount = size;
+                m_parentGo = parentGo;
+                Prefab = prefab;
+
+                Cache = new ObjectPool<GameObject>(
+                    () =>
+                    {
+                        GameObject newGO = Instantiate(Prefab);
+                        newGO.name = Prefab.name;
+                        newGO.SetActive(false);
+                        newGO.transform.parent = m_parentGo.transform; // Make this object a parent of the pooled object
+                        return newGO;
+                    },
+                    InitialSize
+                    );
             }
 
             public void Push(GameObject go)
             {
-                // There is a limit to how much objects we can hold
-                if (PolledCount>=Cache.Length)
-                    throw new InvalidOperationException(string.Format("{0}: Object pool is full", ToString()));
+                // Deactive object, reset its' transform and physics data
+                go.SetActive(false);                
 
-                // Deactive object, reset its transform and physics data
-                go.SetActive(false);
-                go.transform.parent = Go.transform; // Make this object a parent of the pooled object
-                //if (go.rigidbody != null)
-                //	go.rigidbody.velocity = Vector3.zero;
+                Rigidbody rbody = go.GetComponent<Rigidbody>();
+                if (rbody != null)
+                    rbody.velocity = Vector3.zero;
 
                 // Place a pointer to our object to the back of our cache list
-                Cache[PolledCount++] = go;
+                Cache.Push(go);
             }
 
             public GameObject Pop()
             {
-                GameObject go;
-
-                if (PolledCount>0)
-                {
-                    // Return an object being located on the back of our cache list
-                    go = Cache[--PolledCount];
-
-                    // Reset transform and active it
-                    //go.transform.parent = null;
-                    go.SetActive(true);
-                }
-                else
-                {
-                    // No space left in pool, instantiate a new object
-                    //go = (GameObject)Instantiate (pool.Prefab);
-                    throw new InvalidOperationException(string.Format("{0}: object pool is empty", ToString()));
-                }
+                GameObject go = Cache.Pop();
+                
+                // Reset transform and active it
+                //go.transform.parent = null;
+                go.SetActive(true);
 
                 return go;
             }
