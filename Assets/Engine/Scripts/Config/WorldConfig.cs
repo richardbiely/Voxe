@@ -27,7 +27,7 @@ namespace Assets.Engine.Scripts.Config
 
         internal WorldConfig()
         {
-            VisibleRange = 6;
+            VisibleRange = 10;
             CachedRange = VisibleRange+1;
             Streaming = false;
             Infinite = true;
