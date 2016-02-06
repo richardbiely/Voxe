@@ -1,8 +1,9 @@
-﻿using Assets.Engine.Scripts.Common.Threading;
+﻿using Assets.Engine.Scripts.Builders;
+using Assets.Engine.Scripts.Common.Threading;
 
-namespace Assets.Engine.Scripts.Core.Threading
+namespace Assets.Engine.Scripts.Core
 {
-    static class Core
+    public static class Globals
     {
         // Thread pool
         private static ThreadPool _sThreadPool;
@@ -31,6 +32,19 @@ namespace Assets.Engine.Scripts.Core.Threading
                     _sIOPool.Start();
                 }
                 return _sIOPool;
+            }
+        }
+
+        // Mesh builder
+        private static IMeshBuilder _sCubeMeshBuilder;
+
+        public static IMeshBuilder CubeMeshBuilder
+        {
+            get
+            {
+                if (_sCubeMeshBuilder == null)
+                    _sCubeMeshBuilder = new CubeMeshBuilder();
+                return _sCubeMeshBuilder;
             }
         }
     }

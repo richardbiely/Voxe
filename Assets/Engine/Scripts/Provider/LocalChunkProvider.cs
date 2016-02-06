@@ -177,7 +177,7 @@ namespace Assets.Engine.Scripts.Provider
         
         private static void RequestChunkFromDisk(Chunk chunk, string filePath)
         {
-            Core.Threading.Core.IOPool.AddItem(arg =>
+            Globals.IOPool.AddItem(arg =>
                 {
                     if (LoadChunkFromDisk(chunk, filePath))
                     {

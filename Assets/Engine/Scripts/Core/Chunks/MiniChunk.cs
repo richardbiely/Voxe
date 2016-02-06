@@ -54,8 +54,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
             m_parentChunk = parentChunk;
             OffsetY = positionY * EngineSettings.ChunkConfig.SizeY;
 
-            m_drawCallBatcher = new DrawCallBatcher();
-            SolidRenderBuffer = new RenderBuffer();
+            m_drawCallBatcher = new DrawCallBatcher(Globals.CubeMeshBuilder);
+            SolidRenderBuffer = new RenderBuffer(Globals.CubeMeshBuilder);
             BBoxVertices = new List<Vector3>();
             BBoxVerticesTransformed = new List<Vector3>();
 

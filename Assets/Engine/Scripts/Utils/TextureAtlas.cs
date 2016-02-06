@@ -5,7 +5,7 @@ namespace Assets.Engine.Scripts.Atlas
     /// <summary>
     /// Utility class for retrieving texture rectangles
     /// </summary>
-    public static class AtlasUtils
+    public static class TextureAtlas
     {
         #region Constants
 	

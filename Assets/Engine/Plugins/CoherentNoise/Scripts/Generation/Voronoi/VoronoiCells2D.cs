@@ -1,17 +1,16 @@
 using System;
-using Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Displacement;
 using UnityEngine;
 
 namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Voronoi
 {
-	/// <summary>
-	/// Voronoi cell diagram uses a set of control points to partition space into cells. Each point in space belongs to a cell that corresponds to closest control point.
-	/// This generator distributes control pointsby randomly displacing points with integer coordinates. Thus, every unit-sized cube will have a single control point in it,
-	/// randomly placed. A user-supplied function is then used to obtain cell value for a given point.
-	/// 
-	/// 2D version is faster, but ignores Z coordinate.
-	/// </summary>
-	public class VoronoiCells2D : Generator
+    /// <summary>
+    /// Voronoi cell diagram uses a set of control points to partition space into cells. Each point in space belongs to a cell that corresponds to closest control point.
+    /// This generator distributes control pointsby randomly displacing points with integer coordinates. Thus, every unit-sized cube will have a single control point in it,
+    /// randomly placed. A user-supplied function is then used to obtain cell value for a given point.
+    /// 
+    /// 2D version is faster, but ignores Z coordinate.
+    /// </summary>
+    public class VoronoiCells2D : Generator
 	{
 		private readonly Func<int, int, float> m_cellValueSource;
 		private readonly LatticeNoise[] m_controlPointSource;

@@ -9,7 +9,7 @@
         BlockData this[int x, int y, int z] { get; set; }
 
         void Set(BlockData[] data);
-        void Set(int x, int y, int z, BlockData data);
+
         void Reset();
         BlockData[] ToArray();
     }

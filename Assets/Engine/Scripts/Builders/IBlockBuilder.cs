@@ -6,7 +6,7 @@ using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 namespace Assets.Engine.Scripts.Builders
 {
     /// <summary>
-    /// Interface for building static meshes for blocks
+    ///     Interface for building static meshes for blocks
     /// </summary>
     public interface IBlockBuilder
     {

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Assets.Engine.Scripts.Atlas;
 using Assets.Engine.Scripts.Common.Extensions;
-using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Core.Blocks;
 using Assets.Engine.Scripts.Utils;
 using UnityEngine;
@@ -19,7 +18,7 @@ namespace Assets.Engine.Scripts.Builders
         private readonly Rect[] m_faceTextures;
 
         #endregion Private vars
-
+        
         #region Constructor
 
         public CubeBuilder(IList<BlockTexture> textures)
@@ -27,7 +26,7 @@ namespace Assets.Engine.Scripts.Builders
             m_faceTextures = new Rect[textures.Count];
             for (int i = 0; i<textures.Count; i++)
             {
-                m_faceTextures[i] = AtlasUtils.GetRectangle((int)textures[i]);
+                m_faceTextures[i] = TextureAtlas.GetRectangle((int)textures[i]);
             }
         }
 
@@ -72,16 +71,13 @@ namespace Assets.Engine.Scripts.Builders
             return m_faceTextures[face];
         }
 
-        public void Build(RenderBuffer targetBuffer, ref BlockData block, BlockFace face, bool backFace,
-            ref Vector3[] vecs)
+        public void Build(RenderBuffer targetBuffer, ref BlockData block, BlockFace face, bool backFace, ref Vector3[] vecs)
         {
             int iface = (int)face;
-
             float dmg = block.GetDamagePercent();
             Color32 color = BlockDatabase.GetBlockInfo(block.BlockType).Color;
-
-            // Empty block found, create a face
-            targetBuffer.AddFaceIndices(backFace);
+            
+            targetBuffer.AddIndices(backFace);
             targetBuffer.AddVertices(ref vecs);
             targetBuffer.AddFaceColors(ref color);
             targetBuffer.AddFaceUv(GetTexture(iface));

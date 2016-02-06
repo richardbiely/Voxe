@@ -3,7 +3,7 @@ using Assets.Engine.Scripts.Common;
 
 namespace Assets.Engine.Scripts.Core.Blocks
 {
-    class BlockStorage: IBlockStorage
+    public class BlockStorage: IBlockStorage
     {
         //public static readonly int StrideX = ((EngineSettings.WorldConfig.CachedRange*2) + 1)*EngineSettings.ChunkConfig.SizeX;
         //public static readonly int StrideZ = ((EngineSettings.WorldConfig.CachedRange*2) + 1)*EngineSettings.ChunkConfig.SizeZ;
@@ -34,11 +34,6 @@ namespace Assets.Engine.Scripts.Core.Blocks
         public void Set(BlockData[] data)
         {
             Blocks = data;
-        }
-
-        public void Set(int x, int y, int z, BlockData data)
-        {
-            throw new NotImplementedException();
         }
 
         public void Reset()

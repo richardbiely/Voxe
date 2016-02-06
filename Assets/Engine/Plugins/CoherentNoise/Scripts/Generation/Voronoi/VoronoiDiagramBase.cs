@@ -1,15 +1,14 @@
-using Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Displacement;
 using UnityEngine;
 
 namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Voronoi
 {
-	/// <summary>
-	/// Base class for Voronoi diagrams generators. Voronoi diagrams use a set of control points, that are somehow distributed, and for every point calculate distances to the closest control points.
-	/// These distances are then combined to obtain final noise value.
-	/// This generator distributes control points by randomly displacing points with integer coordinates. Thus, every unit-sized cube will have a single control point in it,
-	/// randomly placed.
-	/// </summary>
-	public abstract class VoronoiDiagramBase : Generator
+    /// <summary>
+    /// Base class for Voronoi diagrams generators. Voronoi diagrams use a set of control points, that are somehow distributed, and for every point calculate distances to the closest control points.
+    /// These distances are then combined to obtain final noise value.
+    /// This generator distributes control points by randomly displacing points with integer coordinates. Thus, every unit-sized cube will have a single control point in it,
+    /// randomly placed.
+    /// </summary>
+    public abstract class VoronoiDiagramBase : Generator
 	{
 		private readonly LatticeNoise[] m_controlPointSource;
 

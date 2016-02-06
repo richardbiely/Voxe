@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Text;
 using Assets.Engine.Scripts.Core;
-using Assets.Engine.Scripts.Core.Threading;
 using UnityEngine;
 using Assets.Engine.Scripts.Common.Extensions;
 
@@ -95,8 +94,8 @@ namespace Assets.Client.Scripts.Misc
                 );
 
             m_text.AppendFormat("Chunks: {0}\n", Map.ChunkCnt.ToString());
-            m_text.AppendFormat("ThreadPool items {0}\n", Core.WorkPool.Size.ToString());
-            m_text.AppendFormat("TaskPool items {0}\n", Core.IOPool.Size.ToString());
+            m_text.AppendFormat("ThreadPool items {0}\n", Globals.WorkPool.Size.ToString());
+            m_text.AppendFormat("TaskPool items {0}\n", Globals.IOPool.Size.ToString());
 
             GUI.Box(new Rect(5, 5, 300, 160), "");
             GUI.Label(new Rect(10, 5, 1000, 200), m_text.ToString());

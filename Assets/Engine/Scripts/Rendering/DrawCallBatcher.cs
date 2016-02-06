@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Assets.Engine.Scripts.Builders;
 using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Provider;
 using UnityEngine;
@@ -18,9 +19,9 @@ namespace Assets.Engine.Scripts.Rendering
         
         public Vector3Int Pos { get; set; }
 
-        public DrawCallBatcher()
+        public DrawCallBatcher(IMeshBuilder builder)
         {
-            m_renderBuffer = new RenderBuffer();
+            m_renderBuffer = new RenderBuffer(builder);
             m_drawCalls = new List<GameObject>();
             m_drawCallRenderers = new List<Renderer>();
 
@@ -86,13 +87,8 @@ namespace Assets.Engine.Scripts.Rendering
                 for (int j = 0; j < renderBuffer.Triangles.Count; j++)
                     renderBuffer.Triangles[j] += vOffset;
             }
-
-            m_renderBuffer.Positions.AddRange(renderBuffer.Positions);
-            m_renderBuffer.Normals.AddRange(renderBuffer.Normals);
-            m_renderBuffer.UVs.AddRange(renderBuffer.UVs);
-            m_renderBuffer.UV2.AddRange(renderBuffer.UV2);
-            m_renderBuffer.Colors.AddRange(renderBuffer.Colors);
-            m_renderBuffer.Triangles.AddRange(renderBuffer.Triangles);
+            
+            m_renderBuffer.Combine(renderBuffer);
         }
 
         private void Flush()
@@ -113,7 +109,7 @@ namespace Assets.Engine.Scripts.Rendering
 
                 Mesh mesh = ObjectPoolProvider.Meshes.Pop();
                 Assert.IsTrue(mesh.vertices.Length<=0);
-                m_renderBuffer.CopyToMesh(mesh, false);
+                m_renderBuffer.BuildMesh(mesh);
 
                 MeshFilter filter = go.GetComponent<MeshFilter>();
                 filter.sharedMesh = null;

@@ -1,5 +1,4 @@
-﻿using Assets.Engine.Scripts.Common.DataTypes;
-using UnityEngine;
+﻿using UnityEngine;
 using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
 namespace Assets.Engine.Scripts.Common.Extensions
@@ -9,7 +8,7 @@ namespace Assets.Engine.Scripts.Common.Extensions
         /// <summary>
         ///     Adds triangle indices for a quad
         /// </summary>
-        public static void AddFaceIndices(this RenderBuffer target, bool backFace)
+        public static void AddIndices(this RenderBuffer target, bool backFace)
         {
             int offset = target.Positions.Count;
 
@@ -38,16 +37,6 @@ namespace Assets.Engine.Scripts.Common.Extensions
         /// <summary>
         ///     Adds the vertices to the render buffer.
         /// </summary>
-        public static void AddVertices(this RenderBuffer target, ref Vector3[] vertices, ref Vector3Int offset)
-        {
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                target.Positions.Add(
-                    new Vector3(vertices[i].x + offset.X, vertices[i].y + offset.Y, vertices[i].z + offset.Z)
-                    );
-            }
-        }
-
         public static void AddVertices(this RenderBuffer target, ref Vector3[] vertices)
         {
             target.Positions.AddRange(vertices);
@@ -69,10 +58,10 @@ namespace Assets.Engine.Scripts.Common.Extensions
         /// </summary>
         public static void AddFaceUv(this RenderBuffer target, Rect texCoords)
         {
-            target.UVs.Add(new Vector2(texCoords.xMax, 1f - texCoords.yMax));
-            target.UVs.Add(new Vector2(texCoords.xMax, 1f - texCoords.yMin));
-            target.UVs.Add(new Vector2(texCoords.xMin, 1f - texCoords.yMin));
-            target.UVs.Add(new Vector2(texCoords.xMin, 1f - texCoords.yMax));
+            target.UV1.Add(new Vector2(texCoords.xMax, 1f - texCoords.yMax));
+            target.UV1.Add(new Vector2(texCoords.xMax, 1f - texCoords.yMin));
+            target.UV1.Add(new Vector2(texCoords.xMin, 1f - texCoords.yMin));
+            target.UV1.Add(new Vector2(texCoords.xMin, 1f - texCoords.yMax));
         }
 
         public const int DamageFrames = 10;
