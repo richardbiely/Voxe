@@ -45,7 +45,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         public bool RequestedRemoval;
 
-        #endregion Public variables
+#if     DEBUG
+        public bool IsUsed = false;
+#endif
+
+#endregion Public variables
 
         #region Private variables
 
@@ -85,7 +89,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             for (int i = 0; i<Sections.Length; i++)
                 Sections[i] = new MiniChunk(this, i);
             
-            Reset(false);
+            Reset();
         }
 
         #endregion Constructors
@@ -173,7 +177,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             }
         }
 
-        public void Reset(bool canBeLoaded)
+        public void Reset()
         {
             UnregisterFromNeighbors();
             
@@ -205,7 +209,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             foreach (MiniChunk section in Sections)
                 section.Reset();
 
-			base.Reset();
+            ResetEvent();
         }
 
 		/// <summary>
@@ -905,11 +909,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		private static readonly ChunkState CurrStateGenerateVertices = ChunkState.BuildVertices;
 		private static readonly ChunkState NextStateGenerateVertices = ChunkState.Idle;
-
-        private static int GetBlockType(Chunk chunk, int x, int y, int z)
-        {
-            return (int)chunk.Blocks[x, y, z].BlockType;
-        }
 
 		private static void OnGenerateVerices(Chunk chunk, int setBlockSections, int minY, int maxY)
 		{

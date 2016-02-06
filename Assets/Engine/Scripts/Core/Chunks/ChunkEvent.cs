@@ -15,10 +15,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
             Subscribers = Helpers.CreateArray1D<ChunkEvent>(subscribers);
 
-            Reset();
+            ResetEvent();
         }
 
-        protected void Reset()
+        protected void ResetEvent()
         {
             SubscribersCurr = 0;
             for (int i = 0; i<Subscribers.Length; i++)

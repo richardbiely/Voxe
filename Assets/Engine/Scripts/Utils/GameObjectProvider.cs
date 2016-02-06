@@ -2,6 +2,7 @@
 using Assets.Engine.Scripts.Common;
 using Assets.Engine.Scripts.Common.Collections;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Assets.Engine.Scripts.Provider
 {
@@ -119,6 +120,7 @@ namespace Assets.Engine.Scripts.Provider
                 
                 // Reset transform and active it
                 //go.transform.parent = null;
+                Assert.IsTrue(!go.activeSelf, "Popped an active gameObject!");
                 go.SetActive(true);
 
                 return go;

@@ -9,6 +9,7 @@ using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Core.Blocks;
 using UnityEngine;
 using Assets.Engine.Scripts.Generators.Terrain;
+using UnityEngine.Assertions;
 
 namespace Assets.Engine.Scripts.Provider
 {
@@ -208,6 +209,9 @@ namespace Assets.Engine.Scripts.Provider
         public Chunk RequestChunk(int cx, int cz)
         {
             Chunk chunk = ObjectPoolProvider.Chunks.Pop();
+#if DEBUG
+            Assert.IsTrue(!chunk.IsUsed, "Popped a chunk which is still in use!");
+#endif
             chunk.Init(cx, cz);
             
             if (EngineSettings.WorldConfig.Streaming)
@@ -236,7 +240,10 @@ namespace Assets.Engine.Scripts.Provider
         // save chunk to disk
         public bool ReleaseChunk(Chunk chunk)
         {
-            chunk.Reset(false);
+            chunk.Reset();
+#if DEBUG
+            chunk.IsUsed = false;
+#endif
             ObjectPoolProvider.Chunks.Push(chunk);
 
             return true;
