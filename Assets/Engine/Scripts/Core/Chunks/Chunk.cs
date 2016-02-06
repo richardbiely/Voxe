@@ -272,6 +272,20 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			QueueSetBlock(this, x, y, z, blockData);
 		}
 
+        /// <summary>
+        ///     Chunks whether the chunk resides within camera frustum
+        /// </summary>
+        public bool CheckFrustum(Plane[] frustum)
+        {
+            foreach (MiniChunk section in Sections)
+            {
+                if (GeometryUtility.TestPlanesAABB(frustum, section.WorldBounds))
+                    return true;
+            }
+            
+            return false;
+        }
+
         // Calculate lowest empty and highest solid block position
 		/* TODO: Lowest/highest block can be computed while the terrain is generated. This
 		 * would speed things up for initial chunk generation.

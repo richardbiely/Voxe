@@ -8,6 +8,7 @@ using Assets.Engine.Scripts.Provider;
 using UnityEngine;
 using UnityEngine.Assertions;
 using System.Linq;
+using Assets.Engine.Scripts.Common.Math;
 using Assets.Engine.Scripts.Core.Threading;
 using Assets.Engine.Scripts.Rendering;
 
@@ -30,11 +31,11 @@ namespace Assets.Engine.Scripts.Core
         //! Chunks to be removed
         private List<Chunk> m_chunksToRemove;
         
-        
         private Rect m_viewRange;
         private Rect m_cachedRange;
 
         private Camera m_camera;
+        private Plane[] m_cameraPlanes = new Plane[6];
 
         private Vector2Int[] m_chunksToLoadByPos;
 
@@ -156,8 +157,8 @@ namespace Assets.Engine.Scripts.Core
 
         private bool IsChunkInViewFrustum(Chunk chunk)
         {
-            Vector3 screenPoint = m_camera.WorldToViewportPoint(chunk.WorldBounds.center);
-            return screenPoint.x>0 && screenPoint.x<1 && screenPoint.y>0 && screenPoint.y<1;
+            // Check if the chunk lies within camera planes
+            return chunk.CheckFrustum(m_cameraPlanes);
         }
 
         private bool IsWithinVisibilityRange(Chunk chunk)
@@ -172,6 +173,8 @@ namespace Assets.Engine.Scripts.Core
 
         private void UpdateRangeRects()
         {
+            Geometry.CalculateFrustumPlanes(m_camera, ref m_cameraPlanes);
+
             m_viewRange = new Rect(
                 ViewerChunkPos.X-EngineSettings.WorldConfig.VisibleRange,
                 ViewerChunkPos.Z-EngineSettings.WorldConfig.VisibleRange,

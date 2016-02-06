@@ -182,7 +182,7 @@ Prefab:
       objectReference: {fileID: 812507054}
     - target: {fileID: 11455066, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: Occlusion
