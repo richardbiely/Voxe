@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Assets.Engine.Scripts.Common;
-using Assets.Engine.Scripts.Core.Chunks;
 using UnityEngine;
 
 namespace Assets.Engine.Scripts.Rendering
@@ -49,8 +48,6 @@ namespace Assets.Engine.Scripts.Rendering
             for (int i = 0; i<m_currEntiesCnt; i++)
             {
                 IOcclusionEntity entity = m_entites[i];
-                MiniChunk section = (MiniChunk)entity;
-                
                 entity.Visible = false;
 
                 List<Vector3> vertices = entity.BBoxVerticesTransformed;

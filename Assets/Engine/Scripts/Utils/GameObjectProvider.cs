@@ -89,13 +89,17 @@ namespace Assets.Engine.Scripts.Provider
                 Prefab = prefab;
 
                 Cache = new ObjectPool<GameObject>(
-                    () =>
+                    arg =>
                     {
                         GameObject newGO = Instantiate(Prefab);
                         newGO.name = Prefab.name;
                         newGO.SetActive(false);
                         newGO.transform.parent = m_parentGo.transform; // Make this object a parent of the pooled object
                         return newGO;
+                    },
+                    arg =>
+                    {
+                        Destroy(arg);
                     },
                     InitialSize
                     );

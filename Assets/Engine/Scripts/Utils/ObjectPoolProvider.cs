@@ -12,7 +12,7 @@ namespace Assets.Engine.Scripts.Provider
         private const int ChunkCnt = 16;
         private const int MeshCnt = 16;
 
-        public static readonly ObjectPool<Chunk> Chunks = new ObjectPool<Chunk> (() => new Chunk (), ChunkCnt);
-        public static readonly ObjectPool<Mesh> Meshes = new ObjectPool<Mesh> (() => new Mesh (), MeshCnt);
+        public static readonly ObjectPool<Chunk> Chunks = new ObjectPool<Chunk>(ch => new Chunk (), ChunkCnt);
+        public static readonly ObjectPool<Mesh> Meshes = new ObjectPool<Mesh>(m => new Mesh (), MeshCnt);
     }
 }
