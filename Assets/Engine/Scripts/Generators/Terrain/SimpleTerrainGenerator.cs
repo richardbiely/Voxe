@@ -35,10 +35,10 @@ namespace Assets.Engine.Scripts.Generators.Terrain
 							{
 								chunk[index] = new BlockData(BlockType.Grass);
                                 // Grass block was placed, lets place a tree blueprint here
-                                if (y < EngineSettings.ChunkConfig.SizeYTotal)
-                                {
-                                    //int height =
-                                }
+                                //if (y < EngineSettings.ChunkConfig.SizeYTotal)
+                                //{
+                                //    //int height =
+                                //}
                             }
 							else
 							{

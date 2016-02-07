@@ -2,7 +2,6 @@ using System;
 using Assets.Engine.Scripts.Builders;
 using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Common.Extensions;
-using Assets.Engine.Scripts.Common.IO.RLE;
 using Assets.Engine.Scripts.Common.Threading;
 using Assets.Engine.Scripts.Core.Blocks;
 using Assets.Engine.Scripts.Core.Threading;
@@ -20,10 +19,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 	public class Chunk: ChunkEvent
     {
         #region Public variables        
-
-        public readonly RLE<BlockData> RLE;
-
-        public readonly IBlockStorage Blocks;
+        
+        public readonly BlockStorage Blocks;
 
         public readonly MiniChunk[] Sections;
 
@@ -82,7 +79,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public Chunk():
 			base(4)
         {
-            RLE = new RLE<BlockData>();
             Blocks = new BlockStorage();
 
             Sections = new MiniChunk[EngineSettings.ChunkConfig.StackSize];
@@ -731,16 +727,18 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		{
 			// Generate height limits
 			chunk.CalculateProperties();
+            // Compress chunk data
+            //chunk.Blocks.IsCompressed = true;
+            // Compress chunk data
+            // Only do this when streaming is enabled for now
+            if (EngineSettings.WorldConfig.Streaming)
+            {
+                chunk.Blocks.RLE.Reset();
+                BlockData[] compressedData = chunk.Blocks.ToArray();
+                chunk.Blocks.RLE.Compress(ref compressedData);
+            }
 
-			// Compress chunk data
-			// Only do this when streaming is enabled for now
-			if (EngineSettings.WorldConfig.Streaming)
-			{
-				chunk.RLE.Reset();
-				chunk.RLE.Compress(chunk.Blocks.ToArray());
-			}
-
-		    lock (chunk.m_lock)
+            lock (chunk.m_lock)
 		    {
 		        OnFinalizeDataDone(chunk);
 		    }

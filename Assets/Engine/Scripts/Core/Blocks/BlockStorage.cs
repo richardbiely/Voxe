@@ -1,63 +1,101 @@
 ﻿using System;
 using Assets.Engine.Scripts.Common;
+using Assets.Engine.Scripts.Common.IO.RLE;
+using UnityEngine;
 
 namespace Assets.Engine.Scripts.Core.Blocks
 {
-    public class BlockStorage: IBlockStorage
+    public class BlockStorage : IBlockStorage
     {
-        //public static readonly int StrideX = ((EngineSettings.WorldConfig.CachedRange*2) + 1)*EngineSettings.ChunkConfig.SizeX;
-        //public static readonly int StrideZ = ((EngineSettings.WorldConfig.CachedRange*2) + 1)*EngineSettings.ChunkConfig.SizeZ;
+        private BlockStorageArray m_arrStorage;
+        private BlockStorageRLE m_rleStorage;
+        private IBlockStorage m_currStorage;
+        private bool m_isCompressed;
 
-        //public static readonly int XStep = StrideZ * EngineSettings.ChunkConfig.SizeY;
-        //public static readonly int ZStep = EngineSettings.ChunkConfig.SizeY;
-
-        public BlockData[] Blocks { get; set; }
-
+        public RLE<BlockData> RLE { get { return m_rleStorage.RLE; } }
+        
         public BlockStorage()
         {
-            Blocks = Helpers.CreateArray1D<BlockData>(EngineSettings.ChunkConfig.SizeX*EngineSettings.ChunkConfig.SizeZ*EngineSettings.ChunkConfig.SizeYTotal);
-            //Blocks = Helpers.CreateArray1D<BlockData>(StrideX * StrideZ * EngineSettings.ChunkConfig.SizeY);
+            m_arrStorage = new BlockStorageArray();
+            m_rleStorage = new BlockStorageRLE();
+            m_currStorage = m_arrStorage;
+            m_isCompressed = false;
         }
+
+        public bool IsCompressed
+        {
+            get { return m_isCompressed; }
+            set
+            {
+                // Ignore if there's no change
+                if (value==m_isCompressed)
+                    return;
+
+                // Compression requested
+                if (value)
+                {
+                    try
+                    {
+                        m_rleStorage.Set(ref m_arrStorage.Blocks);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError(ex.Message);
+                    }
+
+                    // Change current storage method to RLE and release the old one
+                    m_currStorage = m_rleStorage;
+                    m_arrStorage = null;
+                }
+                else
+                // Decompression requested
+                {
+                    m_arrStorage = new BlockStorageArray();
+                    m_rleStorage.ToArray(ref m_arrStorage.Blocks);
+
+                    // Change current storage method to array and reset RLE
+                    m_rleStorage.Reset();
+                    m_currStorage = m_arrStorage;
+                }
+
+                m_isCompressed = value;
+            }
+        }
+
+        #region IBlockStorage implementation
 
         public BlockData this[int index]
         {
-            get { return Blocks[index]; }
-            set { Blocks[index] = value; }
+            get { return m_currStorage[index]; }
+            set { m_currStorage[index] = value; }
         }
 
         public BlockData this[int x, int y, int z]
         {
-            get { return Blocks[Helpers.GetIndex1DFrom3D(x, y, z)]; }
-            set { Blocks[Helpers.GetIndex1DFrom3D(x, y, z)] = value; }
+            get { return m_currStorage[Helpers.GetIndex1DFrom3D(x, y, z)]; }
+            set { m_currStorage[Helpers.GetIndex1DFrom3D(x, y, z)] = value; }
         }
 
-        public void Set(BlockData[] data)
+        public void Set(ref BlockData[] data)
         {
-            Blocks = data;
+            m_currStorage.Set(ref data);
         }
 
         public void Reset()
         {
-            Array.Clear(Blocks, 0, Blocks.Length);
+            m_currStorage.Reset();
         }
 
         public BlockData[] ToArray()
         {
-            return Blocks;
+            return m_currStorage.ToArray();
         }
 
-        //public static int BlockIndexByWorldPosition(int x, int z)
-        //{
-        //    int wrapX = x%StrideX;
-        //    if (wrapX < 0)
-        //        wrapX += StrideX;
+        public void ToArray(ref BlockData[] outData)
+        {
+            m_currStorage.ToArray(ref outData);
+        }
 
-        //    int wrapZ = z%StrideZ;
-        //    if (wrapZ < 0)
-        //        wrapZ += StrideZ;
-
-        //    int index = wrapX * XStep + wrapZ * ZStep;
-        //    return index;
-        //}
+        #endregion
     }
 }

@@ -214,7 +214,7 @@ namespace Assets.Engine.Scripts.Common.IO.RLE
 			}
 		}
 
-        public void Compress(T[] data)
+        public void Compress(ref T[] data)
         {
             if (data == null || data.Length == 0)
                 return;
@@ -240,6 +240,19 @@ namespace Assets.Engine.Scripts.Common.IO.RLE
             }
             
             List.Add(new RLEDataPair<T>(cnt, prevVal));
+        }
+
+        public void Decompress(ref T[] outData)
+        {
+            int offset = 0;
+            for (int i = 0; i < List.Count; i++)
+            {
+                RLEDataPair<T> pair = List[i];
+                for (int j = 0; j < pair.Key; j++)
+                    outData[offset + j] = pair.Value;
+
+                offset += pair.Key;
+            }
         }
 
         public T[] Decompress()
@@ -270,7 +283,7 @@ namespace Assets.Engine.Scripts.Common.IO.RLE
             }
         }
 
-        readonly T m_dummy = new T();
+        private readonly T m_dummy = new T();
 
         public void Debinarize(BinaryReader br)
         {

@@ -119,9 +119,11 @@ namespace Assets.Engine.Scripts.Provider
                 }
 
                 // Convert byte array to array of BlockData structs
-                chunk.RLE.Assign(StructSerializers.DeserializeArrayToList<RLEDataPair<BlockData>>(filedata));
-
-                chunk.Blocks.Set(chunk.RLE.Decompress());
+                chunk.Blocks.RLE.Assign(StructSerializers.DeserializeArrayToList<RLEDataPair<BlockData>>(ref filedata));
+                // Decompress data
+                //chunk.Blocks.IsCompressed = false;
+                var decompressedData = chunk.Blocks.RLE.Decompress();
+                chunk.Blocks.Set(ref decompressedData);
             }
             catch (Exception ex)
             {
@@ -139,7 +141,10 @@ namespace Assets.Engine.Scripts.Provider
         {
             try
             {
-                var buff = StructSerializers.SerializeArray(chunk.RLE.List);
+                // Make sure the data is compressed
+                //chunk.Blocks.IsCompressed = true;
+                // Serialize compressed data
+                var buff = StructSerializers.SerializeArray(chunk.Blocks.RLE.List);
 
                 FileStream fs = null;
                 try

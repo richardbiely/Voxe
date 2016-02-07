@@ -48,7 +48,7 @@ namespace Assets.Engine.Scripts.UnitTesting
 
             
             RLE<RLEData> rle = new RLE<RLEData>();
-            rle.Compress(rledata);
+            rle.Compress(ref rledata);
 
 
             RLEData[] decompressed = rle.Decompress();
