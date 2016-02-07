@@ -8,7 +8,7 @@ namespace Assets.Engine.Scripts.Common.IO
     public static class StructSerializers
     {
         // Convert a struct to byte array
-        public static byte[] Serialize<T>(T data) where T : struct
+        public static byte[] Serialize<T>(ref T data) where T : struct
         {
             var dummyValue = default(T);
             int objSize = Marshal.SizeOf(dummyValue);
@@ -25,7 +25,7 @@ namespace Assets.Engine.Scripts.Common.IO
         }      
 
         // Convert a struct array to byte array
-        public static byte[] SerializeArray<T>(T[] data) where T : struct
+        public static byte[] SerializeArray<T>(ref T[] data) where T : struct
         {
             var dummyValue = default(T);
             int objSize = Marshal.SizeOf(dummyValue);
@@ -66,7 +66,7 @@ namespace Assets.Engine.Scripts.Common.IO
         }
 
         // Convert a byte array to a struct
-        public static T Deserialize<T>(byte[] data) where T : struct
+        public static T Deserialize<T>(ref byte[] data) where T : struct
         {
             //if(Marshal.SizeOf(typeof (T))<data.Length)
             //    throw new Exception("Input data too small");
@@ -83,7 +83,7 @@ namespace Assets.Engine.Scripts.Common.IO
         }
 
         // Convert a byte array to a struct array
-        public static T[] DeserializeArray<T>(byte[] data) where T : struct
+        public static T[] DeserializeArray<T>(ref byte[] data) where T : struct
         {
             //if (Marshal.SizeOf(typeof(T)) < data.Length)
             //    throw new Exception("Input data too small");
@@ -105,7 +105,7 @@ namespace Assets.Engine.Scripts.Common.IO
             return ret;
         }
 
-        public static List<T> DeserializeArrayToList<T>(byte[] data) where T : struct
+        public static List<T> DeserializeArrayToList<T>(ref byte[] data) where T : struct
         {
             //if (Marshal.SizeOf(typeof(T)) < data.Length)
             //    throw new Exception("Input data too small");

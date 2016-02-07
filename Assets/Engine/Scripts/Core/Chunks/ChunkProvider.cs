@@ -119,7 +119,7 @@ namespace Assets.Engine.Scripts.Provider
                 }
 
                 // Convert byte array to array of BlockData structs
-                chunk.RLE.Assign(StructSerializers.DeserializeArrayToList<RLEDataPair<BlockData>>(filedata));
+                chunk.RLE.Assign(StructSerializers.DeserializeArrayToList<RLEDataPair<BlockData>>(ref filedata));
 
                 chunk.Blocks.Set(chunk.RLE.Decompress());
             }
