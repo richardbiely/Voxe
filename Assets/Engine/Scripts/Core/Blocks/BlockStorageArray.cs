@@ -9,7 +9,7 @@ namespace Assets.Engine.Scripts.Core.Blocks
 
         public BlockStorageArray()
         {
-            Blocks = Helpers.CreateArray1D<BlockData>(EngineSettings.ChunkConfig.SizeX*EngineSettings.ChunkConfig.SizeZ*EngineSettings.ChunkConfig.SizeYTotal);
+            Blocks = Helpers.CreateArray1D<BlockData>(EngineSettings.ChunkConfig.Size*EngineSettings.ChunkConfig.Size*EngineSettings.ChunkConfig.SizeYTotal);
         }
 
         #region IBlockStorage implementation

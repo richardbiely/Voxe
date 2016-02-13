@@ -15,7 +15,7 @@ namespace Assets.Engine.Scripts.Common
         
         public static int GetIndex1DFrom2D(int x, int z)
         {
-            return x + (z << EngineSettings.ChunkConfig.LogSizeX);
+            return x + (z << EngineSettings.ChunkConfig.LogSize);
         }
 
         public static int GetIndex1DFrom3D(int x, int y, int z, int sizeX, int sizeZ)
@@ -26,8 +26,8 @@ namespace Assets.Engine.Scripts.Common
         public static int GetIndex1DFrom3D(int x, int y, int z)
         {
             return x +
-                (z << EngineSettings.ChunkConfig.LogSizeX) +
-                (y << EngineSettings.ChunkConfig.LogSizeXZ);
+                (z << EngineSettings.ChunkConfig.LogSize) +
+                (y << EngineSettings.ChunkConfig.LogSize2);
         }
 
         public static void GetIndex2DFrom1D(int index, out int x, out int z, int sizeX)
@@ -38,8 +38,8 @@ namespace Assets.Engine.Scripts.Common
 
         public static void GetIndex2DFrom1D(int index, out int x, out int z)
         {
-            x = index & EngineSettings.ChunkConfig.MaskX;
-            z = index >> EngineSettings.ChunkConfig.LogSizeX;
+            x = index & EngineSettings.ChunkConfig.Mask;
+            z = index >> EngineSettings.ChunkConfig.LogSize;
         }
 
         public static void GetIndex3DFrom1D(int index, out int x, out int y, out int z, int sizeX, int sizeZ)
@@ -51,9 +51,9 @@ namespace Assets.Engine.Scripts.Common
 
         public static void GetIndex3DFrom1D(int index, out int x, out int y, out int z)
         {
-            x = index & EngineSettings.ChunkConfig.MaskX;
-            y = index >> EngineSettings.ChunkConfig.LogSizeXZ;
-            z = (index >> EngineSettings.ChunkConfig.LogSizeX) & EngineSettings.ChunkConfig.MaskZ;
+            x = index & EngineSettings.ChunkConfig.Mask;
+            y = index >> EngineSettings.ChunkConfig.LogSize2;
+            z = (index >> EngineSettings.ChunkConfig.LogSize) & EngineSettings.ChunkConfig.Mask;
         }
 
         public static T[] CreateArray1D<T>(int size)

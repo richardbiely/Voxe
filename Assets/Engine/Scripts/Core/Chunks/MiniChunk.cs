@@ -52,7 +52,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public MiniChunk(Chunk parentChunk, int positionY)
         {
             m_parentChunk = parentChunk;
-            OffsetY = positionY * EngineSettings.ChunkConfig.SizeY;
+            OffsetY = positionY * EngineSettings.ChunkConfig.Size;
 
             m_drawCallBatcher = new DrawCallBatcher(Globals.CubeMeshBuilder);
             SolidRenderBuffer = new RenderBuffer(Globals.CubeMeshBuilder);
@@ -89,7 +89,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 return;
 
             m_drawCallBatcher.Clear();
-            m_drawCallBatcher.Pos = new Vector3Int(Pos.X, OffsetY >> EngineSettings.ChunkConfig.LogSizeY, Pos.Z);
+            m_drawCallBatcher.Pos = new Vector3Int(Pos.X, OffsetY >> EngineSettings.ChunkConfig.LogSize, Pos.Z);
             m_drawCallBatcher.Batch(SolidRenderBuffer);
             m_drawCallBatcher.FinalizeDrawCalls();
 

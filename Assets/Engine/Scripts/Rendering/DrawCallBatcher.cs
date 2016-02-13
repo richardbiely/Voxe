@@ -114,7 +114,7 @@ namespace Assets.Engine.Scripts.Rendering
                 MeshFilter filter = go.GetComponent<MeshFilter>();
                 filter.sharedMesh = null;
                 filter.sharedMesh = mesh;
-                filter.transform.position = new Vector3(Pos.X << EngineSettings.ChunkConfig.LogSizeX, 0, Pos.Z << EngineSettings.ChunkConfig.LogSizeZ);
+                filter.transform.position = new Vector3(Pos.X << EngineSettings.ChunkConfig.LogSize, 0, Pos.Z << EngineSettings.ChunkConfig.LogSize);
 
                 m_drawCalls.Add(go);
                 m_drawCallRenderers.Add(go.GetComponent<Renderer>());

@@ -129,15 +129,15 @@ namespace Assets.Engine.Scripts.Core.Chunks
             Pos = new Vector2Int(cx, cz);
 
             WorldBounds = new Bounds(
-                new Vector3(EngineSettings.ChunkConfig.SizeX*(cx+0.5f), EngineSettings.ChunkConfig.SizeYTotal*0.5f, EngineSettings.ChunkConfig.SizeZ*(cz+0.5f)),
-                new Vector3(EngineSettings.ChunkConfig.SizeX, EngineSettings.ChunkConfig.SizeYTotal, EngineSettings.ChunkConfig.SizeZ)
+                new Vector3(EngineSettings.ChunkConfig.Size*(cx+0.5f), EngineSettings.ChunkConfig.SizeYTotal*0.5f, EngineSettings.ChunkConfig.Size*(cz+0.5f)),
+                new Vector3(EngineSettings.ChunkConfig.Size, EngineSettings.ChunkConfig.SizeYTotal, EngineSettings.ChunkConfig.Size)
                 );
 
             foreach (MiniChunk section in Sections)
             {
                 section.WorldBounds = new Bounds(
-                    new Vector3(EngineSettings.ChunkConfig.SizeX*(cx+0.5f), section.OffsetY + EngineSettings.ChunkConfig.SizeY*0.5f, EngineSettings.ChunkConfig.SizeZ*(cz+0.5f)),
-                    new Vector3(EngineSettings.ChunkConfig.SizeX, EngineSettings.ChunkConfig.SizeY, EngineSettings.ChunkConfig.SizeZ)
+                    new Vector3(EngineSettings.ChunkConfig.Size*(cx+0.5f), section.OffsetY + EngineSettings.ChunkConfig.Size*0.5f, EngineSettings.ChunkConfig.Size*(cz+0.5f)),
+                    new Vector3(EngineSettings.ChunkConfig.Size, EngineSettings.ChunkConfig.Size, EngineSettings.ChunkConfig.Size)
                     );
             }
         }
@@ -292,21 +292,21 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             MinRenderY = EngineSettings.ChunkConfig.MaskYTotal;
 			MaxRenderY = 0;
-            MinRenderX = EngineSettings.ChunkConfig.MaskX;
+            MinRenderX = EngineSettings.ChunkConfig.Mask;
             MaxRenderX = 0;
-            MinRenderZ = EngineSettings.ChunkConfig.MaskZ;
+            MinRenderZ = EngineSettings.ChunkConfig.Mask;
             MaxRenderX = 0;
 
             int minY = EngineSettings.ChunkConfig.MaskYTotal, maxY = 0;
 
             for (int y = EngineSettings.ChunkConfig.MaskYTotal; y>=0; y--)
             {
-                int sectionIndex = y>>EngineSettings.ChunkConfig.LogSizeY;
+                int sectionIndex = y>>EngineSettings.ChunkConfig.LogSize;
 				MiniChunk section = Sections[sectionIndex];
 
-                for (int z = 0; z<EngineSettings.ChunkConfig.SizeZ; z++)
+                for (int z = 0; z<EngineSettings.ChunkConfig.Size; z++)
                 {
-                    for (int x = 0; x<EngineSettings.ChunkConfig.SizeX; x++)
+                    for (int x = 0; x<EngineSettings.ChunkConfig.Size; x++)
                     {
                         bool isEmpty = Blocks[x,y,z].IsEmpty();
                         if (!isEmpty)
@@ -336,8 +336,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             if (nonEmptyBlocks > 0)
             {
-                int posInWorldX = Pos.X<<EngineSettings.ChunkConfig.LogSizeX;
-                int posInWorldZ = Pos.Z<<EngineSettings.ChunkConfig.LogSizeZ;
+                int posInWorldX = Pos.X<<EngineSettings.ChunkConfig.LogSize;
+                int posInWorldZ = Pos.Z<<EngineSettings.ChunkConfig.LogSize;
 
                 // Build bounding mesh for each section
                 float width = (MaxRenderX - MinRenderX) + 1;
@@ -351,11 +351,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     if (startY>=maxY)
                         continue;
 
-                    int sectionMaxY = section.OffsetY + EngineSettings.ChunkConfig.MaskY;
+                    int sectionMaxY = section.OffsetY + EngineSettings.ChunkConfig.Mask;
                     if (startY >= sectionMaxY)
                         continue;
 
-                    int heightMax = startY+EngineSettings.ChunkConfig.SizeY;
+                    int heightMax = startY+EngineSettings.ChunkConfig.Size;
                     heightMax = Mathf.Min(heightMax, sectionMaxY);
                     heightMax = Mathf.Min(heightMax, maxY);
 
@@ -910,8 +910,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		private static void OnGenerateVerices(Chunk chunk, int setBlockSections, int minY, int maxY)
 		{
-			int minSection = minY >> EngineSettings.ChunkConfig.LogSizeY;
-			int maxSection = maxY >> EngineSettings.ChunkConfig.LogSizeY;
+			int minSection = minY >> EngineSettings.ChunkConfig.LogSize;
+			int maxSection = maxY >> EngineSettings.ChunkConfig.LogSize;
 
 		    for (int sectionIndex=minSection; sectionIndex<=maxSection; sectionIndex++)
 		    {
@@ -925,8 +925,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		        MiniChunk section = chunk.Sections[sectionIndex];
 		        section.SolidRenderBuffer.Clear();
                 
-                int offsetX = chunk.Pos.X*EngineSettings.ChunkConfig.SizeX;
-		        int offsetZ = chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ;
+                int offsetX = chunk.Pos.X*EngineSettings.ChunkConfig.Size;
+		        int offsetZ = chunk.Pos.Z*EngineSettings.ChunkConfig.Size;
 
 		        int i, j, k, l, w, h, u, v, n;
 		        BlockFace face = 0;
@@ -939,9 +939,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		        };
 		        int[] maxes =
 		        {
-		            EngineSettings.ChunkConfig.SizeX,
-		            EngineSettings.ChunkConfig.SizeY,
-		            EngineSettings.ChunkConfig.SizeZ
+		            EngineSettings.ChunkConfig.Size,
+		            EngineSettings.ChunkConfig.Size,
+		            EngineSettings.ChunkConfig.Size
 		        };
 
 		        int[] x = {0, 0, 0};
@@ -949,8 +949,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		        int[] du = {0, 0, 0}; // Width in a given dimension (du[u] is current dimension)
 		        int[] dv = {0, 0, 0}; // Height in a given dimension (dv[v] is current dimension)
 
-		        int max1 = Math.Max(EngineSettings.ChunkConfig.SizeX, EngineSettings.ChunkConfig.SizeY);
-		        int max2 = Math.Max(EngineSettings.ChunkConfig.SizeZ, EngineSettings.ChunkConfig.SizeY);
+		        int max1 = Math.Max(EngineSettings.ChunkConfig.Size, EngineSettings.ChunkConfig.Size);
+		        int max2 = Math.Max(EngineSettings.ChunkConfig.Size, EngineSettings.ChunkConfig.Size);
 		        BlockData[] mask = new BlockData[max1*max2];
                 
 		        // Iterate over 3 dimensions. Once for front faces, once for back faces
@@ -1014,9 +1014,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		                n = 0;
 
                         // Build faces from the mask if it's possible
-                        for (j = 0; j<EngineSettings.ChunkConfig.SizeY; j++)
+                        for (j = 0; j<EngineSettings.ChunkConfig.Size; j++)
 		                {
-		                    for (i = 0; i<EngineSettings.ChunkConfig.SizeX;)
+		                    for (i = 0; i<EngineSettings.ChunkConfig.Size;)
 		                    {
 		                        if (mask[n].IsEmpty())
 		                        {
@@ -1028,17 +1028,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
                                     BlockType type = mask[n].BlockType;
 
                                     // Compute width
-		                            for (w = 1; i+w<EngineSettings.ChunkConfig.SizeX && mask[n+w].BlockType==type; w++);
+		                            for (w = 1; i+w<EngineSettings.ChunkConfig.Size && mask[n+w].BlockType==type; w++);
 
 		                            // Compute height
 		                            bool done = false;
-		                            for (h = 1; j+h<EngineSettings.ChunkConfig.SizeY; h++)
+		                            for (h = 1; j+h<EngineSettings.ChunkConfig.Size; h++)
 		                            {
 		                                for (k = 0; k<w; k++)
 		                                {
 		                                    if (
-		                                        mask[n+k+h*(EngineSettings.ChunkConfig.SizeX)].IsEmpty() ||
-		                                        mask[n+k+h*(EngineSettings.ChunkConfig.SizeX)].BlockType!=type
+		                                        mask[n+k+h*(EngineSettings.ChunkConfig.Size)].IsEmpty() ||
+		                                        mask[n+k+h*(EngineSettings.ChunkConfig.Size)].BlockType!=type
 		                                        )
 		                                    {
 		                                        done = true;
@@ -1117,7 +1117,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		                            {
 		                                for (k = 0; k<w; ++k)
 		                                {
-		                                    mask[n+k+l*(EngineSettings.ChunkConfig.SizeX)] = BlockData.Air;
+		                                    mask[n+k+l*(EngineSettings.ChunkConfig.Size)] = BlockData.Air;
 		                                }
 		                            }
 
@@ -1268,7 +1268,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             int cx = chunk.Pos.X;
 			int cz = chunk.Pos.Z;
-			int sectionIndex = by >> EngineSettings.ChunkConfig.LogSizeY;
+			int sectionIndex = by >> EngineSettings.ChunkConfig.LogSize;
 
             int subscribersMask = 0;
             int sectionsMask = 0;
@@ -1286,20 +1286,20 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     // Section to the left
                     ((bx == 0) && (subscriberChunk.Pos.X + 1 == cx)) ||
                     // Section to the right
-                    ((bx == EngineSettings.ChunkConfig.MaskX) && (subscriberChunk.Pos.X - 1 == cx))
+                    ((bx == EngineSettings.ChunkConfig.Mask) && (subscriberChunk.Pos.X - 1 == cx))
                 ))
                     subscribersMask = subscribersMask | (1 << i);
 
 				if (subscriberChunk.Pos.X == cx && (
 					// Section to the front
-					((bz == EngineSettings.ChunkConfig.MaskZ) && (subscriberChunk.Pos.Z - 1 == cz)) ||
+					((bz == EngineSettings.ChunkConfig.Mask) && (subscriberChunk.Pos.Z - 1 == cz)) ||
 					// Section to the back
 					((bz == 0) && (subscriberChunk.Pos.Z + 1 == cz))
 				))
                     subscribersMask = subscribersMask | (1 << i);
             }
             
-            int diff = by - sectionIndex * EngineSettings.ChunkConfig.SizeY;
+            int diff = by - sectionIndex * EngineSettings.ChunkConfig.Size;
             // Section to the bottom
             if (diff == 0)
             {
@@ -1307,7 +1307,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 sectionsMask = sectionsMask | (1 << index);
             }
             // Section to the top
-            else if (diff == EngineSettings.ChunkConfig.MaskY)
+            else if (diff == EngineSettings.ChunkConfig.Mask)
             {
                 int index = Math.Min(sectionIndex + 1, EngineSettings.ChunkConfig.StackSize - 1);
                 sectionsMask = sectionsMask | (1 << index);
@@ -1331,7 +1331,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 int index = Common.Helpers.GetIndex1DFrom3D(context.BX, context.BY, context.BZ);
                 Blocks[index] = context.Block;
                                 
-                int section = context.BY >> EngineSettings.ChunkConfig.LogSizeY;
+                int section = context.BY >> EngineSettings.ChunkConfig.LogSize;
 
                 // Chunk needs to be finialized again
                 /*

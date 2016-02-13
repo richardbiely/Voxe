@@ -18,13 +18,13 @@ namespace Assets.Engine.Scripts.Generators.Terrain
             int index = 0;
 			for (int y = 0; y < EngineSettings.ChunkConfig.SizeYTotal; y++)
 			{
-	            for (int z = 0; z < EngineSettings.ChunkConfig.SizeZ; z++)
+	            for (int z = 0; z < EngineSettings.ChunkConfig.Size; z++)
 	            {
-					int wz = z + (chunk.Pos.Z << EngineSettings.ChunkConfig.LogSizeZ);
+					int wz = z + (chunk.Pos.Z << EngineSettings.ChunkConfig.LogSize);
 
-                    for (int x = 0; x < EngineSettings.ChunkConfig.SizeX; x++, index++)
+                    for (int x = 0; x < EngineSettings.ChunkConfig.Size; x++, index++)
                     {
-						int wx = x + (chunk.Pos.X << EngineSettings.ChunkConfig.LogSizeX);
+						int wx = x + (chunk.Pos.X << EngineSettings.ChunkConfig.LogSize);
 
                         bool currentPoint = Eval(wx, y, wz);
                         bool up = Eval(wx, y + 1, wz);

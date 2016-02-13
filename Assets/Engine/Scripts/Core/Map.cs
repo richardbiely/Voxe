@@ -95,15 +95,15 @@ namespace Assets.Engine.Scripts.Core
             if (wy<0 || wy>=EngineSettings.ChunkConfig.SizeYTotal)
                 return BlockData.Air;
 
-            int cx = wx>>EngineSettings.ChunkConfig.LogSizeX;
-            int cz = wz>>EngineSettings.ChunkConfig.LogSizeZ;
+            int cx = wx>>EngineSettings.ChunkConfig.LogSize;
+            int cz = wz>>EngineSettings.ChunkConfig.LogSize;
 
             Chunk chunk = m_chunks[cx, cz];
             if (chunk==null)
                 return BlockData.Air;
 
-            int lx = wx&EngineSettings.ChunkConfig.MaskX;
-            int lz = wz&EngineSettings.ChunkConfig.MaskZ;
+            int lx = wx&EngineSettings.ChunkConfig.Mask;
+            int lz = wz&EngineSettings.ChunkConfig.Mask;
 
             return chunk[lx, wy, lz];
         }
@@ -116,15 +116,15 @@ namespace Assets.Engine.Scripts.Core
             if (wy<0 || wy>=EngineSettings.ChunkConfig.SizeYTotal)
                 return;
 
-            int cx = wx>>EngineSettings.ChunkConfig.LogSizeX;
-            int cz = wz>>EngineSettings.ChunkConfig.LogSizeZ;
+            int cx = wx>>EngineSettings.ChunkConfig.LogSize;
+            int cz = wz>>EngineSettings.ChunkConfig.LogSize;
 
             Chunk chunk = GetChunk(cx, cz);
             if (chunk==null)
                 return;
 
-            int lx = wx&EngineSettings.ChunkConfig.MaskX;
-            int lz = wz&EngineSettings.ChunkConfig.MaskZ;
+            int lx = wx&EngineSettings.ChunkConfig.Mask;
+            int lz = wz&EngineSettings.ChunkConfig.Mask;
 
             chunk.DamageBlock(lx, wy, lz, damage);
         }
@@ -137,15 +137,15 @@ namespace Assets.Engine.Scripts.Core
             if (wy<0 || wy>=EngineSettings.ChunkConfig.SizeYTotal)
                 return;
 
-            int cx = wx>>EngineSettings.ChunkConfig.LogSizeX;
-            int cz = wz>>EngineSettings.ChunkConfig.LogSizeZ;
+            int cx = wx>>EngineSettings.ChunkConfig.LogSize;
+            int cz = wz>>EngineSettings.ChunkConfig.LogSize;
 
             Chunk chunk = GetChunk(cx, cz);
             if (chunk==null)
                 return;
 
-            int lx = wx&EngineSettings.ChunkConfig.MaskX;
-            int lz = wz&EngineSettings.ChunkConfig.MaskZ;
+            int lx = wx&EngineSettings.ChunkConfig.Mask;
+            int lz = wz&EngineSettings.ChunkConfig.Mask;
 
 			chunk.ModifyBlock(lx, wy, lz, block);
         }
@@ -448,10 +448,10 @@ namespace Assets.Engine.Scripts.Core
 
             distance /= Mathf.Sqrt(dx*dx+dy*dy+dz*dz);
 
-            int worldMinX = ViewerChunkPos.X*EngineSettings.ChunkConfig.SizeX;
-            int worldMaxX = worldMinX+(EngineSettings.WorldConfig.CachedRange*EngineSettings.ChunkConfig.SizeX);
-            int worldMinZ = ViewerChunkPos.Z*EngineSettings.ChunkConfig.SizeZ;
-            int worldMaxZ = worldMinZ+(EngineSettings.WorldConfig.CachedRange*EngineSettings.ChunkConfig.SizeZ);
+            int worldMinX = ViewerChunkPos.X*EngineSettings.ChunkConfig.Size;
+            int worldMaxX = worldMinX+(EngineSettings.WorldConfig.CachedRange*EngineSettings.ChunkConfig.Size);
+            int worldMinZ = ViewerChunkPos.Z*EngineSettings.ChunkConfig.Size;
+            int worldMaxZ = worldMinZ+(EngineSettings.WorldConfig.CachedRange*EngineSettings.ChunkConfig.Size);
 
             while ( // step is still inside world bounds
                 (stepX>0 ? (x<worldMaxX) : x>=worldMinX) &&
@@ -563,11 +563,11 @@ namespace Assets.Engine.Scripts.Core
                             Gizmos.color = Color.green;
                             Gizmos.DrawWireCube(
                                 new Vector3(
-                                    chunk.Pos.X*EngineSettings.ChunkConfig.SizeX+EngineSettings.ChunkConfig.SizeX/2,
-                                    EngineSettings.ChunkConfig.SizeY+0.15f,
-                                    chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ+EngineSettings.ChunkConfig.SizeZ/2),
-                                new Vector3(EngineSettings.ChunkConfig.SizeX-0.5f, 0,
-                                            EngineSettings.ChunkConfig.SizeZ-0.5f)
+                                    chunk.Pos.X*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2,
+                                    EngineSettings.ChunkConfig.Size+0.15f,
+                                    chunk.Pos.Z*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2),
+                                new Vector3(EngineSettings.ChunkConfig.Size-0.5f, 0,
+                                            EngineSettings.ChunkConfig.Size-0.5f)
                                 );
                         }
                         else if (IsWithinCachedRange(chunk))
@@ -575,11 +575,11 @@ namespace Assets.Engine.Scripts.Core
                             Gizmos.color = Color.yellow;
                             Gizmos.DrawWireCube(
                                 new Vector3(
-                                    chunk.Pos.X*EngineSettings.ChunkConfig.SizeX+EngineSettings.ChunkConfig.SizeX/2,
-                                    EngineSettings.ChunkConfig.SizeY+0.15f,
-                                    chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ+EngineSettings.ChunkConfig.SizeZ/2),
-                                new Vector3(EngineSettings.ChunkConfig.SizeX-0.5f, 0,
-                                            EngineSettings.ChunkConfig.SizeZ-0.5f)
+                                    chunk.Pos.X*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2,
+                                    EngineSettings.ChunkConfig.Size+0.15f,
+                                    chunk.Pos.Z*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2),
+                                new Vector3(EngineSettings.ChunkConfig.Size-0.5f, 0,
+                                            EngineSettings.ChunkConfig.Size-0.5f)
                                 );
                         }
                         else
@@ -587,11 +587,11 @@ namespace Assets.Engine.Scripts.Core
                             Gizmos.color = Color.red;
                             Gizmos.DrawWireCube(
                                 new Vector3(
-                                    chunk.Pos.X*EngineSettings.ChunkConfig.SizeX+EngineSettings.ChunkConfig.SizeX/2,
-                                    EngineSettings.ChunkConfig.SizeY+0.1f,
-                                    chunk.Pos.Z*EngineSettings.ChunkConfig.SizeZ+EngineSettings.ChunkConfig.SizeZ/2),
-                                new Vector3(EngineSettings.ChunkConfig.SizeX-0.5f, 0,
-                                            EngineSettings.ChunkConfig.SizeZ-0.5f)
+                                    chunk.Pos.X*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2,
+                                    EngineSettings.ChunkConfig.Size+0.1f,
+                                    chunk.Pos.Z*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2),
+                                new Vector3(EngineSettings.ChunkConfig.Size-0.5f, 0,
+                                            EngineSettings.ChunkConfig.Size-0.5f)
                                 );
                         }
                     }
@@ -602,20 +602,20 @@ namespace Assets.Engine.Scripts.Core
             {
                 Gizmos.color = Color.green;
                 Gizmos.DrawWireCube(
-                    new Vector3(ViewerChunkPos.X*EngineSettings.ChunkConfig.SizeX+EngineSettings.ChunkConfig.SizeX/2,
-                                EngineSettings.ChunkConfig.SizeY+0.15f,
-                                ViewerChunkPos.Z*EngineSettings.ChunkConfig.SizeZ+EngineSettings.ChunkConfig.SizeZ/2),
-                    new Vector3((EngineSettings.WorldConfig.VisibleRange*2+1)*EngineSettings.ChunkConfig.SizeX, 0,
-                                (EngineSettings.WorldConfig.VisibleRange*2+1)*EngineSettings.ChunkConfig.SizeZ)
+                    new Vector3(ViewerChunkPos.X*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2,
+                                EngineSettings.ChunkConfig.Size+0.15f,
+                                ViewerChunkPos.Z*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2),
+                    new Vector3((EngineSettings.WorldConfig.VisibleRange*2+1)*EngineSettings.ChunkConfig.Size, 0,
+                                (EngineSettings.WorldConfig.VisibleRange*2+1)*EngineSettings.ChunkConfig.Size)
                     );
 
                 Gizmos.color = Color.yellow;
                 Gizmos.DrawWireCube(
-                    new Vector3(ViewerChunkPos.X*EngineSettings.ChunkConfig.SizeX+EngineSettings.ChunkConfig.SizeX/2,
-                                EngineSettings.ChunkConfig.SizeY+0.15f,
-                                ViewerChunkPos.Z*EngineSettings.ChunkConfig.SizeZ+EngineSettings.ChunkConfig.SizeZ/2),
-                    new Vector3((EngineSettings.WorldConfig.CachedRange*2+1)*EngineSettings.ChunkConfig.SizeX, 0,
-                                (EngineSettings.WorldConfig.CachedRange*2+1)*EngineSettings.ChunkConfig.SizeZ)
+                    new Vector3(ViewerChunkPos.X*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2,
+                                EngineSettings.ChunkConfig.Size+0.15f,
+                                ViewerChunkPos.Z*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2),
+                    new Vector3((EngineSettings.WorldConfig.CachedRange*2+1)*EngineSettings.ChunkConfig.Size, 0,
+                                (EngineSettings.WorldConfig.CachedRange*2+1)*EngineSettings.ChunkConfig.Size)
                     );
             }
         }

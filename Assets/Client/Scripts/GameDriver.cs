@@ -34,8 +34,8 @@ namespace Assets.Client.Scripts
 
         private void FixedUpdate()
         {
-            int posX = Mathf.FloorToInt(ViewerCamera.position.x) >> EngineSettings.ChunkConfig.LogSizeX;
-            int posZ = Mathf.FloorToInt(ViewerCamera.position.z) >> EngineSettings.ChunkConfig.LogSizeZ;
+            int posX = Mathf.FloorToInt(ViewerCamera.position.x) >> EngineSettings.ChunkConfig.LogSize;
+            int posZ = Mathf.FloorToInt(ViewerCamera.position.z) >> EngineSettings.ChunkConfig.LogSize;
 
             m_gameServer.LocalMap.ViewerChunkPos = new Vector2Int(posX, posZ);
             m_gameServer.Update();
