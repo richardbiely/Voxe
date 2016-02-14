@@ -38,6 +38,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public int MinRenderZ { get; private set; }
         public int MaxRenderZ { get; private set; }
 
+        //! Range in which sections are to be iterated
+        public int MinFilledSection { get; private set; }
+        public int MaxFilledSection { get; private set; }
+
         //! Chunk's level of detail. 0=max detail. Every other LOD half the detail of a previous one
         public int LOD {
             get
@@ -227,6 +231,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             MinRenderY = EngineSettings.ChunkConfig.MaskYTotal;
             MaxRenderY = 0;
+
+            MinFilledSection = 0;
+            MaxFilledSection = EngineSettings.ChunkConfig.StackSize-1;
             
             // Reset sections
             foreach (MiniChunk section in Sections)
@@ -360,6 +367,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             MinRenderY = Math.Max(MinRenderY-1, 0);
             MaxRenderY = Math.Min(MaxRenderY+1, EngineSettings.ChunkConfig.MaskYTotal);
+
+            MinFilledSection = MinRenderY>>EngineSettings.ChunkConfig.LogSize;
+            MaxFilledSection = MaxRenderY>>EngineSettings.ChunkConfig.LogSize;
 
             if (nonEmptyBlocks > 0)
             {

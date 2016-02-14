@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityStandardAssets.CrossPlatformInput;
 
 namespace Assets.Client.Scripts
 {
@@ -19,8 +20,8 @@ namespace Assets.Client.Scripts
                 mult = 2f;
             }
 
-            transform.Translate( Vector3.right * Input.GetAxis( "Horizontal" ) * mult * MoveSpeed * Time.deltaTime );
-            transform.Translate( Vector3.forward * Input.GetAxis( "Vertical" ) * mult * MoveSpeed * Time.deltaTime );
+            transform.Translate( Vector3.right * CrossPlatformInputManager.GetAxis( "Horizontal" ) * mult * MoveSpeed * Time.deltaTime );
+            transform.Translate( Vector3.forward * CrossPlatformInputManager.GetAxis( "Vertical" ) * mult * MoveSpeed * Time.deltaTime );
         }
     }
 }

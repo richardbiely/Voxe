@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityStandardAssets.CrossPlatformInput;
 
 namespace Assets.Client.Scripts
 {
@@ -41,18 +42,18 @@ namespace Assets.Client.Scripts
             switch (Axes)
             {
                 case RotationAxes.MouseXAndY:
-                    float rotationX = transform.localEulerAngles.y + Input.GetAxis("Mouse X") * SensitivityX;
+                    float rotationX = transform.localEulerAngles.y + CrossPlatformInputManager.GetAxis("Mouse X") * SensitivityX;
 
-                    m_rotationY += Input.GetAxis("Mouse Y") * SensitivityY;
+                    m_rotationY += CrossPlatformInputManager.GetAxis("Mouse Y") * SensitivityY;
                     m_rotationY = Mathf.Clamp(m_rotationY, MinimumY, MaximumY);
 
                     transform.localEulerAngles = new Vector3(-m_rotationY, rotationX, 0);
                     break;
                 case RotationAxes.MouseX:
-                    transform.Rotate(0, Input.GetAxis("Mouse X") * SensitivityX, 0);
+                    transform.Rotate(0, CrossPlatformInputManager.GetAxis("Mouse X") * SensitivityX, 0);
                     break;
                 default:
-                    m_rotationY += Input.GetAxis("Mouse Y") * SensitivityY;
+                    m_rotationY += CrossPlatformInputManager.GetAxis("Mouse Y") * SensitivityY;
                     m_rotationY = Mathf.Clamp(m_rotationY, MinimumY, MaximumY);
 
                     transform.localEulerAngles = new Vector3(-m_rotationY, transform.localEulerAngles.y, 0);
