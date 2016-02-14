@@ -10,7 +10,7 @@ namespace Assets.Engine.Scripts.Provider
     {
         IChunkGenerator GetGenerator();
 
-        Chunk RequestChunk(int cx, int cz);
+        Chunk RequestChunk(int cx, int cz, int lod);
         bool ReleaseChunk(Chunk chunk);
         
     }

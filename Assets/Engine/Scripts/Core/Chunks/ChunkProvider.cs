@@ -211,14 +211,14 @@ namespace Assets.Engine.Scripts.Provider
         }
 
         // load or generate a chunk
-        public Chunk RequestChunk(int cx, int cz)
+        public Chunk RequestChunk(int cx, int cz, int lod)
         {
             Chunk chunk = GlobalPools.ChunkPool.Pop();
 #if DEBUG
             Assert.IsTrue(!chunk.IsUsed, "Popped a chunk which is still in use!");
 #endif
 
-            chunk.Init(cx, cz, LocalMap.DetermineLOD(cx, cz));
+            chunk.Init(cx, cz, lod);
 
             if (EngineSettings.WorldConfig.Streaming)
             {

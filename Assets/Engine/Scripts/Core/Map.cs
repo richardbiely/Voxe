@@ -153,36 +153,6 @@ namespace Assets.Engine.Scripts.Core
 			chunk.ModifyBlock(lx, wy, lz, block);
         }
 
-        public int DetermineLOD(int cx, int cz)
-        {
-            int lod = 0;
-
-            if (ForceLOD>=0)
-            {
-                lod = ForceLOD;
-            }
-            else
-            {
-                if (LODCoef <= 0)
-                    return 0;
-
-                int xDist = Mathf.Abs(cx-ViewerChunkPos.X);
-                int zDist = Mathf.Abs(cz-ViewerChunkPos.Z);
-
-                // Pick the greater distance and choose a proper LOD
-                int dist = Mathf.Max(xDist, zDist);
-                lod = (int)(dist/(LODCoef*EngineSettings.ChunkConfig.LogSize));
-            }
-
-            // LOD can't be bigger than chunk size
-            if (lod<0)
-                lod = 0;
-            if (lod>EngineSettings.ChunkConfig.LogSize)
-                lod = EngineSettings.ChunkConfig.LogSize;
-
-            return lod;
-        }
-
         // We'll only allow a certain amount of chunks to be created per update
         // Currently, this number is derived from the visible world size divided by the number of updates per second
         // !TODO: Let this value large for now. Change it back / adjust it later
@@ -356,7 +326,7 @@ namespace Assets.Engine.Scripts.Core
                 if (m_chunks.Check(xx, zz))
                     continue;
 
-                Chunk chunk = ChunkProvider.RequestChunk(xx, zz);
+                Chunk chunk = ChunkProvider.RequestChunk(xx, zz, m_clipmap[xx, zz].LOD);
                 m_chunks[chunk.Pos.X, chunk.Pos.Z] = chunk;
             }
 
