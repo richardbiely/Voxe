@@ -80,7 +80,7 @@ namespace Assets.Engine.Scripts.Builders
             targetBuffer.AddIndices(backFace);
             targetBuffer.AddVertices(ref vecs);
             targetBuffer.AddFaceColors(ref color);
-            targetBuffer.AddFaceUv(GetTexture(iface));
+            targetBuffer.AddFaceUv(GetTexture(iface), backFace);
             targetBuffer.AddDamageUVs(dmg);
             targetBuffer.AddNormals(ref SNormals[iface]);
         }

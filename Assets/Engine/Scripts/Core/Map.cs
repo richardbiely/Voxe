@@ -66,7 +66,7 @@ namespace Assets.Engine.Scripts.Core
         public IChunkProvider ChunkProvider;
         
         // Position of viewer in chunk coordinates
-        public Vector2Int ViewerChunkPos;
+        public Vector2Int ViewerChunkPos { get; private set; }
 
         public OcclusionCuller Occlusion;
 
@@ -196,6 +196,15 @@ namespace Assets.Engine.Scripts.Core
 
         private void UpdateRangeRects()
         {
+            // Update camera position
+            int posX = Mathf.FloorToInt(m_camera.transform.position.x) >> EngineSettings.ChunkConfig.LogSize;
+            int posZ = Mathf.FloorToInt(m_camera.transform.position.z) >> EngineSettings.ChunkConfig.LogSize;
+            ViewerChunkPos = new Vector2Int(posX, posZ);
+
+            // Update clipmap offset
+            m_clipmap.SetOffset(ViewerChunkPos.X, ViewerChunkPos.Z);
+
+            // Recalculate camera frustum planes
             Geometry.CalculateFrustumPlanes(m_camera, ref m_cameraPlanes);
         }
 
@@ -234,7 +243,6 @@ namespace Assets.Engine.Scripts.Core
                         chunk.LOD = item.LOD;
                         chunk.SetPossiblyVisible(true);
                         chunk.Restore();
-                        chunk.UpdateChunk();
 
                         // If occlusion culling is enabled we need to register it
                         if (EngineSettings.WorldConfig.OcclusionCulling && Occlusion!=null)
@@ -340,14 +348,10 @@ namespace Assets.Engine.Scripts.Core
 
         private void UpdateCache()
         {
-            int offsetX = ViewerChunkPos.X;
-            int offsetZ = ViewerChunkPos.Z;
-            m_clipmap.SetOffset(offsetX, offsetZ);
-
             foreach(var chunkPos in m_chunksToLoadByPos)
             {
-                int xx = offsetX+chunkPos.X;
-                int zz = offsetZ+chunkPos.Z;
+                int xx = ViewerChunkPos.X + chunkPos.X;
+                int zz = ViewerChunkPos.Z + chunkPos.Z;
 
                 if (m_chunks.Check(xx, zz))
                     continue;
@@ -377,14 +381,11 @@ namespace Assets.Engine.Scripts.Core
 
         private void ReleaseChunk(Chunk chunk)
         {
-            int cx = chunk.Pos.X;
-            int cz = chunk.Pos.Z;
-
             // Return out chunk back to object pool
             ChunkProvider.ReleaseChunk(chunk);
 
             // Invalidate the chunk
-            m_chunks.Remove(cx, cz);
+            m_chunks.Remove(chunk.Pos.X, chunk.Pos.Z);
         }
         
         public void Shutdown()

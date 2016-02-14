@@ -1,7 +1,5 @@
 using System;
 using System.Collections;
-using Assets.Engine.Scripts;
-using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Provider;
 using UnityEngine;
@@ -34,10 +32,7 @@ namespace Assets.Client.Scripts
 
         private void FixedUpdate()
         {
-            int posX = Mathf.FloorToInt(ViewerCamera.position.x) >> EngineSettings.ChunkConfig.LogSize;
-            int posZ = Mathf.FloorToInt(ViewerCamera.position.z) >> EngineSettings.ChunkConfig.LogSize;
-
-            m_gameServer.LocalMap.ViewerChunkPos = new Vector2Int(posX, posZ);
+            
             m_gameServer.Update();
         }
 

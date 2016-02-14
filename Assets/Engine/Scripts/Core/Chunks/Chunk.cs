@@ -1111,6 +1111,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
                                     );
 
                                 // Face vertices transformed to world coordinates
+                                // 0--1
+                                // |  |
+                                // |  |
+                                // 3--2
                                 Vector3[] vecs =
                                 {
                                     new Vector3(

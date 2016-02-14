@@ -12,25 +12,30 @@ namespace Assets.Engine.Scripts.Common.Extensions
         {
             int offset = target.Vertices.Count;
 
+            // 0--1
+            // |\ |
+            // | \|
+            // 3--2
+
             if (backFace)
             {
-                target.Triangles.Add(offset + 2);//2
-                target.Triangles.Add(offset + 0);//0
-                target.Triangles.Add(offset + 1);//1
+                target.Triangles.Add(offset + 2);
+                target.Triangles.Add(offset + 0);
+                target.Triangles.Add(offset + 1);
 
-                target.Triangles.Add(offset + 3);//3
-                target.Triangles.Add(offset + 0);//0
-                target.Triangles.Add(offset + 2);//2
+                target.Triangles.Add(offset + 3);
+                target.Triangles.Add(offset + 0);
+                target.Triangles.Add(offset + 2);
             }
             else
             {
-                target.Triangles.Add(offset + 2);//2
-                target.Triangles.Add(offset + 1);//1
-                target.Triangles.Add(offset + 0);//0
+                target.Triangles.Add(offset + 2);
+                target.Triangles.Add(offset + 1);
+                target.Triangles.Add(offset + 0);
 
-                target.Triangles.Add(offset + 3);//3
-                target.Triangles.Add(offset + 2);//2
-                target.Triangles.Add(offset + 0);//0
+                target.Triangles.Add(offset + 3);
+                target.Triangles.Add(offset + 2);
+                target.Triangles.Add(offset + 0);
             }
         }
 
@@ -56,8 +61,12 @@ namespace Assets.Engine.Scripts.Common.Extensions
         /// <summary>
         ///     Adds the face UVs.
         /// </summary>
-        public static void AddFaceUv(this RenderBuffer target, Rect texCoords)
+        public static void AddFaceUv(this RenderBuffer target, Rect texCoords, bool backFace)
         {
+            // 0--1
+            // |  |
+            // |  |
+            // 3--2 --> 0, 1, 3, 2
             target.UV1.Add(new Vector2(texCoords.xMax, 1f - texCoords.yMax));
             target.UV1.Add(new Vector2(texCoords.xMax, 1f - texCoords.yMin));
             target.UV1.Add(new Vector2(texCoords.xMin, 1f - texCoords.yMin));
@@ -77,10 +86,10 @@ namespace Assets.Engine.Scripts.Common.Extensions
             int dmgFrame = Mathf.FloorToInt(damage);
             Rect texCoords = new Rect(dmgFrame * DamageMultiplier, 0f, DamageMultiplier, 1f);
 
-            target.UV2.Add(new Vector2(texCoords.xMax, 1f - texCoords.yMin));
             target.UV2.Add(new Vector2(texCoords.xMax, 1f - texCoords.yMax));
-            target.UV2.Add(new Vector2(texCoords.xMin, 1f - texCoords.yMax));
+            target.UV2.Add(new Vector2(texCoords.xMax, 1f - texCoords.yMin));
             target.UV2.Add(new Vector2(texCoords.xMin, 1f - texCoords.yMin));
+            target.UV2.Add(new Vector2(texCoords.xMin, 1f - texCoords.yMax));
         }
 
         public static void AddNormals(this RenderBuffer target, ref Vector3[] normals)

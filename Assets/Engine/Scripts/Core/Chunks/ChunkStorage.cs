@@ -2,7 +2,7 @@
 
 namespace Assets.Engine.Scripts.Core.Chunks
 {
-    class ChunkStorage: IChunkStorage
+    public class ChunkStorage: IChunkStorage
     {
         private static readonly long Stride = 1000000;//int.MaxValue;
 
