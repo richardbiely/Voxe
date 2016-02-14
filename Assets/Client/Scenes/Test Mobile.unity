@@ -220,6 +220,10 @@ Prefab:
       propertyPath: Camera
       value: 
       objectReference: {fileID: 829896160}
+    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: ChunkGenerator
+      value: 
+      objectReference: {fileID: 1591168964}
     m_RemovedComponents:
     - {fileID: 11423040, guid: a4db001565d61294aae75f13fc68c869, type: 2}
   m_ParentPrefab: {fileID: 100100000, guid: a4db001565d61294aae75f13fc68c869, type: 2}
@@ -691,6 +695,21 @@ CanvasRenderer:
     type: 2}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1545834739}
+--- !u!1 &1591168963 stripped
+GameObject:
+  m_PrefabParentObject: {fileID: 198724, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+  m_PrefabInternal: {fileID: 297728905}
+--- !u!114 &1591168964
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1591168963}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bddd13805c0442d45805e26defc2d558, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!23 &1645071061 stripped
 MeshRenderer:
   m_PrefabParentObject: {fileID: 2300002, guid: 276ec6ff205a51947bd7ffda6065715a,

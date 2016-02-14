@@ -1,22 +1,23 @@
 using Assets.Engine.Scripts.Core.Blocks;
 using Assets.Engine.Scripts.Core.Chunks;
+using UnityEngine;
 
 namespace Assets.Engine.Scripts.Generators
 {
     /// <summary>
     /// Simple generator which produces completely solid chunks
     /// </summary>
-    public class SolidChunkGenerator : IChunkGenerator
+    public class SolidChunkGenerator : AChunkGenerator
     {
         #region IChunkGenerator implementation
 
-		public void Generate (Chunk chunk)
+		public override void Generate (Chunk chunk)
         {
 			for (int i = 0; i < EngineSettings.ChunkConfig.VolumeTotal; i++)
 				chunk[i] = new BlockData(BlockType.Dirt);
         }
 
-        public void OnCalculateProperties(int x, int y, int z, ref BlockData data)
+        public override void OnCalculateProperties(int x, int y, int z, ref BlockData data)
         {
         }
 

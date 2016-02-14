@@ -40,9 +40,9 @@ namespace Assets.Engine.Scripts.Core
         {
             m_chunkStorage = new ChunkStorage();
             ChunkProvider = new ChunkProvider(this);
-            //ChunkGenerator = new SimplePerlinGenerator();
-            //ChunkGenerator = new SolidChunkGenerator();
-            ChunkGenerator = new SimpleTerrainGenerator();
+
+            // Camera - set from the editor
+            // ChunkGenerator - set from the editor
 
             m_clipmap = new ChunkClipmap();
             m_chunksToRemove = new List<Chunk>();
@@ -60,11 +60,11 @@ namespace Assets.Engine.Scripts.Core
         #region Public Fields
 
         public Camera Camera;
+        public AChunkGenerator ChunkGenerator;
 
         public IChunkProvider ChunkProvider { get; private set; }
-        public IChunkGenerator ChunkGenerator { get; private set; }
         
-        // Position of viewer in chunk coordinates
+        //! Position of viewer in chunk coordinates
         public Vector2Int ViewerChunkPos { get; private set; }
 
         public OcclusionCuller Occlusion;

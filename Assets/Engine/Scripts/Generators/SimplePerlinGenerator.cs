@@ -8,12 +8,13 @@ namespace Assets.Engine.Scripts.Generators
     /// <summary>
     /// Simple generator which produces thresholded 3D perlin noise
     /// </summary>
-    public class SimplePerlinGenerator : IChunkGenerator
+    public class SimplePerlinGenerator : AChunkGenerator
     {
-        readonly ValueNoise m_noise = new ValueNoise (0);
+        private readonly ValueNoise m_noise = new ValueNoise (0);
 	
         #region IChunkGenerator implementation
-		public void Generate (Chunk chunk)
+
+		public override void Generate (Chunk chunk)
         {
             int index = 0;
 			for (int y = 0; y < EngineSettings.ChunkConfig.SizeYTotal; y++)
@@ -39,7 +40,7 @@ namespace Assets.Engine.Scripts.Generators
             }
         }
 
-        public void OnCalculateProperties(int x, int y, int z, ref BlockData data)
+        public override void OnCalculateProperties(int x, int y, int z, ref BlockData data)
         {
         }
 

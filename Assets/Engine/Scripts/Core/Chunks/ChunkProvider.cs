@@ -28,10 +28,7 @@ namespace Assets.Engine.Scripts.Provider
         #endregion Public Properties
 
         #region Private vars
-
-        // chunk generator
-        public readonly IChunkGenerator ChunkGenerator;
-
+        
         // String builder used in the main thread to determine a file path for a given chunk
         public static readonly StringBuilder FilePathStringBuilder = new StringBuilder(DataPath.Length+21);
 
@@ -181,12 +178,7 @@ namespace Assets.Engine.Scripts.Provider
         #endregion Threading
 
         #region IChunkProvider implementation
-
-        public IChunkGenerator GetGenerator()
-        {
-            return ChunkGenerator;
-        }
-
+        
         // load or generate a chunk
         public Chunk RequestChunk(int cx, int cz, int lod)
         {

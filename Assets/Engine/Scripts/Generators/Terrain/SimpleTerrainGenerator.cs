@@ -8,12 +8,13 @@ namespace Assets.Engine.Scripts.Generators.Terrain
     /// <summary>
     /// 	Produces a simple Minecraft-like terrain
     /// </summary>
-    public class SimpleTerrainGenerator : IChunkGenerator
+    public class SimpleTerrainGenerator : AChunkGenerator
     {
         private readonly ValueNoise m_noise = new ValueNoise (0);
 	
         #region IChunkGenerator implementation
-        public void Generate (Chunk chunk)
+
+        public override void Generate (Chunk chunk)
         {
             int index = 0;
 			for (int y = 0; y < EngineSettings.ChunkConfig.SizeYTotal; y++)
@@ -56,7 +57,7 @@ namespace Assets.Engine.Scripts.Generators.Terrain
                 }
             }
         }
-        public void OnCalculateProperties(int x, int y, int z, ref BlockData data)
+        public override void OnCalculateProperties(int x, int y, int z, ref BlockData data)
         {   
         }
 
