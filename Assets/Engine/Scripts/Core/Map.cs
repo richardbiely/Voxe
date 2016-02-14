@@ -71,10 +71,11 @@ namespace Assets.Engine.Scripts.Core
 
         public OcclusionCuller Occlusion;
 
-        public float LODCoef = 1.5f;
+        public float LODCoef = 1f;
 
-        public bool GizmoGeometryBounds;
-        public bool GizmoMapBounds;
+        [Header("Debugging")]
+        public bool ShowGeomBounds;
+        public bool ShowMapBounds;
 
         #endregion Public Fields
 
@@ -570,7 +571,7 @@ namespace Assets.Engine.Scripts.Core
                     if (chunk==null)
                         continue;
                     
-                    if (GizmoGeometryBounds && chunk.IsFinalized())
+                    if (ShowGeomBounds && chunk.IsFinalized())
                     {
                         Gizmos.color = Color.white;
                         foreach (MiniChunk section in chunk.Sections)
@@ -582,7 +583,7 @@ namespace Assets.Engine.Scripts.Core
                         }
                     }
 
-                    if (GizmoMapBounds)
+                    if (ShowMapBounds)
                     {
                         if (IsWithinVisibilityRange(chunk))
                         {
@@ -624,7 +625,7 @@ namespace Assets.Engine.Scripts.Core
                 }
             }
 
-            if (GizmoMapBounds)
+            if (ShowMapBounds)
             {
                 Gizmos.color = Color.green;
                 Gizmos.DrawWireCube(
