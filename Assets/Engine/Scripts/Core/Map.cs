@@ -71,6 +71,8 @@ namespace Assets.Engine.Scripts.Core
 
         public OcclusionCuller Occlusion;
 
+        public float LODCoef = 1.5f;
+
         public bool GizmoGeometryBounds;
         public bool GizmoMapBounds;
 
@@ -150,6 +152,27 @@ namespace Assets.Engine.Scripts.Core
 			chunk.ModifyBlock(lx, wy, lz, block);
         }
 
+        public int DetermineLOD(int cx, int cz)
+        {
+            if (LODCoef<=0)
+                return 0;
+
+            int xDist = Mathf.Abs(cx - ViewerChunkPos.X);
+            int zDist = Mathf.Abs(cz - ViewerChunkPos.Z);
+
+            // Pick the greater distance and choose a proper LOD
+            int dist = Mathf.Max(xDist, zDist);
+            int lod = (int)(dist / (LODCoef*EngineSettings.ChunkConfig.LogSize));
+
+            // LOD can't be bigger than chunk size
+            if (lod<0)
+                lod = 0;
+            if (lod>EngineSettings.ChunkConfig.LogSize)
+                lod = EngineSettings.ChunkConfig.LogSize;
+
+            return lod;
+        }
+
         // We'll only allow a certain amount of chunks to be created per update
         // Currently, this number is derived from the visible world size divided by the number of updates per second
         // !TODO: Let this value large for now. Change it back / adjust it later
@@ -158,7 +181,7 @@ namespace Assets.Engine.Scripts.Core
         private bool IsChunkInViewFrustum(Chunk chunk)
         {
             // Check if the chunk lies within camera planes
-            return chunk.CheckFrustum(m_cameraPlanes);
+            return true;//chunk.CheckFrustum(m_cameraPlanes);
         }
 
         private bool IsWithinVisibilityRange(Chunk chunk)
@@ -215,6 +238,7 @@ namespace Assets.Engine.Scripts.Core
                     // Chunk is within visibilty range. Full update with geometry generation is possible
                     if (IsWithinVisibilityRange(chunk))
                     {
+                        chunk.LOD = DetermineLOD(chunk.Pos.X, chunk.Pos.Z);
                         chunk.SetPossiblyVisible(true);
                         chunk.Restore();
                         chunk.UpdateChunk();
@@ -233,12 +257,13 @@ namespace Assets.Engine.Scripts.Core
                         }
                         else
                             chunk.SetVisible(true);
-
+                        
                         chunk.UpdateChunk();
                     }
                     // Chunk is within cached range. Full update except for geometry generation
                     else if (IsWithinCachedRange(chunk))
                     {
+                        chunk.LOD = DetermineLOD(chunk.Pos.X, chunk.Pos.Z);
                         chunk.SetPossiblyVisible(false);
                         chunk.SetVisible(false);
                         chunk.Restore();
@@ -255,6 +280,7 @@ namespace Assets.Engine.Scripts.Core
                     // Chunk is not in viewfrustum but still within cached range
                     if (IsWithinCachedRange(chunk))
                     {
+                        chunk.LOD = DetermineLOD(chunk.Pos.X, chunk.Pos.Z);
                         chunk.SetPossiblyVisible(false);
                         chunk.SetVisible(false);
                         chunk.Restore();

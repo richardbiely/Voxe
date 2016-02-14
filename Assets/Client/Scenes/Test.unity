@@ -190,7 +190,7 @@ Prefab:
       objectReference: {fileID: 1914990388}
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: GizmoGeometryBounds
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: Scale
@@ -199,6 +199,10 @@ Prefab:
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: ChunkScale
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: LODCoef
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: a4db001565d61294aae75f13fc68c869, type: 2}
@@ -294,19 +298,19 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
       propertyPath: m_LocalRotation.x
-      value: -0.000000115202326
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
       propertyPath: m_LocalRotation.y
-      value: -0.7071067
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
       propertyPath: m_LocalRotation.z
-      value: 0.7071068
+      value: -0.5000001
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
       propertyPath: m_LocalRotation.w
-      value: -0.00000011520231
+      value: 0.49999994
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
       propertyPath: m_RootOrder

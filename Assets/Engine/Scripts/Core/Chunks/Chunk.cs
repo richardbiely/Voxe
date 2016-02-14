@@ -38,6 +38,27 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public int MinRenderZ { get; private set; }
         public int MaxRenderZ { get; private set; }
 
+        //! Chunk's level of detail. 0=max detail. Every other LOD half the detail of a previous one
+        public int LOD {
+            get
+            {
+                return m_lod;
+            }
+            set
+            {
+                if (value!=m_lod)
+                {
+                    // Request new lod
+                    m_lod = value;
+
+                    // Request update for each chunk section
+                    for (int i = 0; i < EngineSettings.ChunkConfig.StackSize; i++)
+                        m_setBlockSections = m_setBlockSections | (1 << i);
+                    RefreshState(ChunkState.BuildVertices);
+                }
+            }
+        }
+
         public bool PossiblyVisible { get; private set; }
 
         public bool RequestedRemoval;
@@ -67,6 +88,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
         private ChunkState m_refreshTasks;
 		//! Tasks already executed
 		private ChunkState m_completedTasks;
+
+        //! Chunk's current level of detail
+        private int m_lod;
 
 		//! Specifies whether there's a task running
 		private bool m_taskRunning;
@@ -124,9 +148,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         #endregion Accessors
         
-        public void Init(int cx, int cz)
+        public void Init(int cx, int cz, int lod)
         {
             Pos = new Vector2Int(cx, cz);
+            m_lod = lod;
 
             WorldBounds = new Bounds(
                 new Vector3(EngineSettings.ChunkConfig.Size*(cx+0.5f), EngineSettings.ChunkConfig.SizeYTotal*0.5f, EngineSettings.ChunkConfig.Size*(cz+0.5f)),
@@ -183,7 +208,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 			RequestedRemoval = false;
 			m_taskRunning = false;
-            
+
+            m_lod = 0;
+
             m_notifyState = m_notifyState.Reset();            
 			m_pendingTasks = m_pendingTasks.Reset();            
             m_completedTasks = m_completedTasks.Reset();
@@ -895,13 +922,15 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			public readonly int SetBlockSections;
 			public readonly int MinY;
 			public readonly int MaxY;
+		    public readonly int LOD;
 
-			public SGenerateVerticesWorkItem(Chunk chunk, int setBlockSections, int minY, int maxY)
+			public SGenerateVerticesWorkItem(Chunk chunk, int setBlockSections, int minY, int maxY, int lod)
 			{
 				Chunk = chunk;
 				SetBlockSections = setBlockSections;
 				MinY = minY;
 				MaxY = maxY;
+			    LOD = lod;
 			}
 		}
 
@@ -1119,7 +1148,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             }
         }
 
-		private static void OnGenerateVerices(Chunk chunk, int setBlockSections, int minY, int maxY)
+		private static void OnGenerateVerices(Chunk chunk, int setBlockSections, int minY, int maxY, int lod)
 		{
 			int minSection = minY >> EngineSettings.ChunkConfig.LogSize;
 			int maxSection = maxY >> EngineSettings.ChunkConfig.LogSize;
@@ -1137,7 +1166,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 int offsetZ = chunk.Pos.Z * EngineSettings.ChunkConfig.Size;
 
                 MiniChunk section = chunk.Sections[sectionIndex];
-		        BuildMesh(section, offsetX, offsetZ, 0);
+		        BuildMesh(section, offsetX, offsetZ, lod);
 		    }
 
 		    lock (chunk.m_lock)
@@ -1158,10 +1187,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		/// </summary>
 		private void GenerateVertices()
 		{
-			Assert.IsTrue(
+			/*Assert.IsTrue(
 				m_completedTasks.Check(ChunkState.FinalizeData),
 				string.Format("[{0},{1}] - GenerateVertices set sooner than FinalizeData completed. Pending:{2}, Completed:{3}", Pos.X, Pos.Z, m_pendingTasks, m_completedTasks)
-            );
+            );*/
             if (!m_completedTasks.Check(ChunkState.FinalizeData))
                 return;
 
@@ -1191,7 +1220,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			{
 				int lowest = Mathf.Max(MinRenderY, 0);
 				int highest = Mathf.Min(MaxRenderY, EngineSettings.ChunkConfig.SizeYTotal-1);
-				var workItem = new SGenerateVerticesWorkItem(this, m_setBlockSections, lowest, highest);
+				var workItem = new SGenerateVerticesWorkItem(this, m_setBlockSections, lowest, highest, LOD);
                 
 				m_setBlockSections = 0;
 
@@ -1200,7 +1229,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 					arg =>
 					{
 						SGenerateVerticesWorkItem item = (SGenerateVerticesWorkItem)arg;
-						OnGenerateVerices(item.Chunk, item.SetBlockSections, item.MinY, item.MaxY);
+						OnGenerateVerices(item.Chunk, item.SetBlockSections, item.MinY, item.MaxY, item.LOD);
 					},
 					workItem)
 				);

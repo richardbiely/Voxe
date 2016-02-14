@@ -217,8 +217,9 @@ namespace Assets.Engine.Scripts.Provider
 #if DEBUG
             Assert.IsTrue(!chunk.IsUsed, "Popped a chunk which is still in use!");
 #endif
-            chunk.Init(cx, cz);
-            
+
+            chunk.Init(cx, cz, LocalMap.DetermineLOD(cx, cz));
+
             if (EngineSettings.WorldConfig.Streaming)
             {
                 string filePath = GetFilePathFromIndex(chunk.Pos.X, chunk.Pos.Z);
