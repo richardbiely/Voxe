@@ -18,7 +18,7 @@ namespace Assets.Engine.Scripts.UnitTesting
             const int n = 16;
 
             TestClass c = null;
-            ObjectPool<TestClass> pool = new ObjectPool<TestClass>(arg => new TestClass (), n);
+            ObjectPool<TestClass> pool = new ObjectPool<TestClass>(arg => new TestClass (), n, false);
 
             for (int i=0; i<n; i++) {
                 c = pool.Pop ();
@@ -33,7 +33,7 @@ namespace Assets.Engine.Scripts.UnitTesting
             const int n = 16;
 
             List<TestClass> list = new List<TestClass> ();
-            ObjectPool<TestClass> pool = new ObjectPool<TestClass>(arg => new TestClass (), n);
+            ObjectPool<TestClass> pool = new ObjectPool<TestClass>(arg => new TestClass (), n, false);
 
             for (int i=0; i<n; i++) {
                 list.Add (pool.Pop ());

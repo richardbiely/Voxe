@@ -97,11 +97,8 @@ namespace Assets.Engine.Scripts.Provider
                         newGO.transform.parent = m_parentGo.transform; // Make this object a parent of the pooled object
                         return newGO;
                     },
-                    arg =>
-                    {
-                        Destroy(arg);
-                    },
-                    InitialSize
+                    InitialSize,
+                    false
                     );
             }
 

@@ -213,7 +213,7 @@ namespace Assets.Engine.Scripts.Provider
         // load or generate a chunk
         public Chunk RequestChunk(int cx, int cz)
         {
-            Chunk chunk = ObjectPoolProvider.Chunks.Pop();
+            Chunk chunk = Globals.ChunkPool.Pop();
 #if DEBUG
             Assert.IsTrue(!chunk.IsUsed, "Popped a chunk which is still in use!");
 #endif
@@ -250,7 +250,7 @@ namespace Assets.Engine.Scripts.Provider
 #if DEBUG
             chunk.IsUsed = false;
 #endif
-            ObjectPoolProvider.Chunks.Push(chunk);
+            Globals.ChunkPool.Push(chunk);
 
             return true;
         }

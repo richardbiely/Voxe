@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Assets.Engine.Scripts.Builders;
 using Assets.Engine.Scripts.Common.DataTypes;
+using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Provider;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -41,7 +42,7 @@ namespace Assets.Engine.Scripts.Rendering
 
                 var filter = go.GetComponent<MeshFilter>();
                 filter.sharedMesh.Clear(false);
-                ObjectPoolProvider.Meshes.Push(filter.sharedMesh);
+                Globals.MeshPool.Push(filter.sharedMesh);
                 filter.sharedMesh = null;
 
                 GameObjectProvider.PushObject(GOPChunk, go);
@@ -107,7 +108,7 @@ namespace Assets.Engine.Scripts.Rendering
                 go.name = string.Format("[{0},{1},{2}]:{3}", Pos.X, Pos.Z, Pos.Y, m_drawCalls.Count);
 #endif
 
-                Mesh mesh = ObjectPoolProvider.Meshes.Pop();
+                Mesh mesh = Globals.MeshPool.Pop();
                 Assert.IsTrue(mesh.vertices.Length<=0);
                 m_renderBuffer.BuildMesh(mesh);
 
