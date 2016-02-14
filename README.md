@@ -17,6 +17,10 @@ Main focus of Voxe will be put on technology and extensibility. I want this to b
 ##### Terrain generation
 Voxe currently sports a few simple terrain generators. One for a simple flat terrain, a perlin noise generator and one generic terrain generator. They all are currently usable mostly for debugging purposes and will later be replaced with a proper fully configurable terrain generator.
 
+##### Terrain level of detail
+In order to save performance Voxe is capable of generating terrain in multiple levels of detail.
+NOTE: Currently WIP
+
 ##### Terrain streaming
 The world is streamed - chunks are loaded and saved as you move. Streaming on a separate thread is supported. RLE compression is used.
 
