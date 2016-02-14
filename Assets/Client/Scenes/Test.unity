@@ -212,9 +212,16 @@ Prefab:
       propertyPath: ShowGeomBounds
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 11423040, guid: a4db001565d61294aae75f13fc68c869, type: 2}
   m_ParentPrefab: {fileID: 100100000, guid: a4db001565d61294aae75f13fc68c869, type: 2}
   m_IsPrefabParent: 0
+--- !u!114 &297728906 stripped
+MonoBehaviour:
+  m_PrefabParentObject: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869,
+    type: 2}
+  m_PrefabInternal: {fileID: 297728905}
+  m_Script: {fileID: 11500000, guid: d1851deb9790aa444a040a2f320b62f8, type: 3}
 --- !u!1 &583099778
 GameObject:
   m_ObjectHideFlags: 0
@@ -328,6 +335,10 @@ Prefab:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 11400024, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
+      propertyPath: LocalMap
+      value: 
+      objectReference: {fileID: 297728906}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
   m_IsPrefabParent: 0

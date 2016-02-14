@@ -7,6 +7,7 @@ namespace Assets.Client.Scripts
 {
     public class BlockPicker : MonoBehaviour
     {
+        public Map LocalMap;
         public Renderer CursorRenderer;
         private Transform m_cursorTransform;
 
@@ -26,7 +27,7 @@ namespace Assets.Client.Scripts
 
             TileRaycastHit hit;
             Ray ray = new Ray(transform.position, transform.forward);
-            if (Map.Current.Raycast(ray, PickDistance, out hit))
+            if (LocalMap.Raycast(ray, PickDistance, out hit))
             {
                 m_cursorTransform.position = hit.HitBlock + Vector3.one * 0.5f;
                 m_cursorTransform.rotation = Quaternion.identity;
@@ -34,13 +35,13 @@ namespace Assets.Client.Scripts
 
                 if (Input.GetMouseButtonDown(0))
                 {
-                    //Map.Current.DamageBlock(hit.HitBlock.X, hit.HitBlock.Y, hit.HitBlock.Z, 16);
-					Map.Current.SetBlock(BlockData.Air, hit.HitBlock.X, hit.HitBlock.Y, hit.HitBlock.Z);
+                    //LocalMap.DamageBlock(hit.HitBlock.X, hit.HitBlock.Y, hit.HitBlock.Z, 16);
+                    LocalMap.SetBlock(BlockData.Air, hit.HitBlock.X, hit.HitBlock.Y, hit.HitBlock.Z);
                 }
             }
             else
             {
-                //CursorRenderer.enabled = false;
+                CursorRenderer.enabled = false;
             }
         }
     }

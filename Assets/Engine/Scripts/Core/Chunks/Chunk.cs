@@ -18,7 +18,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
     /// </summary>
 	public class Chunk: ChunkEvent
     {
-        #region Public variables        
+        #region Public variables
+
+        public Map Map { get; private set; }
         
         public readonly BlockStorage Blocks;
 
@@ -152,8 +154,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         #endregion Accessors
         
-        public void Init(int cx, int cz, int lod)
+        public void Init(Map map, int cx, int cz, int lod)
         {
+            Map = map;
             Pos = new Vector2Int(cx, cz);
             m_lod = lod;
 
@@ -173,10 +176,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		public void RegisterNeighbors()
 		{
-			Chunk left = Map.Current.GetChunk(Pos.X - 1, Pos.Z);
-			Chunk right = Map.Current.GetChunk(Pos.X + 1, Pos.Z);
-			Chunk front = Map.Current.GetChunk(Pos.X, Pos.Z - 1);
-			Chunk behind = Map.Current.GetChunk(Pos.X, Pos.Z + 1);
+			Chunk left = Map.GetChunk(Pos.X - 1, Pos.Z);
+			Chunk right = Map.GetChunk(Pos.X + 1, Pos.Z);
+			Chunk front = Map.GetChunk(Pos.X, Pos.Z - 1);
+			Chunk behind = Map.GetChunk(Pos.X, Pos.Z + 1);
 
 			// Left
 			RegisterNeighbor(left);
@@ -653,7 +656,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         private static void OnGenerateData(Chunk chunk)
 		{
-			Map.Current.ChunkProvider.GetGenerator().Generate(chunk);
+			chunk.Map.ChunkGenerator.Generate(chunk);
 
 		    lock (chunk.m_lock)
 		    {
@@ -947,8 +950,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		private static readonly ChunkState CurrStateGenerateVertices = ChunkState.BuildVertices;
 		private static readonly ChunkState NextStateGenerateVertices = ChunkState.Idle;
 
-        private static void BuildMesh(MiniChunk section, int offsetX, int offsetZ, int lod)
+        private static void BuildMesh(Chunk chunk, int sectionIndex, int offsetX, int offsetZ, int lod)
         {
+            Map map = chunk.Map;
+
+            MiniChunk section = chunk.Sections[sectionIndex];
             section.SolidRenderBuffer.Clear();
 
             BlockFace face = 0;
@@ -1022,8 +1028,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
                             int realY = (x[1]<<lod) + section.OffsetY;
                             int realZ = (x[2]<<lod) + offsetZ;
 
-                            BlockData voxelFace0 = Map.Current.GetBlock(realX, realY, realZ);
-                            BlockData voxelFace1 = Map.Current.GetBlock(realX+q[0], realY+q[1], realZ+q[2]);
+                            BlockData voxelFace0 = map.GetBlock(realX, realY, realZ);
+                            BlockData voxelFace1 = map.GetBlock(realX+q[0], realY+q[1], realZ+q[2]);
 
                             mask[n++] = (voxelFace0.IsSolid() && voxelFace1.IsSolid())
                                             ? BlockData.Air
@@ -1178,9 +1184,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
                 int offsetX = chunk.Pos.X * EngineSettings.ChunkConfig.Size;
                 int offsetZ = chunk.Pos.Z * EngineSettings.ChunkConfig.Size;
-
-                MiniChunk section = chunk.Sections[sectionIndex];
-		        BuildMesh(section, offsetX, offsetZ, lod);
+                
+		        BuildMesh(chunk, sectionIndex, offsetX, offsetZ, lod);
 		    }
 
 		    lock (chunk.m_lock)

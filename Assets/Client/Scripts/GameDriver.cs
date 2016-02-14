@@ -16,8 +16,6 @@ namespace Assets.Client.Scripts
 
         private void Start()
         {
-            m_gameServer = new ChunkProvider(GameMap);
-
             //StartCoroutine(OnActivateGC());
         }
 
@@ -32,14 +30,13 @@ namespace Assets.Client.Scripts
 
         private void FixedUpdate()
         {
-            
-            m_gameServer.Update();
+            GameMap.UpdateMap();
         }
 
         private void OnDestroy()
         {
             m_stop = true;
-            m_gameServer.Shutdown();
+            GameMap.Shutdown();
         }
     }
 }

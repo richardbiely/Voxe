@@ -10,22 +10,17 @@ using UnityEngine.Assertions;
 using System.Linq;
 using Assets.Engine.Scripts.Common.Math;
 using Assets.Engine.Scripts.Core.Threading;
+using Assets.Engine.Scripts.Generators;
+using Assets.Engine.Scripts.Generators.Terrain;
 using Assets.Engine.Scripts.Rendering;
 
 namespace Assets.Engine.Scripts.Core
 {
     public class Map: MonoBehaviour
     {
-        #region Static Fields
-
-        //! The local instance of the Map.
-        public static Map Current;        
-
-        #endregion Static Fields
-
         #region Private vars
 
-        private ChunkStorage m_chunks;
+        private ChunkStorage m_chunkStorage;
 
         //! Clipmap with precomputed static data useful for map processing
         private ChunkClipmap m_clipmap;
@@ -44,7 +39,12 @@ namespace Assets.Engine.Scripts.Core
 
         public void Awake()
         {
-            m_chunks = new ChunkStorage();
+            m_chunkStorage = new ChunkStorage();
+            ChunkProvider = new ChunkProvider(this);
+            //ChunkGenerator = new SimplePerlinGenerator();
+            //ChunkGenerator = new SolidChunkGenerator();
+            ChunkGenerator = new SimpleTerrainGenerator();
+
             m_clipmap = new ChunkClipmap();
             m_chunksToRemove = new List<Chunk>();
         }
@@ -63,7 +63,8 @@ namespace Assets.Engine.Scripts.Core
 
         #region Public Fields
 
-        public IChunkProvider ChunkProvider;
+        public IChunkProvider ChunkProvider { get; private set; }
+        public IChunkGenerator ChunkGenerator { get; private set; }
         
         // Position of viewer in chunk coordinates
         public Vector2Int ViewerChunkPos { get; private set; }
@@ -86,7 +87,7 @@ namespace Assets.Engine.Scripts.Core
         /// </summary>
         public Chunk GetChunk(int cx, int cz)
         {
-            Chunk chunk = m_chunks.Check(cx, cz) ? m_chunks[cx, cz] : null;
+            Chunk chunk = m_chunkStorage.Check(cx, cz) ? m_chunkStorage[cx, cz] : null;
             return chunk;
         }
 
@@ -101,7 +102,7 @@ namespace Assets.Engine.Scripts.Core
             int cx = wx>>EngineSettings.ChunkConfig.LogSize;
             int cz = wz>>EngineSettings.ChunkConfig.LogSize;
 
-            Chunk chunk = m_chunks[cx, cz];
+            Chunk chunk = m_chunkStorage[cx, cz];
             if (chunk==null)
                 return BlockData.Air;
 
@@ -191,7 +192,7 @@ namespace Assets.Engine.Scripts.Core
             
             // Process loaded chunks
             int cnt = 0;
-            foreach (Chunk chunk in m_chunks.Values)
+            foreach (Chunk chunk in m_chunkStorage.Values)
             {
                 cnt++;
 
@@ -323,11 +324,11 @@ namespace Assets.Engine.Scripts.Core
                 int xx = ViewerChunkPos.X + chunkPos.X;
                 int zz = ViewerChunkPos.Z + chunkPos.Z;
 
-                if (m_chunks.Check(xx, zz))
+                if (m_chunkStorage.Check(xx, zz))
                     continue;
 
                 Chunk chunk = ChunkProvider.RequestChunk(xx, zz, m_clipmap[xx, zz].LOD);
-                m_chunks[chunk.Pos.X, chunk.Pos.Z] = chunk;
+                m_chunkStorage[chunk.Pos.X, chunk.Pos.Z] = chunk;
             }
 
 			// Commit collected work items
@@ -355,7 +356,7 @@ namespace Assets.Engine.Scripts.Core
             ChunkProvider.ReleaseChunk(chunk);
 
             // Invalidate the chunk
-            m_chunks.Remove(chunk.Pos.X, chunk.Pos.Z);
+            m_chunkStorage.Remove(chunk.Pos.X, chunk.Pos.Z);
         }
         
         public void Shutdown()
@@ -368,7 +369,7 @@ namespace Assets.Engine.Scripts.Core
                     int cnt = 0;
 
                     // Process loaded chunks
-                    foreach (Chunk chunk in m_chunks.Values)
+                    foreach (Chunk chunk in m_chunkStorage.Values)
                     {
                         ++cnt;
                         if (chunk.Finish())
@@ -527,9 +528,9 @@ namespace Assets.Engine.Scripts.Core
 
         private void OnDrawGizmosSelected()
         {
-            if (m_chunks!=null)
+            if (m_chunkStorage!=null)
             {
-                foreach (Chunk chunk in m_chunks.Values)
+                foreach (Chunk chunk in m_chunkStorage.Values)
                 {
                     if (chunk==null)
                         continue;

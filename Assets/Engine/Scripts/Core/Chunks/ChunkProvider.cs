@@ -23,10 +23,7 @@ namespace Assets.Engine.Scripts.Provider
         // Persistent data to be stored in <disk>:/Users/<user>/AppData/LocalLow/RBiely/Voxe/VoxelData
         private static readonly string DataPath = string.Format("{0}/{1}", Application.persistentDataPath, "VoxelData");
 
-        /// <summary>
-        ///     Gets the local clientside map.
-        /// </summary>
-        public Map LocalMap { get; private set; }
+        private readonly Map m_map;
 
         #endregion Public Properties
 
@@ -44,33 +41,13 @@ namespace Assets.Engine.Scripts.Provider
 
         public ChunkProvider(Map map)
         {
-            Map.Current = LocalMap = map;
-            map.ChunkProvider = this;
-
-            //ChunkGenerator = new SimplePerlinGenerator();
-            //ChunkGenerator = new SolidChunkGenerator();
-            ChunkGenerator = new SimpleTerrainGenerator();
+            m_map = map;
         }
 
         #endregion Constructor
 
         #region Public Methods
 
-        /// <summary>
-        ///     Update the server.
-        /// </summary>
-        public void Update()
-        {
-            LocalMap.UpdateMap();
-        }
-
-        /// <summary>
-        ///     Shutdown this server.
-        /// </summary>
-        public void Shutdown()
-        {
-            LocalMap.Shutdown();
-        }
 
         public static string GetFilePathFromIndex(int cx, int cz)
         {
@@ -218,7 +195,7 @@ namespace Assets.Engine.Scripts.Provider
             Assert.IsTrue(!chunk.IsUsed, "Popped a chunk which is still in use!");
 #endif
 
-            chunk.Init(cx, cz, lod);
+            chunk.Init(m_map, cx, cz, lod);
 
             if (EngineSettings.WorldConfig.Streaming)
             {
