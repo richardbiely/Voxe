@@ -25,15 +25,14 @@ namespace Assets.Engine.Scripts.Core
 
         #region Private vars
 
-        //private BlockStorage m_blocks;
         private ChunkStorage m_chunks;
+
+        //! Clipmap with precomputed static data useful for map processing
+        private ChunkClipmap m_clipmap;
 
         //! Chunks to be removed
         private List<Chunk> m_chunksToRemove;
         
-        private Rect m_viewRange;
-        private Rect m_cachedRange;
-
         private Camera m_camera;
         private Plane[] m_cameraPlanes = new Plane[6];
 
@@ -45,8 +44,8 @@ namespace Assets.Engine.Scripts.Core
 
         public void Awake()
         {
-            //m_blocks = new BlockStorage();
             m_chunks = new ChunkStorage();
+            m_clipmap = new ChunkClipmap();
             m_chunksToRemove = new List<Chunk>();
         }
 
@@ -195,33 +194,9 @@ namespace Assets.Engine.Scripts.Core
             return chunk.CheckFrustum(m_cameraPlanes);
         }
 
-        private bool IsWithinVisibilityRange(Chunk chunk)
-        {
-            return chunk.Pos.X>=m_viewRange.xMin && chunk.Pos.Z>=m_viewRange.yMin && chunk.Pos.X<=m_viewRange.xMax && chunk.Pos.Z<=m_viewRange.yMax;
-        }
-
-        private bool IsWithinCachedRange(Chunk chunk)
-        {
-            return chunk.Pos.X>=m_cachedRange.xMin && chunk.Pos.Z>=m_cachedRange.yMin && chunk.Pos.X<=m_cachedRange.xMax && chunk.Pos.Z<=m_cachedRange.yMax;
-        }
-
         private void UpdateRangeRects()
         {
             Geometry.CalculateFrustumPlanes(m_camera, ref m_cameraPlanes);
-
-            m_viewRange = new Rect(
-                ViewerChunkPos.X-EngineSettings.WorldConfig.VisibleRange,
-                ViewerChunkPos.Z-EngineSettings.WorldConfig.VisibleRange,
-                EngineSettings.WorldConfig.VisibleRange*2,
-                EngineSettings.WorldConfig.VisibleRange*2
-                );
-
-            m_cachedRange = new Rect(
-                ViewerChunkPos.X-EngineSettings.WorldConfig.CachedRange,
-                ViewerChunkPos.Z-EngineSettings.WorldConfig.CachedRange,
-                EngineSettings.WorldConfig.CachedRange*2,
-                EngineSettings.WorldConfig.CachedRange*2
-                );
         }
 
         public static int ChunkCnt = 0;
@@ -246,10 +221,17 @@ namespace Assets.Engine.Scripts.Core
                 // Chunk is within view frustum
                 if (IsChunkInViewFrustum(chunk))
                 {
-                    // Chunk is within visibilty range. Full update with geometry generation is possible
-                    if (IsWithinVisibilityRange(chunk))
+                    ChunkClipmapItem item = m_clipmap[chunk.Pos.X, chunk.Pos.Z];
+
+                    // Chunk is too far away. Remove it
+                    if (!m_clipmap.IsInsideBounds(chunk.Pos.X, chunk.Pos.Z))
                     {
-                        chunk.LOD = DetermineLOD(chunk.Pos.X, chunk.Pos.Z);
+                        removeChunk = true;
+                    }
+                    // Chunk is within visibilty range. Full update with geometry generation is possible
+                    else if (item.IsWithinVisibleRange)
+                    {
+                        chunk.LOD = item.LOD;
                         chunk.SetPossiblyVisible(true);
                         chunk.Restore();
                         chunk.UpdateChunk();
@@ -272,35 +254,32 @@ namespace Assets.Engine.Scripts.Core
                         chunk.UpdateChunk();
                     }
                     // Chunk is within cached range. Full update except for geometry generation
-                    else if (IsWithinCachedRange(chunk))
+                    else// if (item.IsWithinCachedRange)
                     {
-                        chunk.LOD = DetermineLOD(chunk.Pos.X, chunk.Pos.Z);
+                        chunk.LOD = item.LOD;
                         chunk.SetPossiblyVisible(false);
                         chunk.SetVisible(false);
                         chunk.Restore();
                         chunk.UpdateChunk();
-                    }
-                    else
-                    // Chunk is too far away. Remove it
-                    {
-                        removeChunk = true;
                     }
                 }
                 else
                 {
-                    // Chunk is not in viewfrustum but still within cached range
-                    if (IsWithinCachedRange(chunk))
+                    ChunkClipmapItem item = m_clipmap[chunk.Pos.X, chunk.Pos.Z];
+
+                    // Chunk is not visible and too far away. Remote it
+                    if (!m_clipmap.IsInsideBounds(chunk.Pos.X, chunk.Pos.Z))
                     {
-                        chunk.LOD = DetermineLOD(chunk.Pos.X, chunk.Pos.Z);
+                        removeChunk = true;
+                    }
+                    // Chunk is not in viewfrustum but still within cached range
+                    else if (item.IsWithinCachedRange)
+                    {
+                        chunk.LOD = item.LOD;
                         chunk.SetPossiblyVisible(false);
                         chunk.SetVisible(false);
                         chunk.Restore();
                         chunk.UpdateChunk();
-                    }
-                    else
-                    // Chunk is not visible and too far away. Remote it
-                    {
-                        removeChunk = true;
                     }
                 }
 
@@ -342,6 +321,8 @@ namespace Assets.Engine.Scripts.Core
 
         private void InitCache()
         {
+            m_clipmap.Init(ForceLOD, LODCoef);
+
             // Build a list of coordinates
             List<Vector2Int> chunksToLoad = new List<Vector2Int>();
             for (int z = -EngineSettings.WorldConfig.CachedRange; z <= EngineSettings.WorldConfig.CachedRange; ++z)
@@ -361,6 +342,7 @@ namespace Assets.Engine.Scripts.Core
         {
             int offsetX = ViewerChunkPos.X;
             int offsetZ = ViewerChunkPos.Z;
+            m_clipmap.SetOffset(offsetX, offsetZ);
 
             foreach(var chunkPos in m_chunksToLoadByPos)
             {
@@ -595,7 +577,21 @@ namespace Assets.Engine.Scripts.Core
 
                     if (ShowMapBounds)
                     {
-                        if (IsWithinVisibilityRange(chunk))
+                        ChunkClipmapItem item = m_clipmap[chunk.Pos.X, chunk.Pos.Z];
+
+                        if(!m_clipmap.IsInsideBounds(chunk.Pos.X, chunk.Pos.Z))
+                        {
+                            Gizmos.color = Color.red;
+                            Gizmos.DrawWireCube(
+                                new Vector3(
+                                    chunk.Pos.X*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2,
+                                    EngineSettings.ChunkConfig.Size+0.1f,
+                                    chunk.Pos.Z*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2),
+                                new Vector3(EngineSettings.ChunkConfig.Size-0.5f, 0,
+                                            EngineSettings.ChunkConfig.Size-0.5f)
+                                );
+                        }
+                        else if (item.IsWithinVisibleRange)
                         {
                             Gizmos.color = Color.green;
                             Gizmos.DrawWireCube(
@@ -607,25 +603,13 @@ namespace Assets.Engine.Scripts.Core
                                             EngineSettings.ChunkConfig.Size-0.5f)
                                 );
                         }
-                        else if (IsWithinCachedRange(chunk))
+                        else// if (item.IsWithinCachedRange)
                         {
                             Gizmos.color = Color.yellow;
                             Gizmos.DrawWireCube(
                                 new Vector3(
                                     chunk.Pos.X*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2,
                                     EngineSettings.ChunkConfig.Size+0.15f,
-                                    chunk.Pos.Z*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2),
-                                new Vector3(EngineSettings.ChunkConfig.Size-0.5f, 0,
-                                            EngineSettings.ChunkConfig.Size-0.5f)
-                                );
-                        }
-                        else
-                        {
-                            Gizmos.color = Color.red;
-                            Gizmos.DrawWireCube(
-                                new Vector3(
-                                    chunk.Pos.X*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2,
-                                    EngineSettings.ChunkConfig.Size+0.1f,
                                     chunk.Pos.Z*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2),
                                 new Vector3(EngineSettings.ChunkConfig.Size-0.5f, 0,
                                             EngineSettings.ChunkConfig.Size-0.5f)

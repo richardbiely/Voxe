@@ -12,20 +12,15 @@ namespace Assets.Engine.Scripts.Common.Collections
         private readonly T[] m_items;
 
         // Helpers values used for calculation of position inside the item list
-        private readonly int m_maskX;
-        private readonly int m_maskZ;
-        private readonly int m_logX;
+        private readonly int m_width;
+        private readonly int m_height;
 
         //private readonly object m_lock = new object();
         
         public CircularArray2D(int width, int height)
         {
-            width = Mathf.NextPowerOfTwo(width);
-            height = Mathf.NextPowerOfTwo(height);
-
-            m_logX = Mathf.CeilToInt(Mathf.Log(width, 2));
-            m_maskX = width - 1;
-            m_maskZ = height - 1;
+            m_width = width;
+            m_height = height;
 
             OffsetX = 0;
             OffsetZ = 0;
@@ -48,7 +43,7 @@ namespace Assets.Engine.Scripts.Common.Collections
         {
             get
             {
-                return m_maskX+1;
+                return m_width;
             }
         }
 
@@ -56,7 +51,7 @@ namespace Assets.Engine.Scripts.Common.Collections
         {
             get
             {
-                return m_maskZ+1;
+                return m_height;
             }
         }
 
@@ -77,16 +72,16 @@ namespace Assets.Engine.Scripts.Common.Collections
         {
             get
             {
-                int realX = (x + OffsetX) & m_maskX;
-                int realZ = (z + OffsetZ) & m_maskZ;
-                int pos = realX+(realZ<<m_logX);
+                int realX = Helpers.Mod(x + OffsetX, m_width);
+                int realZ = Helpers.Mod(z + OffsetZ, m_height);
+                int pos = Helpers.GetIndex1DFrom2D(realX, realZ, m_width);
                 return this[pos];
             }
             set
             {
-                int realX = (x + OffsetX) & m_maskX;
-                int realZ = (z + OffsetZ) & m_maskZ;
-                int pos = realX+(realZ<<m_logX);
+                int realX = Helpers.Mod(x + OffsetX, m_width);
+                int realZ = Helpers.Mod(z + OffsetZ, m_height);
+                int pos = Helpers.GetIndex1DFrom2D(realX, realZ, m_width);
                 this[pos] = value;
             }
         }

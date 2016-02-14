@@ -2,7 +2,7 @@ namespace Assets.Engine.Scripts.Common.Collections
 {
     public sealed class Array2D<T>
     {
-		    private readonly T[] m_items;
+        private readonly T[] m_items;
         private readonly int m_width;
 
         public Array2D(int x, int y, T defaultValue)

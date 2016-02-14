@@ -4,10 +4,6 @@ namespace Assets.Engine.Scripts.Common
 {
     public static class Helpers
     {
-        public static Vector3 ZeroVec3 = Vector3.zero;
-        public static Vector2 ZeroVec2 = Vector2.zero;
-        public static Quaternion ZeroQuat = Quaternion.identity;
-        
         public static int GetIndex1DFrom2D(int x, int z, int sizeX)
         {
             return x + z*sizeX;

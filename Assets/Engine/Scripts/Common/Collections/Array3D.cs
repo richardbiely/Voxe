@@ -2,7 +2,7 @@ namespace Assets.Engine.Scripts.Common.Collections
 {
     public sealed class Array3D<T>
     {
-		    private readonly int m_width;
+        private readonly int m_width;
         private readonly int m_height;
         private readonly T[] m_items;
 
