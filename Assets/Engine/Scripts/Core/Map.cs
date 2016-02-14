@@ -28,7 +28,6 @@ namespace Assets.Engine.Scripts.Core
         //! Chunks to be removed
         private List<Chunk> m_chunksToRemove;
         
-        private Camera m_camera;
         private Plane[] m_cameraPlanes = new Plane[6];
 
         private Vector2Int[] m_chunksToLoadByPos;
@@ -51,9 +50,6 @@ namespace Assets.Engine.Scripts.Core
 
         public void Start()
         {
-            GameObject cameraGo = GameObject.FindGameObjectWithTag("MainCamera");
-            m_camera = cameraGo.GetComponent<Camera>();
-            
             UpdateRangeRects();
             InitCache();
             UpdateCache();
@@ -62,6 +58,8 @@ namespace Assets.Engine.Scripts.Core
         #endregion Constructor
 
         #region Public Fields
+
+        public Camera Camera;
 
         public IChunkProvider ChunkProvider { get; private set; }
         public IChunkGenerator ChunkGenerator { get; private set; }
@@ -168,15 +166,15 @@ namespace Assets.Engine.Scripts.Core
         private void UpdateRangeRects()
         {
             // Update camera position
-            int posX = Mathf.FloorToInt(m_camera.transform.position.x) >> EngineSettings.ChunkConfig.LogSize;
-            int posZ = Mathf.FloorToInt(m_camera.transform.position.z) >> EngineSettings.ChunkConfig.LogSize;
+            int posX = Mathf.FloorToInt(Camera.transform.position.x) >> EngineSettings.ChunkConfig.LogSize;
+            int posZ = Mathf.FloorToInt(Camera.transform.position.z) >> EngineSettings.ChunkConfig.LogSize;
             ViewerChunkPos = new Vector2Int(posX, posZ);
 
             // Update clipmap offset
             m_clipmap.SetOffset(ViewerChunkPos.X, ViewerChunkPos.Z);
 
             // Recalculate camera frustum planes
-            Geometry.CalculateFrustumPlanes(m_camera, ref m_cameraPlanes);
+            Geometry.CalculateFrustumPlanes(Camera, ref m_cameraPlanes);
         }
 
         public static int ChunkCnt = 0;

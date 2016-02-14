@@ -212,6 +212,10 @@ Prefab:
       propertyPath: ShowGeomBounds
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: Camera
+      value: 
+      objectReference: {fileID: 829896160}
     m_RemovedComponents:
     - {fileID: 11423040, guid: a4db001565d61294aae75f13fc68c869, type: 2}
   m_ParentPrefab: {fileID: 100100000, guid: a4db001565d61294aae75f13fc68c869, type: 2}
