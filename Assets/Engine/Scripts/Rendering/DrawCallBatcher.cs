@@ -42,7 +42,7 @@ namespace Assets.Engine.Scripts.Rendering
 
                 var filter = go.GetComponent<MeshFilter>();
                 filter.sharedMesh.Clear(false);
-                Globals.MeshPool.Push(filter.sharedMesh);
+                GlobalPools.MeshPool.Push(filter.sharedMesh);
                 filter.sharedMesh = null;
 
                 GameObjectProvider.PushObject(GOPChunk, go);
@@ -73,14 +73,14 @@ namespace Assets.Engine.Scripts.Rendering
                 return;
 
             // Lets create a separate batch if the number of vertices is too great
-            if (m_renderBuffer.Positions.Count + renderBuffer.Positions.Count >= 65000)
+            if (m_renderBuffer.Vertices.Count + renderBuffer.Vertices.Count >= 65000)
             {
                 Debug.LogWarning("Too many vertices :O");
                 Flush();
             }
 
             // Add data to main buffer
-            int vOffset = m_renderBuffer.Positions.Count;
+            int vOffset = m_renderBuffer.Vertices.Count;
 
             // Further calls to batch need to offset each triangle value by the number of triangles previously present
             if (vOffset != 0)
@@ -94,7 +94,7 @@ namespace Assets.Engine.Scripts.Rendering
 
         private void Flush()
         {
-            if (m_renderBuffer.Positions.Count <= 0)
+            if (m_renderBuffer.Vertices.Count <= 0)
             {
                 Debug.Log("Empty flush");
                 return;
@@ -108,7 +108,7 @@ namespace Assets.Engine.Scripts.Rendering
                 go.name = string.Format("[{0},{1},{2}]:{3}", Pos.X, Pos.Z, Pos.Y, m_drawCalls.Count);
 #endif
 
-                Mesh mesh = Globals.MeshPool.Pop();
+                Mesh mesh = GlobalPools.MeshPool.Pop();
                 Assert.IsTrue(mesh.vertices.Length<=0);
                 m_renderBuffer.BuildMesh(mesh);
 

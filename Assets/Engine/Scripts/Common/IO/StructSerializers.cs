@@ -69,7 +69,7 @@ namespace Assets.Engine.Scripts.Common.IO
         public static T Deserialize<T>(ref byte[] data) where T : struct
         {
             //if(Marshal.SizeOf(typeof (T))<data.Length)
-            //    throw new Exception("Input data too small");
+            //    throw new VoxeException("Input data too small");
 
             int objSize = data.Length;
             IntPtr buffer = Marshal.AllocHGlobal(objSize);
@@ -86,7 +86,7 @@ namespace Assets.Engine.Scripts.Common.IO
         public static T[] DeserializeArray<T>(ref byte[] data) where T : struct
         {
             //if (Marshal.SizeOf(typeof(T)) < data.Length)
-            //    throw new Exception("Input data too small");
+            //    throw new VoxeException("Input data too small");
 
             int elemSize = Marshal.SizeOf(typeof(T));
             int elemLen = data.Length / elemSize;
@@ -108,7 +108,7 @@ namespace Assets.Engine.Scripts.Common.IO
         public static List<T> DeserializeArrayToList<T>(ref byte[] data) where T : struct
         {
             //if (Marshal.SizeOf(typeof(T)) < data.Length)
-            //    throw new Exception("Input data too small");
+            //    throw new VoxeException("Input data too small");
 
             int elemSize = Marshal.SizeOf(typeof(T));
             int elemLen = data.Length / elemSize;

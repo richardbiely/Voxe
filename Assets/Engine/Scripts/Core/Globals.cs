@@ -1,8 +1,5 @@
 ﻿using Assets.Engine.Scripts.Builders;
-using Assets.Engine.Scripts.Common.Collections;
 using Assets.Engine.Scripts.Common.Threading;
-using Assets.Engine.Scripts.Core.Chunks;
-using UnityEngine;
 
 namespace Assets.Engine.Scripts.Core
 {
@@ -50,10 +47,5 @@ namespace Assets.Engine.Scripts.Core
                 return _sCubeMeshBuilder;
             }
         }
-
-        // Object pools for often used heap objects
-
-        public static readonly ObjectPool<Chunk> ChunkPool = new ObjectPool<Chunk>(ch => new Chunk(), 128, false);
-        public static readonly ObjectPool<Mesh> MeshPool = new ObjectPool<Mesh>(m => new Mesh(), 128, false);
     }
 }

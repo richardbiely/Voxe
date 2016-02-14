@@ -10,7 +10,7 @@ namespace Assets.Engine.Scripts.Common.Extensions
         /// </summary>
         public static void AddIndices(this RenderBuffer target, bool backFace)
         {
-            int offset = target.Positions.Count;
+            int offset = target.Vertices.Count;
 
             if (backFace)
             {
@@ -39,7 +39,7 @@ namespace Assets.Engine.Scripts.Common.Extensions
         /// </summary>
         public static void AddVertices(this RenderBuffer target, ref Vector3[] vertices)
         {
-            target.Positions.AddRange(vertices);
+            target.Vertices.AddRange(vertices);
         }
 
         /// <summary>

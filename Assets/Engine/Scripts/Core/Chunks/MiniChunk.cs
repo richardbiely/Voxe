@@ -85,7 +85,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         public void Build()
         {
-            if (IsBuilt || SolidRenderBuffer.Positions.Count<=0)
+            if (IsBuilt || SolidRenderBuffer.Vertices.Count<=0)
                 return;
 
             m_drawCallBatcher.Clear();

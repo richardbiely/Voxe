@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Assets.Engine.Scripts.Common.Collections
 {
@@ -90,7 +89,7 @@ namespace Assets.Engine.Scripts.Common.Collections
         public void Push(T item)
         {
             if (m_objectIndex<=0)
-                throw new Exception("Object pool is full");
+                throw new VoxeException("Object pool is full");
             
             // If we're using less then 1/4th of memory capacity, let's free half of the allocated memory.
             // We're doing it this way so that there's a certain threshold before allocating new memory.

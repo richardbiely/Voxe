@@ -11,7 +11,7 @@ namespace Assets.Engine.Scripts.Rendering
     {
         private readonly IMeshBuilder m_meshBuilder;
 
-        public readonly List<Vector3> Positions = new List<Vector3>();
+        public readonly List<Vector3> Vertices = new List<Vector3>();
         public readonly List<Vector3> Normals = new List<Vector3>();
         public readonly List<Vector2> UV1 = new List<Vector2>();
         public readonly List<Vector2> UV2 = new List<Vector2>();
@@ -28,7 +28,7 @@ namespace Assets.Engine.Scripts.Rendering
         /// </summary>
         public void Clear()
         {
-            Positions.Clear();
+            Vertices.Clear();
             Normals.Clear();
             UV1.Clear();
             UV2.Clear();
@@ -38,12 +38,12 @@ namespace Assets.Engine.Scripts.Rendering
 
         public bool IsEmpty()
         {
-            return (Positions.Count <= 0);
+            return (Vertices.Count <= 0);
         }
 
         public void Combine(RenderBuffer renderBuffer)
         {
-            Positions.AddRange(renderBuffer.Positions);
+            Vertices.AddRange(renderBuffer.Vertices);
             Normals.AddRange(renderBuffer.Normals);
             UV1.AddRange(renderBuffer.UV1);
             UV2.AddRange(renderBuffer.UV2);

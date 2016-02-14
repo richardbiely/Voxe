@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Assets.Engine.Scripts.Core;
+using UnityEngine;
 
 namespace Assets.Engine.Scripts.Common.Extensions
 {
@@ -16,10 +17,9 @@ namespace Assets.Engine.Scripts.Common.Extensions
             int triangleCount = triangles.Length;
             int vertexCount = vertices.Length;
 
-            Vector3[] tan1 = new Vector3[vertexCount];
-            Vector3[] tan2 = new Vector3[vertexCount];
-
-            Vector4[] tangents = new Vector4[vertexCount];
+            Vector3[] tan1 = GlobalPools.PopVector3Array(vertexCount);
+            Vector3[] tan2 = GlobalPools.PopVector3Array(vertexCount);
+            Vector4[] tangents = GlobalPools.PopVector4Array(vertexCount);
 
             for (long t = 0; t < triangleCount; t += 3)
             {
@@ -81,6 +81,10 @@ namespace Assets.Engine.Scripts.Common.Extensions
             }
 
             mesh.tangents = tangents;
+
+            GlobalPools.PushVector3Array(tan1);
+            GlobalPools.PushVector3Array(tan2);
+            GlobalPools.PushVector4Array(tangents);
         }
     }
 }

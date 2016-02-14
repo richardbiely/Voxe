@@ -7,7 +7,7 @@ using UnityEngine.Assertions;
 namespace Assets.Engine.Scripts.Provider
 {
     [AddComponentMenu("Voxe/Singleton/GameObjectProvider")]
-    public class GameObjectProvider: MonoSingleton<GameObjectProvider>
+    public sealed class GameObjectProvider: MonoSingleton<GameObjectProvider>
     {
         private GameObject m_go;
         public ObjectPoolEntry [] ObjectPools = new ObjectPoolEntry [0];
