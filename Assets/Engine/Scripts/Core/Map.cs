@@ -72,6 +72,7 @@ namespace Assets.Engine.Scripts.Core
         public OcclusionCuller Occlusion;
 
         public float LODCoef = 1f;
+        public int ForceLOD = -1;
 
         [Header("Debugging")]
         public bool ShowGeomBounds;
@@ -155,15 +156,24 @@ namespace Assets.Engine.Scripts.Core
 
         public int DetermineLOD(int cx, int cz)
         {
-            if (LODCoef<=0)
-                return 0;
+            int lod = 0;
 
-            int xDist = Mathf.Abs(cx - ViewerChunkPos.X);
-            int zDist = Mathf.Abs(cz - ViewerChunkPos.Z);
+            if (ForceLOD>=0)
+            {
+                lod = ForceLOD;
+            }
+            else
+            {
+                if (LODCoef <= 0)
+                    return 0;
 
-            // Pick the greater distance and choose a proper LOD
-            int dist = Mathf.Max(xDist, zDist);
-            int lod = (int)(dist / (LODCoef*EngineSettings.ChunkConfig.LogSize));
+                int xDist = Mathf.Abs(cx-ViewerChunkPos.X);
+                int zDist = Mathf.Abs(cz-ViewerChunkPos.Z);
+
+                // Pick the greater distance and choose a proper LOD
+                int dist = Mathf.Max(xDist, zDist);
+                lod = (int)(dist/(LODCoef*EngineSettings.ChunkConfig.LogSize));
+            }
 
             // LOD can't be bigger than chunk size
             if (lod<0)
@@ -182,7 +192,7 @@ namespace Assets.Engine.Scripts.Core
         private bool IsChunkInViewFrustum(Chunk chunk)
         {
             // Check if the chunk lies within camera planes
-            return true;//chunk.CheckFrustum(m_cameraPlanes);
+            return chunk.CheckFrustum(m_cameraPlanes);
         }
 
         private bool IsWithinVisibilityRange(Chunk chunk)
