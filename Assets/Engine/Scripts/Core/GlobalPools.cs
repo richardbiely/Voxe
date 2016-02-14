@@ -89,15 +89,15 @@ namespace Assets.Engine.Scripts.Core
             return pool.Pop();
         }
 
-        private static void PushArray<T>(T[] arrayOfT, IDictionary<int, ArrayPool<T>> pools)
+        private static void PushArray<T>(T[] array, IDictionary<int, ArrayPool<T>> pools)
         {
-            int length = arrayOfT.Length;
+            int length = array.Length;
 
             ArrayPool<T> pool;
             if (!pools.TryGetValue(length, out pool))
                 throw new VoxeException("Couldn't find an array pool of length "+length);
 
-            pool.Push(arrayOfT);
+            pool.Push(array);
         }
     }
 }

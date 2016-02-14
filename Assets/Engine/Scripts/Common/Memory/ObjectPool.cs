@@ -70,7 +70,9 @@ namespace Assets.Engine.Scripts.Common.Collections
                 m_objects.Add(m_objectAllocator.Action(m_objectAllocator.Arg));
         }
 
-        // Retrieves an object from pool and returns it
+        /// <summary>
+        ///     Retrieves an object from the top of the pool
+        /// </summary>
         public T Pop()
         {
             if (m_objectIndex >= m_objects.Count)
@@ -85,7 +87,9 @@ namespace Assets.Engine.Scripts.Common.Collections
             return m_objects[m_objectIndex++];
         }
 
-        // Returns an object back to pool
+        /// <summary>
+        ///     Returns an object back to pool
+        /// </summary>
         public void Push(T item)
         {
             if (m_objectIndex<=0)
@@ -115,8 +119,10 @@ namespace Assets.Engine.Scripts.Common.Collections
 
             m_objects[--m_objectIndex] = item;
         }
-
-        // Releases all unused memory
+        
+        /// <summary>
+        ///    Releases all unused memory
+        /// </summary>
         public void Compact()
         {
             // Use custom deallocation if deallocator is set

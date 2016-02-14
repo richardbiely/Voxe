@@ -29,8 +29,11 @@ namespace Assets.Engine.Scripts.Common.Memory
                 // Init
                 m_arrays = new Stack<T[]>(initialCapacity);
             }
-        }        
+        }
 
+        /// <summary>
+        ///     Retrieves an array from the top of the pool
+        /// </summary>
         public T[] Pop()
         {
             if (m_arrays.Count==0)
@@ -39,6 +42,9 @@ namespace Assets.Engine.Scripts.Common.Memory
             return m_arrays.Pop();
         }
 
+        /// <summary>
+        ///     Returns an array back to the pool
+        /// </summary>
         public void Push(T[] item)
         {
             if (item==null)
