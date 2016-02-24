@@ -2,7 +2,7 @@
 
 namespace Assets.Engine.Scripts.Core.Chunks
 {
-    interface IChunkStorage
+    public interface IChunkStorage
     {
         Chunk this[int x, int z] { get; set; }
 

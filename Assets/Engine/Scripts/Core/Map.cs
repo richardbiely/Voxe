@@ -11,7 +11,6 @@ using System.Linq;
 using Assets.Engine.Scripts.Common.Math;
 using Assets.Engine.Scripts.Core.Threading;
 using Assets.Engine.Scripts.Generators;
-using Assets.Engine.Scripts.Generators.Terrain;
 using Assets.Engine.Scripts.Rendering;
 
 namespace Assets.Engine.Scripts.Core

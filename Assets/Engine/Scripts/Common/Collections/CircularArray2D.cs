@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using UnityEngine;
 
 namespace Assets.Engine.Scripts.Common.Collections
 {
@@ -14,8 +13,6 @@ namespace Assets.Engine.Scripts.Common.Collections
         // Helpers values used for calculation of position inside the item list
         private readonly int m_width;
         private readonly int m_height;
-
-        //private readonly object m_lock = new object();
         
         public CircularArray2D(int width, int height)
         {
@@ -75,19 +72,19 @@ namespace Assets.Engine.Scripts.Common.Collections
                 int realX = Helpers.Mod(x + OffsetX, m_width);
                 int realZ = Helpers.Mod(z + OffsetZ, m_height);
                 int pos = Helpers.GetIndex1DFrom2D(realX, realZ, m_width);
-                return this[pos];
+                return m_items[pos];
             }
             set
             {
                 int realX = Helpers.Mod(x + OffsetX, m_width);
                 int realZ = Helpers.Mod(z + OffsetZ, m_height);
                 int pos = Helpers.GetIndex1DFrom2D(realX, realZ, m_width);
-                this[pos] = value;
+                m_items[pos] = value;
             }
         }
 
         /// <summary>
-        ///     Access circular array as tough it were a regular array. No safety checks.
+        ///     Access circular array as tough it was a regular array. No safety checks.
         /// </summary>
         public T this[int i]
         {
