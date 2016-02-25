@@ -381,7 +381,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
                 // Build bounding mesh for each section
                 float width = (MaxRenderX - MinRenderX) + 1;
-                float depth = (MaxRenderX - MinRenderZ) + 1;
+                float depth = (MaxRenderZ - MinRenderZ) + 1;
                 int startY = minY;
                 for (int i = 0; i < Sections.Length; i++)
                 {
