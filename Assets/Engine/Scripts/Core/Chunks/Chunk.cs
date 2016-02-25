@@ -1,12 +1,10 @@
 using System;
-using Assets.Engine.Scripts.Builders;
 using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Common.Extensions;
 using Assets.Engine.Scripts.Common.Threading;
 using Assets.Engine.Scripts.Core.Blocks;
 using Assets.Engine.Scripts.Core.Threading;
 using Assets.Engine.Scripts.Provider;
-using Assets.Engine.Scripts.Utils;
 using UnityEngine;
 using Assert = UnityEngine.Assertions.Assert;
 using System.Collections.Generic;
@@ -333,9 +331,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             MaxRenderX = 0;
             MinRenderZ = EngineSettings.ChunkConfig.Mask;
             MaxRenderX = 0;
-
-            int minY = EngineSettings.ChunkConfig.MaskYTotal, maxY = 0;
-
+            
             for (int y = EngineSettings.ChunkConfig.MaskYTotal; y>=0; y--)
             {
                 int sectionIndex = y>>EngineSettings.ChunkConfig.LogSize;
@@ -353,16 +349,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
                             if (x<MinRenderX) MinRenderX = x;
                             if (z<MinRenderZ) MinRenderZ = z;
-                            if (y<minY) minY = y;
 
                             if (x>MaxRenderX) MaxRenderX = x;
                             if (z>MaxRenderZ) MaxRenderZ = z;
-                            if (y>maxY) maxY = y;
 
                             if (y>MaxRenderY)
                                 MaxRenderY = y;
                         }
-                        else if (MinRenderY > y)
+                        else if (y<MinRenderY)
                             MinRenderY = y;
                     }
                 }
@@ -382,27 +376,27 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 // Build bounding mesh for each section
                 float width = (MaxRenderX - MinRenderX) + 1;
                 float depth = (MaxRenderZ - MinRenderZ) + 1;
-                int startY = minY;
+                int startY = MinRenderY;
                 for (int i = 0; i < Sections.Length; i++)
                 {
                     MiniChunk section = Sections[i];
                     section.ResetBoundingMesh();
 
-                    if (startY>=maxY)
+                    if (startY>=MaxRenderY)
                         continue;
 
                     int sectionMaxY = section.OffsetY + EngineSettings.ChunkConfig.Mask;
-                    if (startY >= sectionMaxY)
+                    if (startY>=sectionMaxY)
                         continue;
 
                     int heightMax = startY+EngineSettings.ChunkConfig.Size;
                     heightMax = Mathf.Min(heightMax, sectionMaxY);
-                    heightMax = Mathf.Min(heightMax, maxY);
+                    heightMax = Mathf.Min(heightMax, MaxRenderY);
 
                     float height = heightMax - startY;
 
                     Bounds bounds = new Bounds(
-                        new Vector3(posInWorldX + width*0.5f, startY + height*0.5f + 1, posInWorldZ + depth*0.5f),
+                        new Vector3(posInWorldX + width*0.5f, startY + height*0.5f, posInWorldZ + depth*0.5f),
                         new Vector3(width, height, depth)
                         );
                     section.BuildBoundingMesh(ref bounds);
@@ -818,10 +812,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 OnFinalizeDataDone(this);
                 return false;
             }
-            m_refreshTasks = m_refreshTasks.Reset(CurrStateFinalizeData);
 
-            // NOTE: No need to check whether FinalizeData has already been called here.
-            // In fact, we expect that this might happen e.g. when modifying blocks in chunk.
+            m_refreshTasks = m_refreshTasks.Reset(CurrStateFinalizeData);
             m_completedTasks = m_completedTasks.Reset(CurrStateFinalizeData);
 
             m_taskRunning = true;
@@ -901,10 +893,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 OnSerialzeChunkDone(this);
                 return false;
             }
-            m_refreshTasks = m_refreshTasks.Reset(CurrStateSerializeChunk);
 
-			// NOTE: No need to check whether SerializeChunk has already been called here.
-			// In fact, we expect that this might happen e.g. when modifying blocks in chunk.
+            m_refreshTasks = m_refreshTasks.Reset(CurrStateSerializeChunk);
 			m_completedTasks = m_completedTasks.Reset(CurrStateSerializeChunk);
 
 			SSerializeWorkItem workItem = new SSerializeWorkItem(
@@ -1020,10 +1010,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 OnGenerateVerticesDone(this);
                 return;
             }
-            m_refreshTasks = m_refreshTasks.Reset(CurrStateGenerateVertices);
 
-            // NOTE: No need to check whether GenerateVertices has already been called here.
-            // In fact, we expect that this might happen e.g. when modifying blocks in chunk.
+            m_refreshTasks = m_refreshTasks.Reset(CurrStateGenerateVertices);
             m_completedTasks = m_completedTasks.Reset(CurrStateGenerateVertices);
 
 			int nonEmptyBlocks = 0;

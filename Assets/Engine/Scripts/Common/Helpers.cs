@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace Assets.Engine.Scripts.Common
 {
     public static class Helpers
