@@ -210,7 +210,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: ShowGeomBounds
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: Camera
@@ -220,6 +220,10 @@ Prefab:
       propertyPath: ChunkGenerator
       value: 
       objectReference: {fileID: 297728908}
+    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: MeshBuilder
+      value: 
+      objectReference: {fileID: 297728911}
     m_RemovedComponents:
     - {fileID: 11423040, guid: a4db001565d61294aae75f13fc68c869, type: 2}
   m_ParentPrefab: {fileID: 100100000, guid: a4db001565d61294aae75f13fc68c869, type: 2}
@@ -265,6 +269,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d93a4db5a39db4041879a82d425d83ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &297728911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 297728907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfe42fce6d47f8e419120f3d17d227ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &583099778

@@ -8,6 +8,7 @@ using Assets.Engine.Scripts.Provider;
 using UnityEngine;
 using UnityEngine.Assertions;
 using System.Linq;
+using Assets.Engine.Scripts.Builders;
 using Assets.Engine.Scripts.Common.Math;
 using Assets.Engine.Scripts.Core.Threading;
 using Assets.Engine.Scripts.Generators;
@@ -60,6 +61,7 @@ namespace Assets.Engine.Scripts.Core
 
         public Camera Camera;
         public AChunkGenerator ChunkGenerator;
+        public AVoxelMeshBuilder MeshBuilder;
 
         public IChunkProvider ChunkProvider { get; private set; }
         
