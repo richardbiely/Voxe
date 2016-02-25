@@ -352,14 +352,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
 							++section.NonEmptyBlocks;
 
                             if (x<MinRenderX) MinRenderX = x;
+                            if (z<MinRenderZ) MinRenderZ = z;
                             if (y<minY) minY = y;
-                            if (z< MinRenderZ) MinRenderZ = z;
 
-                            if (x> MaxRenderX) MaxRenderX = x;
+                            if (x>MaxRenderX) MaxRenderX = x;
+                            if (z>MaxRenderZ) MaxRenderZ = z;
                             if (y>maxY) maxY = y;
-                            if (z> MaxRenderZ) MaxRenderZ = z;
 
-                            if (y > MaxRenderY)
+                            if (y>MaxRenderY)
                                 MaxRenderY = y;
                         }
                         else if (MinRenderY > y)
@@ -933,48 +933,43 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		{
 			public readonly Chunk Chunk;
 			public readonly int SetBlockSections;
+		    public readonly int MinX;
+		    public readonly int MaxX;
 			public readonly int MinY;
 			public readonly int MaxY;
-		    public readonly int LOD;
+            public readonly int MinZ;
+            public readonly int MaxZ;
+            public readonly int LOD;
 
-			public SGenerateVerticesWorkItem(Chunk chunk, int setBlockSections, int minY, int maxY, int lod)
+			public SGenerateVerticesWorkItem(Chunk chunk, int setBlockSections, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod)
 			{
 				Chunk = chunk;
 				SetBlockSections = setBlockSections;
+			    MinX = minX;
+			    MaxX = maxX;
 				MinY = minY;
 				MaxY = maxY;
+			    MinZ = minZ;
+			    MaxZ = maxZ;
 			    LOD = lod;
 			}
 		}
 
 		private static readonly ChunkState CurrStateGenerateVertices = ChunkState.BuildVertices;
 		private static readonly ChunkState NextStateGenerateVertices = ChunkState.Idle;
-
-        private static void BuildMesh(Chunk chunk, int sectionIndex, int offsetX, int offsetZ, int lod)
+        
+        private static void BuildMesh(Map map, MiniChunk section, int offsetX, int offsetZ, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod)
         {
-            Map map = chunk.Map;
-
-            MiniChunk section = chunk.Sections[sectionIndex];
             section.SolidRenderBuffer.Clear();
 
             BlockFace face = 0;
 
             int stepSize = 1 << lod;
             Assert.IsTrue(lod<=EngineSettings.ChunkConfig.LogSize); // LOD can't be bigger than chunk size
-            int width = EngineSettings.ChunkConfig.Size / stepSize;
+            int width = EngineSettings.ChunkConfig.Size >> lod;
 
-            int[] mins =
-            {
-                    0,
-                    0,
-                    0
-                };
-            int[] maxes =
-            {
-                    width,
-                    width,
-                    width
-                };
+            int[] mins = { minX >> lod, minY >> lod, minZ >> lod };
+            int[] maxes = { maxX >> lod, maxY >> lod, maxZ >> lod };
 
             int[] x = {0, 0, 0}; // Relative position of block
             int[] xx = { 0, 0, 0 }; // Relative position of block after aplying lod
@@ -1015,14 +1010,23 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 }
 
                 // Move through the dimension from front to back
-                for (x[d] = mins[d]-1; x[d]<maxes[d];)
+                for (x[d] = mins[d]-1; x[d]<=maxes[d];)
                 {
                     // Compute the mask
                     int n = 0;
-
-                    for (x[v] = mins[v]; x[v]<maxes[v]; x[v]++)
+                    
+                    for (x[v] = 0; x[v]<mins[v]; x[v]++)
                     {
-                        for (x[u] = mins[u]; x[u]<maxes[u]; x[u]++)
+                        for (x[u] = 0; x[u]<width; x[u]++)
+                            mask[n++] = BlockData.Air;
+                    }
+
+                    for (x[v] = mins[v]; x[v]<=maxes[v]; x[v]++)
+                    {
+                        for (x[u] = 0; x[u]<mins[u]; x[u]++)
+                            mask[n++] = BlockData.Air;
+
+                        for (x[u] = mins[u]; x[u]<=maxes[u]; x[u]++)
                         {
                             int realX = (x[0]<<lod) + offsetX;
                             int realY = (x[1]<<lod) + section.OffsetY;
@@ -1035,6 +1039,15 @@ namespace Assets.Engine.Scripts.Core.Chunks
                                             ? BlockData.Air
                                             : (backFace ? voxelFace1 : voxelFace0);
                         }
+
+                        for (x[u] = maxes[u]+1; x[u]<width; x[u]++)
+                            mask[n++] = BlockData.Air;
+                    }
+
+                    for (x[v] = maxes[v]+1; x[v]<width; x[v]++)
+                    {
+                        for (x[u] = 0; x[u]<width; x[u]++)
+                            mask[n++] = BlockData.Air;
                     }
 
                     x[d]++;
@@ -1168,7 +1181,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             }
         }
 
-		private static void OnGenerateVerices(Chunk chunk, int setBlockSections, int minY, int maxY, int lod)
+		private static void OnGenerateVerices(Chunk chunk, int setBlockSections, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod)
 		{
 			int minSection = minY >> EngineSettings.ChunkConfig.LogSize;
 			int maxSection = maxY >> EngineSettings.ChunkConfig.LogSize;
@@ -1182,10 +1195,19 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		            continue;
 		        setBlockSections = setBlockSections&(~sectionIndexBit);
 
+                Map map = chunk.Map;
+                MiniChunk section = chunk.Sections[sectionIndex];
+
                 int offsetX = chunk.Pos.X * EngineSettings.ChunkConfig.Size;
                 int offsetZ = chunk.Pos.Z * EngineSettings.ChunkConfig.Size;
+
+		        int minSectionY = Mathf.Max(minY, section.OffsetY) - section.OffsetY;
+		        int maxSectionY = Mathf.Min(maxY, section.OffsetY+EngineSettings.ChunkConfig.Size) - section.OffsetY;
+
+		        minSectionY = Mathf.Max(0, minSectionY);
+		        maxSectionY = Mathf.Min(maxSectionY, EngineSettings.ChunkConfig.Mask);
                 
-		        BuildMesh(chunk, sectionIndex, offsetX, offsetZ, lod);
+                BuildMesh(map, section, offsetX, offsetZ, minX, maxX, minSectionY, maxSectionY, minZ, maxZ, lod);
 		    }
 
 		    lock (chunk.m_lock)
@@ -1239,7 +1261,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			{
 				int lowest = Mathf.Max(MinRenderY, 0);
 				int highest = Mathf.Min(MaxRenderY, EngineSettings.ChunkConfig.SizeYTotal-1);
-				var workItem = new SGenerateVerticesWorkItem(this, m_setBlockSections, lowest, highest, LOD);
+				var workItem = new SGenerateVerticesWorkItem(
+                    this, m_setBlockSections, MinRenderX, MaxRenderX, lowest, highest, MinRenderZ, MaxRenderZ, LOD
+                    );
                 
 				m_setBlockSections = 0;
 
@@ -1248,8 +1272,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 					arg =>
 					{
 						SGenerateVerticesWorkItem item = (SGenerateVerticesWorkItem)arg;
-						OnGenerateVerices(item.Chunk, item.SetBlockSections, item.MinY, item.MaxY, item.LOD);
-					},
+                        OnGenerateVerices(item.Chunk, item.SetBlockSections, item.MinX, item.MaxX, item.MinY, item.MaxY, item.MinZ, item.MaxZ, item.LOD);
+                    },
 					workItem)
 				);
 			}

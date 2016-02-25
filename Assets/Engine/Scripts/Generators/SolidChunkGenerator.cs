@@ -1,6 +1,5 @@
 using Assets.Engine.Scripts.Core.Blocks;
 using Assets.Engine.Scripts.Core.Chunks;
-using UnityEngine;
 
 namespace Assets.Engine.Scripts.Generators
 {
