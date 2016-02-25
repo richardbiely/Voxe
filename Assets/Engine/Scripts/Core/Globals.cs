@@ -1,4 +1,4 @@
-﻿using Assets.Engine.Scripts.Builders;
+﻿using Assets.Engine.Scripts.Builders.Mesh;
 using Assets.Engine.Scripts.Common.Threading;
 
 namespace Assets.Engine.Scripts.Core

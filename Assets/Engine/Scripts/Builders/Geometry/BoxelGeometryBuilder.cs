@@ -1,4 +1,5 @@
-﻿using Assets.Engine.Scripts.Common.DataTypes;
+﻿using Assets.Engine.Scripts.Builders.Block;
+using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Core.Blocks;
 using Assets.Engine.Scripts.Utils;
@@ -6,9 +7,12 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
-namespace Assets.Engine.Scripts.Builders
+namespace Assets.Engine.Scripts.Builders.Geometry
 {
-    public class BoxelMeshBuilder: AVoxelMeshBuilder
+    /// <summary>
+    /// Generates a typical cubical voxel geometry for a chunk. Faces will be merged, however, to decrease its complexity.
+    /// </summary>
+    public class BoxelGeometryBuilder: AVoxelGeometryBuilder
     {
         public override void BuildMesh(
             Map map, RenderBuffer renderBuffer, int offsetX, int offsetY, int offsetZ,

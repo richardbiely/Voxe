@@ -3,9 +3,9 @@ using Assets.Engine.Scripts.Core;
 using UnityEngine;
 using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
-namespace Assets.Engine.Scripts.Builders
+namespace Assets.Engine.Scripts.Builders.Geometry
 {
-    public abstract class AVoxelMeshBuilder: MonoBehaviour, IVoxelMeshBuilder
+    public abstract class AVoxelGeometryBuilder: MonoBehaviour, IVoxelGeometryBuilder
     {
         public virtual void BuildMesh(
             Map map, RenderBuffer renderBuffer, int offsetX, int offsetY, int offsetZ,

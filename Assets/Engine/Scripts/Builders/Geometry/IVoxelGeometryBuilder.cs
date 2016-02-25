@@ -1,9 +1,9 @@
 ﻿using Assets.Engine.Scripts.Core;
 using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
-namespace Assets.Engine.Scripts.Builders
+namespace Assets.Engine.Scripts.Builders.Geometry
 {
-    public interface IVoxelMeshBuilder
+    public interface IVoxelGeometryBuilder
     {
         void BuildMesh(
             Map map, RenderBuffer renderBuffer, int offsetX, int offsetY, int offsetZ,

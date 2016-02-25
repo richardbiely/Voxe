@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Assets.Engine.Scripts.Builders;
+using Assets.Engine.Scripts.Builders.Mesh;
 using UnityEngine;
 
 namespace Assets.Engine.Scripts.Rendering

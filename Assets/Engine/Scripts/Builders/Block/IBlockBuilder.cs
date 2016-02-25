@@ -3,7 +3,7 @@ using Assets.Engine.Scripts.Utils;
 using UnityEngine;
 using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
-namespace Assets.Engine.Scripts.Builders
+namespace Assets.Engine.Scripts.Builders.Block
 {
     /// <summary>
     ///     Interface for building static meshes for blocks

@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Assets.Engine.Scripts.Builders;
+using Assets.Engine.Scripts.Builders.Mesh;
 using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Provider;
