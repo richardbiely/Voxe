@@ -73,6 +73,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             IsBuilt = false;
 
             m_drawCallBatcher.Clear();
+            SolidRenderBuffer.Clear();
 
             ResetBoundingMesh();
         }
