@@ -583,11 +583,16 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			}
 		}
 
+        private bool IsFinished_Internal()
+        {
+            return m_completedTasks.Check(ChunkState.Remove);
+        }
+
 		public bool IsFinished()
 		{
 		    lock (m_lock)
 		    {
-		        return m_completedTasks.Check(ChunkState.Remove);
+                return IsFinished_Internal();
 		    }
 		}
 
@@ -598,12 +603,16 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 return m_completedTasks.Check(ChunkState.FinalizeData);
             }
         }
+        private bool IsExecutingTask_Internal()
+        {
+            return m_taskRunning;
+        }
 
         public bool IsExecutingTask()
 		{
 		    lock (m_lock)
 		    {
-		        return m_taskRunning;
+		        return IsExecutingTask_Internal();
 		    }
 		}
 
@@ -633,20 +642,20 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         public void ProcessPendingTasks(bool possiblyVisible)
         {
-            // We are not allowed to check anything as long as there is a task still running
-            if (IsExecutingTask())
-                return;
+            lock (m_lock)
+            {
+                // We are not allowed to check anything as long as there is a task still running
+                if (IsExecutingTask_Internal())
+                    return;
 
-            // Once this chunk is marked as finished we stop caring about everything else
-            if (IsFinished())
-                return;
+                // Once this chunk is marked as finished we stop caring about everything else
+                if (IsFinished())
+                    return;
+            }
 
             // Go from the least important bit to most important one. If a given bit it set
             // we execute the task tied with it
-            ProcessNotifyState();
-            if (m_pendingTasks.Check(ChunkState.Generate) && GenerateData(possiblyVisible))
-                return;
-
+            
 #if ENABLE_BLUEPRINTS
             ProcessNotifyState();
             if (m_pendingTasks.Check(ChunkState.GenerateBlueprints) && GenerateBlueprints())
@@ -663,14 +672,19 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 return;
 
             ProcessNotifyState();
-            if (m_pendingTasks.Check(ChunkState.Remove))
+            if (m_pendingTasks.Check(ChunkState.Remove) && RemoveChunk())
+                return;
+
+            ProcessNotifyState();
+            if (m_pendingTasks.Check(ChunkState.Generate) && GenerateData(possiblyVisible))
+                return;
+
+            // Building vertices has the lowest priority for us. It's just the data we see.
+            if (possiblyVisible)
 			{
-				RemoveChunk();
-			}
-			// Building vertices has the lowest priority for us. It's just the data we see.
-			else if (possiblyVisible && m_pendingTasks.Check(ChunkState.BuildVertices))
-			{				
-				GenerateVertices();
+                ProcessNotifyState();
+                if (m_pendingTasks.Check(ChunkState.BuildVertices))
+                    GenerateVertices();
 			}
 		}
 
@@ -1089,7 +1103,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		private static readonly ChunkState CurrStateRemoveChunk = ChunkState.Remove;
 
-		private void RemoveChunk()
+		private bool RemoveChunk()
 		{
             // If chunk was generated we need to wait for other states with higher priority to finish first
             if (m_completedTasks.Check(ChunkState.Generate))
@@ -1101,11 +1115,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
 #endif
                     ChunkState.FinalizeData
                     ))
-                    return;
+                    return false;
 
                 // With streaming enabled we have to wait for serialization to finish as well
                 if (EngineSettings.WorldConfig.Streaming && !m_completedTasks.Check(ChunkState.Serialize))
-                    return;
+                    return false;
             }
             else
             // No work on chunk started yet. Reset its' state completely
@@ -1115,7 +1129,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
             }
                         
             m_completedTasks = m_completedTasks.Set(CurrStateRemoveChunk);
-        }
+		    return true;
+		}
 
 #endregion Remove chunk
 
