@@ -1,4 +1,4 @@
-﻿using Assets.Engine.Scripts.Core;
+﻿using Assets.Engine.Scripts.Core.Chunks;
 using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
 namespace Assets.Engine.Scripts.Builders.Geometry

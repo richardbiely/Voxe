@@ -1,6 +1,6 @@
 using System;
 using System.Collections;
-using Assets.Engine.Scripts.Core;
+using Assets.Engine.Scripts.Core.Chunks;
 using UnityEngine;
 
 namespace Assets.Client.Scripts
@@ -27,7 +27,7 @@ namespace Assets.Client.Scripts
 
         private void FixedUpdate()
         {
-            GameMap.UpdateMap();
+            GameMap.ProcessChunks();
         }
 
         private void OnDestroy()

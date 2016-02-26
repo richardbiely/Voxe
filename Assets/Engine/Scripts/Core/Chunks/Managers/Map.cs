@@ -2,25 +2,20 @@
 using Assets.Engine.Scripts.Common;
 using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Core.Blocks;
-using Assets.Engine.Scripts.Core.Chunks;
 using Assets.Engine.Scripts.Physics;
-using Assets.Engine.Scripts.Provider;
 using UnityEngine;
 using UnityEngine.Assertions;
 using System.Linq;
 using Assets.Engine.Scripts.Builders.Geometry;
 using Assets.Engine.Scripts.Common.Math;
-using Assets.Engine.Scripts.Core.Threading;
 using Assets.Engine.Scripts.Generators;
 using Assets.Engine.Scripts.Rendering;
 
-namespace Assets.Engine.Scripts.Core
+namespace Assets.Engine.Scripts.Core.Chunks
 {
-    public class Map: MonoBehaviour
+    public class Map: ChunkManager
     {
         #region Private vars
-
-        private ChunkStorage m_chunkStorage;
 
         //! Clipmap with precomputed static data useful for map processing
         private ChunkClipmap m_clipmap;
@@ -34,13 +29,10 @@ namespace Assets.Engine.Scripts.Core
 
         #endregion Private vars
 
-        #region Constructor
+        #region ChunkManager overrides
 
-        public void Awake()
+        protected override void OnAwake()
         {
-            m_chunkStorage = new ChunkStorage();
-            ChunkProvider = new ChunkProvider(this);
-
             // Camera - set from the editor
             // ChunkGenerator - set from the editor
 
@@ -48,7 +40,7 @@ namespace Assets.Engine.Scripts.Core
             m_chunksToRemove = new List<Chunk>();
         }
 
-        public void Start()
+        protected override void OnStart()
         {
             UpdateRangeRects();
             InitCache();
@@ -62,8 +54,6 @@ namespace Assets.Engine.Scripts.Core
         public Camera Camera;
         public AChunkGenerator ChunkGenerator;
         public AVoxelGeometryBuilder MeshBuilder;
-
-        public IChunkProvider ChunkProvider { get; private set; }
         
         //! Position of viewer in chunk coordinates
         public Vector2Int ViewerChunkPos { get; private set; }
@@ -82,16 +72,7 @@ namespace Assets.Engine.Scripts.Core
         #region Public Methods
 
         /// <summary>
-        ///     Gets the chunk at the given chunk coordinates.
-        /// </summary>
-        public Chunk GetChunk(int cx, int cz)
-        {
-            Chunk chunk = m_chunkStorage.Check(cx, cz) ? m_chunkStorage[cx, cz] : null;
-            return chunk;
-        }
-
-        /// <summary>
-        ///     Get the block at the world position
+        ///     Returns a block at a given world position
         /// </summary>
         public BlockData GetBlock(int wx, int wy, int wz)
         {
@@ -101,7 +82,7 @@ namespace Assets.Engine.Scripts.Core
             int cx = wx>>EngineSettings.ChunkConfig.LogSize;
             int cz = wz>>EngineSettings.ChunkConfig.LogSize;
 
-            Chunk chunk = m_chunkStorage[cx, cz];
+            Chunk chunk = GetChunk(cx, cz);
             if (chunk==null)
                 return BlockData.Air;
 
@@ -178,123 +159,100 @@ namespace Assets.Engine.Scripts.Core
             Geometry.CalculateFrustumPlanes(Camera, ref m_cameraPlanes);
         }
 
-        public static int ChunkCnt = 0;
-        
-        private void UpdateChunks()
+        protected override void OnPreProcessChunks()
         {
-            // Limit the amount of chunks per update. This is necessary due to the GC.
-            // Creating too many chunks per frame would result in many allocations
-            // Until I do not figure out how to handle mesh generation better, this is a necessity
-            // !TODO Make this more intelligent. E.g., make this depend on visible world size so
-            // !TODO it does not take too long before chunks are displayed on the screen
-            //int chunksReadyToBatch = 0;
-            
-            // Process loaded chunks
-            int cnt = 0;
-            foreach (Chunk chunk in m_chunkStorage.Values)
+            // Update world bounds
+            if (EngineSettings.WorldConfig.Infinite)
             {
-                cnt++;
+                UpdateRangeRects();
+            }
+        }
 
-                bool removeChunk = false;
+        protected override void OnProcessChunk(Chunk chunk)
+        {
+            bool removeChunk = false;
 
-                // Chunk is within view frustum
-                if (IsChunkInViewFrustum(chunk))
+            // Chunk is within view frustum
+            if (IsChunkInViewFrustum(chunk))
+            {
+                ChunkClipmapItem item = m_clipmap[chunk.Pos.X, chunk.Pos.Z];
+
+                // Chunk is too far away. Remove it
+                if (!m_clipmap.IsInsideBounds(chunk.Pos.X, chunk.Pos.Z))
                 {
-                    ChunkClipmapItem item = m_clipmap[chunk.Pos.X, chunk.Pos.Z];
+                    removeChunk = true;
+                }
+                // Chunk is within visibilty range. Full update with geometry generation is possible
+                else if (item.IsWithinVisibleRange)
+                {
+                    chunk.LOD = item.LOD;
+                    chunk.SetPossiblyVisible(true);
+                    chunk.Restore();
 
-                    // Chunk is too far away. Remove it
-                    if (!m_clipmap.IsInsideBounds(chunk.Pos.X, chunk.Pos.Z))
+                    // If occlusion culling is enabled we need to register it
+                    if (EngineSettings.WorldConfig.OcclusionCulling && Occlusion!=null)
                     {
-                        removeChunk = true;
-                    }
-                    // Chunk is within visibilty range. Full update with geometry generation is possible
-                    else if (item.IsWithinVisibleRange)
-                    {
-                        chunk.LOD = item.LOD;
-                        chunk.SetPossiblyVisible(true);
-                        chunk.Restore();
-
-                        // If occlusion culling is enabled we need to register it
-                        if (EngineSettings.WorldConfig.OcclusionCulling && Occlusion!=null)
+                        foreach (MiniChunk section in chunk.Sections)
                         {
-                            foreach (MiniChunk section in chunk.Sections)
-                            {
-                                section.Visible = false;
-                                if (!chunk.IsFinalized())
-                                    continue;
+                            section.Visible = false;
+                            if (!chunk.IsFinalized())
+                                continue;
 
-                                Occlusion.RegisterEntity(section);
-                            }
+                            Occlusion.RegisterEntity(section);
                         }
-                        else
-                            chunk.SetVisible(true);
+                    }
+                    else
+                        chunk.SetVisible(true);
                         
-                        chunk.UpdateChunk();
-                    }
-                    // Chunk is within cached range. Full update except for geometry generation
-                    else// if (item.IsWithinCachedRange)
-                    {
-                        chunk.LOD = item.LOD;
-                        chunk.SetPossiblyVisible(false);
-                        chunk.SetVisible(false);
-                        chunk.Restore();
-                        chunk.UpdateChunk();
-                    }
+                    chunk.UpdateChunk();
                 }
-                else
+                // Chunk is within cached range. Full update except for geometry generation
+                else// if (item.IsWithinCachedRange)
                 {
-                    ChunkClipmapItem item = m_clipmap[chunk.Pos.X, chunk.Pos.Z];
-
-                    // Chunk is not visible and too far away. Remote it
-                    if (!m_clipmap.IsInsideBounds(chunk.Pos.X, chunk.Pos.Z))
-                    {
-                        removeChunk = true;
-                    }
-                    // Chunk is not in viewfrustum but still within cached range
-                    else if (item.IsWithinCachedRange)
-                    {
-                        chunk.LOD = item.LOD;
-                        chunk.SetPossiblyVisible(false);
-                        chunk.SetVisible(false);
-                        chunk.Restore();
-                        chunk.UpdateChunk();
-                    }
-                }
-
-                // Make an attempt to unload the chunk
-                if (removeChunk && EngineSettings.WorldConfig.Infinite && chunk.Finish())
-                {
-                    m_chunksToRemove.Add(chunk);
+                    chunk.LOD = item.LOD;
+                    chunk.SetPossiblyVisible(false);
+                    chunk.SetVisible(false);
+                    chunk.Restore();
+                    chunk.UpdateChunk();
                 }
             }
-            ChunkCnt = cnt;
+            else
+            {
+                ChunkClipmapItem item = m_clipmap[chunk.Pos.X, chunk.Pos.Z];
 
-            // Commit collected work items
-            WorkPoolManager.Commit();
-            IOPoolManager.Commit();
+                // Chunk is not visible and too far away. Remote it
+                if (!m_clipmap.IsInsideBounds(chunk.Pos.X, chunk.Pos.Z))
+                {
+                    removeChunk = true;
+                }
+                // Chunk is not in viewfrustum but still within cached range
+                else if (item.IsWithinCachedRange)
+                {
+                    chunk.LOD = item.LOD;
+                    chunk.SetPossiblyVisible(false);
+                    chunk.SetVisible(false);
+                    chunk.Restore();
+                    chunk.UpdateChunk();
+                }
+            }
 
-            #region Perform occlusion culling
+            if (removeChunk)
+                UnregisterChunk(chunk.Pos);
+        }
 
+        protected override void OnPostProcessChunks()
+        {
+            // Perform occlussion culling
             if (EngineSettings.WorldConfig.OcclusionCulling && Occlusion!=null)
             {
                 Occlusion.PerformOcclusion();
             }
 
-            #endregion
-            
-            #region Remove unused chunks
-
-            for (int i = 0; i<m_chunksToRemove.Count; i++)
+            // Update chunk cache
+            if (EngineSettings.WorldConfig.Infinite)
             {
-                var chunk = m_chunksToRemove[i];
-
-                // Now that all work is finished, release the chunk
-                ReleaseChunk(chunk);
+                UpdateCache();
             }
-            m_chunksToRemove.Clear();
-
-            #endregion
-
         }
 
         private void InitCache()
@@ -322,79 +280,22 @@ namespace Assets.Engine.Scripts.Core
             {
                 int xx = ViewerChunkPos.X + chunkPos.X;
                 int zz = ViewerChunkPos.Z + chunkPos.Z;
-
-                if (m_chunkStorage.Check(xx, zz))
-                    continue;
-
-                Chunk chunk = ChunkProvider.RequestChunk(xx, zz, m_clipmap[xx, zz].LOD);
-                m_chunkStorage[chunk.Pos.X, chunk.Pos.Z] = chunk;
+                RegisterChunk(new Vector2Int(xx,zz));
             }
-
-			// Commit collected work items
-            WorkPoolManager.Commit();
-            IOPoolManager.Commit();
-        }
-        
-        public void UpdateMap()
-        {
-            if (EngineSettings.WorldConfig.Infinite)
-            {
-                UpdateRangeRects();
-                UpdateChunks();
-                UpdateCache();
-            }
-            else
-            {
-                UpdateChunks();
-            }
-        }
-
-        private void ReleaseChunk(Chunk chunk)
-        {
-            // Return out chunk back to object pool
-            ChunkProvider.ReleaseChunk(chunk);
-
-            // Invalidate the chunk
-            m_chunkStorage.Remove(chunk.Pos.X, chunk.Pos.Z);
         }
         
         public void Shutdown()
         {
             if (EngineSettings.WorldConfig.Streaming)
             {
-                // With streaming enabled, wait until all chunks are stored to disk before exit
-                while (true)
+                UnregisterAll();
+
+                // With streaming enabled, wait until all chunks are stored to disk before exiting
+                while (!IsEmpty())
                 {
-                    int cnt = 0;
-
-                    // Process loaded chunks
-                    foreach (Chunk chunk in m_chunkStorage.Values)
-                    {
-                        ++cnt;
-                        if (chunk.Finish())
-                            m_chunksToRemove.Add(chunk);
-                    }
-
-                    // Wait for chunks
-                    if (cnt==0)
-                        break;
-
-					// Commit collected work items
-                    WorkPoolManager.Commit();
-                    IOPoolManager.Commit();
-
-                    // Release chunks which finished their work
-                    for (int i = 0; i<m_chunksToRemove.Count; i++)
-                    {
-                        var chunk = m_chunksToRemove[i];
-                        ReleaseChunk(chunk);
-                    }
-                    m_chunksToRemove.Clear();
                 }
             }
         }
-
-        
 
         /// <summary>
         ///     Perform a raycast against the map blocks
@@ -527,13 +428,14 @@ namespace Assets.Engine.Scripts.Core
 
         private void OnDrawGizmosSelected()
         {
-            if (m_chunkStorage!=null)
+            if (m_chunks!=null)
             {
-                foreach (Chunk chunk in m_chunkStorage.Values)
+                foreach (ChunkController controller in m_chunks.Values)
                 {
+                    Chunk chunk = controller.Chunk;
                     if (chunk==null)
                         continue;
-                    
+
                     if (ShowGeomBounds && chunk.IsFinalized())
                     {
                         Gizmos.color = Color.white;

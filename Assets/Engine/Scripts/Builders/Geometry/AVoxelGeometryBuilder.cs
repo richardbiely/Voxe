@@ -1,5 +1,5 @@
 ﻿using System;
-using Assets.Engine.Scripts.Core;
+using Assets.Engine.Scripts.Core.Chunks;
 using UnityEngine;
 using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 

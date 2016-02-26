@@ -1,7 +1,7 @@
 ﻿using Assets.Engine.Scripts.Builders.Block;
 using Assets.Engine.Scripts.Common.DataTypes;
-using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Core.Blocks;
+using Assets.Engine.Scripts.Core.Chunks;
 using Assets.Engine.Scripts.Utils;
 using UnityEngine;
 using UnityEngine.Assertions;

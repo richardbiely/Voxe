@@ -223,11 +223,17 @@ Prefab:
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: ChunkGenerator
       value: 
-      objectReference: {fileID: 1591168966}
+      objectReference: {fileID: 297728906}
     m_RemovedComponents:
     - {fileID: 11423040, guid: a4db001565d61294aae75f13fc68c869, type: 2}
   m_ParentPrefab: {fileID: 100100000, guid: a4db001565d61294aae75f13fc68c869, type: 2}
   m_IsPrefabParent: 0
+--- !u!114 &297728906 stripped
+MonoBehaviour:
+  m_PrefabParentObject: {fileID: 11479704, guid: a4db001565d61294aae75f13fc68c869,
+    type: 2}
+  m_PrefabInternal: {fileID: 297728905}
+  m_Script: {fileID: 11500000, guid: bddd13805c0442d45805e26defc2d558, type: 3}
 --- !u!1 &423721370
 GameObject:
   m_ObjectHideFlags: 0
@@ -695,43 +701,6 @@ CanvasRenderer:
     type: 2}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1545834739}
---- !u!1 &1591168963 stripped
-GameObject:
-  m_PrefabParentObject: {fileID: 198724, guid: a4db001565d61294aae75f13fc68c869, type: 2}
-  m_PrefabInternal: {fileID: 297728905}
---- !u!114 &1591168964
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1591168963}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a9a41e1ea4e0e647adc7ac65b9b225b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1591168965
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1591168963}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d93a4db5a39db4041879a82d425d83ab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1591168966
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1591168963}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bddd13805c0442d45805e26defc2d558, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!23 &1645071061 stripped
 MeshRenderer:
   m_PrefabParentObject: {fileID: 2300002, guid: 276ec6ff205a51947bd7ffda6065715a,

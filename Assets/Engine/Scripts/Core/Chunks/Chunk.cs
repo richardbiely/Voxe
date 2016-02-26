@@ -4,10 +4,10 @@ using Assets.Engine.Scripts.Common.Extensions;
 using Assets.Engine.Scripts.Common.Threading;
 using Assets.Engine.Scripts.Core.Blocks;
 using Assets.Engine.Scripts.Core.Threading;
-using Assets.Engine.Scripts.Provider;
 using UnityEngine;
 using Assert = UnityEngine.Assertions.Assert;
 using System.Collections.Generic;
+using Assets.Engine.Scripts.Core.Chunks.Providers;
 
 namespace Assets.Engine.Scripts.Core.Chunks
 {

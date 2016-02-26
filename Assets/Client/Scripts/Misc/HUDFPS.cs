@@ -92,8 +92,7 @@ namespace Assets.Client.Scripts.Misc
                 m_lastDeltaTime.ToString("0.000"),
                 (1F / m_lastDeltaTime).ToString("0.0")
                 );
-
-            m_text.AppendFormat("Chunks: {0}\n", Map.ChunkCnt.ToString());
+            
             m_text.AppendFormat("ThreadPool items {0}\n", Globals.WorkPool.Size.ToString());
             m_text.AppendFormat("TaskPool items {0}\n", Globals.IOPool.Size.ToString());
 

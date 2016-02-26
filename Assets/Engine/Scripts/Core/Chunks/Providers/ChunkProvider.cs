@@ -3,26 +3,22 @@ using System.IO;
 using System.Text;
 using Assets.Engine.Scripts.Common.IO;
 using Assets.Engine.Scripts.Common.IO.RLE;
-using Assets.Engine.Scripts.Core.Chunks;
-using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Core.Blocks;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace Assets.Engine.Scripts.Provider
+namespace Assets.Engine.Scripts.Core.Chunks.Providers
 {
     /// <summary>
     ///     A purely local chunk provider
     /// </summary>
-    public class ChunkProvider: IChunkProvider
+    public class ChunkProvider: AChunkProvider
     {
         #region Public Properties
 
         // Persistent data to be stored in <disk>:/Users/<user>/AppData/LocalLow/RBiely/Voxe/VoxelData
         private static readonly string DataPath = string.Format("{0}/{1}", Application.persistentDataPath, "VoxelData");
-
-        private readonly Map m_map;
-
+        
         #endregion Public Properties
 
         #region Private vars
@@ -31,18 +27,8 @@ namespace Assets.Engine.Scripts.Provider
         public static readonly StringBuilder FilePathStringBuilder = new StringBuilder(DataPath.Length+21);
 
         #endregion Private vars
-
-        #region Constructor
-
-        public ChunkProvider(Map map)
-        {
-            m_map = map;
-        }
-
-        #endregion Constructor
-
+        
         #region Public Methods
-
 
         public static string GetFilePathFromIndex(int cx, int cz)
         {
@@ -178,14 +164,14 @@ namespace Assets.Engine.Scripts.Provider
         #region IChunkProvider implementation
         
         // load or generate a chunk
-        public Chunk RequestChunk(int cx, int cz, int lod)
+        public override Chunk RequestChunk(ChunkManager map, int cx, int cz, int lod)
         {
             Chunk chunk = GlobalPools.ChunkPool.Pop();
 #if DEBUG
             Assert.IsTrue(!chunk.IsUsed, "Popped a chunk which is still in use!");
 #endif
 
-            chunk.Init(m_map, cx, cz, lod);
+            chunk.Init((Map)map, cx, cz, lod);
 
             if (EngineSettings.WorldConfig.Streaming)
             {
@@ -211,7 +197,7 @@ namespace Assets.Engine.Scripts.Provider
         }
 
         // save chunk to disk
-        public bool ReleaseChunk(Chunk chunk)
+        public override bool ReleaseChunk(Chunk chunk)
         {
             chunk.Reset();
 #if DEBUG
