@@ -140,11 +140,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         #endregion Accessors
         
-        public void Init(Map map, int cx, int cz, int lod)
+        public void Init(Map map, int cx, int cz)
         {
             Map = map;
             Pos = new Vector2Int(cx, cz);
-            m_lod = lod;
+            m_lod = 0;
 
             WorldBounds = new Bounds(
                 new Vector3(EngineSettings.ChunkConfig.Size*(cx+0.5f), EngineSettings.ChunkConfig.SizeYTotal*0.5f, EngineSettings.ChunkConfig.Size*(cz+0.5f)),

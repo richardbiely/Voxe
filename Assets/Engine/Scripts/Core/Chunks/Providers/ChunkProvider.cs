@@ -164,14 +164,14 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
         #region IChunkProvider implementation
         
         // load or generate a chunk
-        public override Chunk RequestChunk(ChunkManager map, int cx, int cz, int lod)
+        public override Chunk RequestChunk(ChunkManager map, int cx, int cz)
         {
             Chunk chunk = GlobalPools.ChunkPool.Pop();
 #if DEBUG
             Assert.IsTrue(!chunk.IsUsed, "Popped a chunk which is still in use!");
 #endif
 
-            chunk.Init((Map)map, cx, cz, lod);
+            chunk.Init((Map)map, cx, cz);
 
             if (EngineSettings.WorldConfig.Streaming)
             {

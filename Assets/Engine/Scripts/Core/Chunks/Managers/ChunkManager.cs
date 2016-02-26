@@ -9,6 +9,13 @@ namespace Assets.Engine.Scripts.Core.Chunks
 {
     public class ChunkManager: MonoBehaviour, IChunkManager
     {
+        #region Public Fields
+
+        //! Provider of chunks
+        public AChunkProvider ChunkProvider;
+
+        #endregion Public Fields
+
         #region Private vars
 
         //! Chunk storage
@@ -35,13 +42,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
         }
 
         #endregion Private vars
-
-        #region Public Fields
-
-        //! Provider of chunks
-        public AChunkProvider ChunkProvider;
-        
-        #endregion Public Fields
 
         #region Unity overrides
 
@@ -124,7 +124,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 controller.Flags &= ~RequestFlags.Unload;
 
                 // Ignore the request if there already has been one
-                if ((controller.Flags&RequestFlags.Load)!=0)
+                if ((controller.Flags&RequestFlags.Load)==RequestFlags.Load)
                     return;
 
                 controller.Flags |= RequestFlags.Load;
@@ -160,7 +160,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             controller.Flags &= ~RequestFlags.Load;
 
             // Ignore the request if there already has been one
-            if ((controller.Flags&RequestFlags.Unload)!=0)
+            if ((controller.Flags&RequestFlags.Unload)==RequestFlags.Unload)
                 return;
 
             controller.Flags |= RequestFlags.Unload;
@@ -235,7 +235,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     continue;
 
                 // Request a new chunk from our provider and register it in chunk storage
-                controller.Chunk = ChunkProvider.RequestChunk(this, controller.Pos.X, controller.Pos.Z, 0);
+                controller.Chunk = ChunkProvider.RequestChunk(this, controller.Pos.X, controller.Pos.Z);
                 m_chunks.Add(controller.Pos, controller);
             }
             m_chunksToLoad.Clear();

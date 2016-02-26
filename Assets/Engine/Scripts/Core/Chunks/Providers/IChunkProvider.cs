@@ -7,7 +7,7 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
     /// </summary>
     public interface IChunkProvider
     {
-        Chunk RequestChunk(ChunkManager map, int cx, int cz, int lod);
+        Chunk RequestChunk(ChunkManager map, int cx, int cz);
         bool ReleaseChunk(Chunk chunk);
         
     }
