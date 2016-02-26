@@ -477,7 +477,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			}
 
 			// Wait until all work is finished on a given chunk
-			bool isWorking = IsExecutingTask() || !IsFinished();
+            bool isWorking;
+            lock (m_lock)
+            {
+                isWorking = IsExecutingTask_Internal() || !IsFinished_Internal();
+            }
 			return !isWorking;
         }
 
@@ -603,6 +607,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 return m_completedTasks.Check(ChunkState.FinalizeData);
             }
         }
+
         private bool IsExecutingTask_Internal()
         {
             return m_taskRunning;
@@ -649,7 +654,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     return;
 
                 // Once this chunk is marked as finished we stop caring about everything else
-                if (IsFinished())
+                if (IsFinished_Internal())
                     return;
             }
 
