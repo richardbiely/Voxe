@@ -14,28 +14,36 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
     /// </summary>
     public class ChunkProvider: AChunkProvider
     {
-        #region Public Properties
-
-        // Persistent data to be stored in <disk>:/Users/<user>/AppData/LocalLow/RBiely/Voxe/VoxelData
-        private static readonly string DataPath = string.Format("{0}/{1}", Application.persistentDataPath, "VoxelData");
-        
-        #endregion Public Properties
-
         #region Private vars
-        
-        // String builder used in the main thread to determine a file path for a given chunk
-        public static readonly StringBuilder FilePathStringBuilder = new StringBuilder(DataPath.Length+21);
+
+        //! Persistent data to be stored in <disk>:/Users/<user>/AppData/LocalLow/RBiely/Voxe/VoxelData
+        private string m_dataPath;
+
+        //! String builder used in the main thread to determine a file path for a given chunk
+        private StringBuilder m_filePathStringBuilder;
 
         #endregion Private vars
-        
+
+        public string Path;
+
+        #region Unity overrides
+
+        private void Awake()
+        {
+            m_dataPath = string.Format("{0}/{1}", Application.persistentDataPath, Path.Length==0 ? "VoxelData" : Path);
+            m_filePathStringBuilder = new StringBuilder(m_dataPath.Length + 21);
+        }
+
+        #endregion
+
         #region Public Methods
 
-        public static string GetFilePathFromIndex(int cx, int cz)
+        public string GetFilePathFromIndex(int cx, int cz)
         {
             // E.g. D:\VoxelData\0FF21_22F00_00001.chn
-            FilePathStringBuilder.Remove(0, FilePathStringBuilder.Length);
-            FilePathStringBuilder.AppendFormat(@"{0}\{1}_{2}.chn", DataPath, cx.ToString("X8"), cz.ToString("X8"));
-            return FilePathStringBuilder.ToString();
+            m_filePathStringBuilder.Remove(0, m_filePathStringBuilder.Length);
+            m_filePathStringBuilder.AppendFormat(@"{0}\{1}_{2}.chn", m_dataPath, cx.ToString("X8"), cz.ToString("X8"));
+            return m_filePathStringBuilder.ToString();
         }
 
         #endregion Public Methods

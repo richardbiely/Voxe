@@ -943,9 +943,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
             m_refreshTasks = m_refreshTasks.Reset(CurrStateSerializeChunk);
 			m_completedTasks = m_completedTasks.Reset(CurrStateSerializeChunk);
 
+		    ChunkProvider provider = (ChunkProvider)Map.ChunkProvider;
 			SSerializeWorkItem workItem = new SSerializeWorkItem(
 				this,
-				ChunkProvider.GetFilePathFromIndex(Pos.X, Pos.Z)
+                provider.GetFilePathFromIndex(Pos.X, Pos.Z)
 			);
 
             m_taskRunning = true;
