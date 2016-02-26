@@ -84,7 +84,7 @@ namespace Assets.Engine.Scripts.Common.DataTypes
 
         public static bool operator!=(Vector3Int lhs, Vector3Int rhs)
         {
-            return lhs.X!=rhs.X || lhs.Y!=rhs.Y || lhs.Z==rhs.Z;
+            return lhs.X!=rhs.X || lhs.Y!=rhs.Y || lhs.Z!=rhs.Z;
         }
 
         #endregion Operators

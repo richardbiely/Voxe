@@ -69,7 +69,7 @@ namespace Assets.Engine.Scripts.Common.DataTypes
 
         public static bool operator !=(Vector2Int lhs, Vector2Int rhs)
         {
-            return lhs.X != rhs.X || lhs.Z == rhs.Z;
+            return lhs.X != rhs.X || lhs.Z != rhs.Z;
         }
 
         #endregion
