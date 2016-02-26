@@ -11,10 +11,5 @@ namespace Assets.Engine.Scripts.Generators
         {
             throw new NotImplementedException();
         }
-
-        public virtual void OnCalculateProperties(int x, int y, int z, ref BlockData data)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

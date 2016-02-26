@@ -6,10 +6,11 @@ using UnityEngine;
 namespace Assets.Engine.Scripts.Generators
 {
     /// <summary>
-    ///     Simple generator which produces thresholded 3D perlin noise
+    ///     Produces a simple Minecraft-like terrain
     /// </summary>
-    public class SimplePerlinGenerator: AChunkGenerator
+    public class SimpleTerrainGenerator: AChunkGenerator
     {
+        private const float Coef = 0.015f;
         private readonly ValueNoise m_noise = new ValueNoise(0);
 
         #region IChunkGenerator implementation
@@ -26,9 +27,21 @@ namespace Assets.Engine.Scripts.Generators
                     {
                         int wx = x+(chunk.Pos.X<<EngineSettings.ChunkConfig.LogSize);
 
-                        if (m_noise.GetValue(new Vector3(wx, y, wz)*0.1f)>0f)
+                        bool currentPoint = Eval(wx, y, wz);
+                        if (currentPoint)
                         {
-                            chunk.GenerateBlock(x, y, z, new BlockData(BlockType.Dirt));
+                            bool up = Eval(wx, y+1, wz);
+                            if (!up)
+                            {
+                                chunk.GenerateBlock(x, y, z, new BlockData(BlockType.Grass));
+                            }
+                            else
+                            {
+                                if (y>50)
+                                    chunk.GenerateBlock(x, y, z, new BlockData(BlockType.Dirt));
+                                else
+                                    chunk.GenerateBlock(x, y, z, new BlockData(BlockType.Stone));
+                            }
                         }
                         else
                         {
@@ -40,5 +53,12 @@ namespace Assets.Engine.Scripts.Generators
         }
 
         #endregion IChunkGenerator implementation
+
+        private bool Eval(int x, int y, int z)
+        {
+            float density = m_noise.GetValue(new Vector3(x, y, z)*Coef);
+            density -= (y-64)*Coef;
+            return density>0f;
+        }
     }
 }

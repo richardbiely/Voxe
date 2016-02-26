@@ -93,6 +93,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		//! Tasks already executed
 		private ChunkState m_completedTasks;
 
+        //! First finalization differs from subsequent ones
+        private bool m_firstFinalization;
+
         //! Chunk's current level of detail
         private int m_lod;
 
@@ -213,6 +216,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 			RequestedRemoval = false;
 			m_taskRunning = false;
+            m_firstFinalization = true;
 
             m_lod = 0;
 
@@ -232,6 +236,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             MinRenderY = EngineSettings.ChunkConfig.MaskYTotal;
             MaxRenderY = 0;
+            MinRenderX = EngineSettings.ChunkConfig.Mask;
+            MaxRenderX = 0;
+            MinRenderZ = EngineSettings.ChunkConfig.Mask;
+            MaxRenderX = 0;
 
             MinFilledSection = 0;
             MaxFilledSection = EngineSettings.ChunkConfig.StackSize-1;
@@ -316,6 +324,34 @@ namespace Assets.Engine.Scripts.Core.Chunks
             
             return false;
         }
+        
+        public void GenerateBlock(int x, int y, int z, BlockData data)
+        {
+            Blocks[x, y, z] = data;
+            
+            bool isEmpty = data.IsEmpty();
+            if (!isEmpty)
+            {
+                int sectionIndex = y >> EngineSettings.ChunkConfig.LogSize;
+                MiniChunk section = Sections[sectionIndex];
+                ++section.NonEmptyBlocks;
+
+                if (x < MinRenderX)
+                    MinRenderX = x;
+                if (z < MinRenderZ)
+                    MinRenderZ = z;
+
+                if (x > MaxRenderX)
+                    MaxRenderX = x;
+                if (z > MaxRenderZ)
+                    MaxRenderZ = z;
+
+                if (y > MaxRenderY)
+                    MaxRenderY = y;
+            }
+            else if (y < MinRenderY)
+                MinRenderY = y;
+        }
 
         // Calculate lowest empty and highest solid block position
 		/* TODO: Lowest/highest block can be computed while the terrain is generated. This
@@ -325,39 +361,53 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
             int nonEmptyBlocks = 0;
 
-            MinRenderY = EngineSettings.ChunkConfig.MaskYTotal;
-			MaxRenderY = 0;
-            MinRenderX = EngineSettings.ChunkConfig.Mask;
-            MaxRenderX = 0;
-            MinRenderZ = EngineSettings.ChunkConfig.Mask;
-            MaxRenderX = 0;
-            
-            for (int y = EngineSettings.ChunkConfig.MaskYTotal; y>=0; y--)
+            if (m_firstFinalization)
             {
-                int sectionIndex = y>>EngineSettings.ChunkConfig.LogSize;
-				MiniChunk section = Sections[sectionIndex];
+                foreach (MiniChunk section in Sections)
+                    nonEmptyBlocks += section.NonEmptyBlocks;
 
-                for (int z = 0; z<EngineSettings.ChunkConfig.Size; z++)
+                m_firstFinalization = false;
+            }
+            else
+            {
+                MinRenderY = EngineSettings.ChunkConfig.MaskYTotal;
+                MaxRenderY = 0;
+                MinRenderX = EngineSettings.ChunkConfig.Mask;
+                MaxRenderX = 0;
+                MinRenderZ = EngineSettings.ChunkConfig.Mask;
+                MaxRenderX = 0;
+
+                for (int y = EngineSettings.ChunkConfig.MaskYTotal; y>=0; y--)
                 {
-                    for (int x = 0; x<EngineSettings.ChunkConfig.Size; x++)
+                    int sectionIndex = y>>EngineSettings.ChunkConfig.LogSize;
+                    MiniChunk section = Sections[sectionIndex];
+
+                    for (int z = 0; z<EngineSettings.ChunkConfig.Size; z++)
                     {
-                        bool isEmpty = Blocks[x,y,z].IsEmpty();
-                        if (!isEmpty)
+                        for (int x = 0; x<EngineSettings.ChunkConfig.Size; x++)
                         {
-                            ++nonEmptyBlocks;
-							++section.NonEmptyBlocks;
+                            bool isEmpty = Blocks[x, y, z].IsEmpty();
+                            if (!isEmpty)
+                            {
+                                ++nonEmptyBlocks;
+                                ++section.NonEmptyBlocks;
 
-                            if (x<MinRenderX) MinRenderX = x;
-                            if (z<MinRenderZ) MinRenderZ = z;
+                                if (x<MinRenderX)
+                                    MinRenderX = x;
+                                if (z<MinRenderZ)
+                                    MinRenderZ = z;
 
-                            if (x>MaxRenderX) MaxRenderX = x;
-                            if (z>MaxRenderZ) MaxRenderZ = z;
+                                if (x>MaxRenderX)
+                                    MaxRenderX = x;
+                                if (z>MaxRenderZ)
+                                    MaxRenderZ = z;
 
-                            if (y>MaxRenderY)
-                                MaxRenderY = y;
+                                if (y>MaxRenderY)
+                                    MaxRenderY = y;
+                            }
+                            else if (y<MinRenderY)
+                                MinRenderY = y;
                         }
-                        else if (y<MinRenderY)
-                            MinRenderY = y;
                     }
                 }
             }

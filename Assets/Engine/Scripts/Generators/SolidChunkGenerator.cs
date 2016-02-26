@@ -4,22 +4,26 @@ using Assets.Engine.Scripts.Core.Chunks;
 namespace Assets.Engine.Scripts.Generators
 {
     /// <summary>
-    /// Simple generator which produces completely solid chunks
+    ///     Simple generator which produces completely solid chunks
     /// </summary>
-    public class SolidChunkGenerator : AChunkGenerator
+    public class SolidChunkGenerator: AChunkGenerator
     {
         #region IChunkGenerator implementation
 
-		public override void Generate (Chunk chunk)
+        public override void Generate(Chunk chunk)
         {
-			for (int i = 0; i < EngineSettings.ChunkConfig.VolumeTotal; i++)
-				chunk[i] = new BlockData(BlockType.Dirt);
+            for (int y = EngineSettings.ChunkConfig.MaskYTotal; y>=0; y--)
+            {
+                for (int z = 0; z<EngineSettings.ChunkConfig.Size; z++)
+                {
+                    for (int x = 0; x<EngineSettings.ChunkConfig.Size; x++)
+                    {
+                        chunk.GenerateBlock(x, y, z, new BlockData(BlockType.Dirt));
+                    }
+                }
+            }
         }
 
-        public override void OnCalculateProperties(int x, int y, int z, ref BlockData data)
-        {
-        }
-
-        #endregion
+        #endregion IChunkGenerator implementation
     }
 }
