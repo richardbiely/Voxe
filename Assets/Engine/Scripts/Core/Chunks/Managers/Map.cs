@@ -441,7 +441,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                         Gizmos.color = Color.white;
                         foreach (MiniChunk section in chunk.Sections)
                         {
-                            if (section.BBoxVertices.Count<=0)
+                            if (!section.Visible || section.BBoxVertices.Count<=0)
                                 continue;
 
                             Gizmos.DrawWireCube(section.GeometryBounds.center, section.GeometryBounds.size);
