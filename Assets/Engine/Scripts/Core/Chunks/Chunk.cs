@@ -122,22 +122,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         #endregion Constructors
 
         #region Accessors
-
-		/// <summary>
-		///     Access a block using a 1D coordinate
-		/// </summary>
-		public BlockData this[int index]
-		{
-			get
-			{
-				return Blocks[index];
-			}
-			set
-			{
-				Blocks[index] = value;
-			}
-		}
-
+        
         /// <summary>
         ///     Access a block using 3D coordinates
         /// </summary>
@@ -1159,8 +1144,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		private void QueueSetBlock(Chunk chunk, int bx, int by, int bz, BlockData block)
 		{
             // Ignore attempts to change the block into the same one
-            int blockIndex = Common.Helpers.GetIndex1DFrom3D(bx, by, bz);
-            if (block.BlockType==Blocks[blockIndex].BlockType)
+            if (block.BlockType==Blocks[bx, by, bz].BlockType)
                 return;
 
             int cx = chunk.Pos.X;
@@ -1224,9 +1208,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
             for (int i = 0; i < m_setBlockQueue.Count; i++)
             {
                 SetBlockContext context = m_setBlockQueue[i];
-
-                int index = Common.Helpers.GetIndex1DFrom3D(context.BX, context.BY, context.BZ);
-                Blocks[index] = context.Block;
+                
+                Blocks[context.BX, context.BY, context.BZ] = context.Block;
                                 
                 int section = context.BY >> EngineSettings.ChunkConfig.LogSize;
 

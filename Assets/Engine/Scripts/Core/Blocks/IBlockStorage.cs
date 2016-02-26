@@ -5,7 +5,6 @@
     /// </summary>
     public interface IBlockStorage
     {
-        BlockData this[int index] { get; set; }
         BlockData this[int x, int y, int z] { get; set; }
 
         void Set(ref BlockData[] data);

@@ -13,15 +13,18 @@ namespace Assets.Engine.Scripts.Core.Blocks
         }
 
         #region IBlockStorage implementation
-
-        public BlockData this[int index]
-        {
-            get { return Blocks[index]; }
-            set { Blocks[index] = value; }
-        }
-
+        
         public BlockData this[int x, int y, int z]
         {
+            /* NOTE:
+                Chunk generation which takes the most time currently accesses the memory
+                in y->z->x fashion where y is constantly decreasing. Therefore, instead
+                of accessing memory as [x,y,z], [x,MaskYTotal-y,z] would be more suitable
+                for performance.
+                Benchmarking showed that although small there's a noticable increase in
+                performance. However, as this part is later going to be written completely
+                differently, I decided to let it be for now.
+            */
             get { return Blocks[Helpers.GetIndex1DFrom3D(x, y, z)]; }
             set { Blocks[Helpers.GetIndex1DFrom3D(x, y, z)] = value; }
         }

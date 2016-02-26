@@ -1,5 +1,4 @@
 ﻿using System;
-using Assets.Engine.Scripts.Common;
 using Assets.Engine.Scripts.Common.IO.RLE;
 using UnityEngine;
 
@@ -63,17 +62,12 @@ namespace Assets.Engine.Scripts.Core.Blocks
         }
 
         #region IBlockStorage implementation
-
-        public BlockData this[int index]
-        {
-            get { return m_currStorage[index]; }
-            set { m_currStorage[index] = value; }
-        }
+        
 
         public BlockData this[int x, int y, int z]
         {
-            get { return m_currStorage[Helpers.GetIndex1DFrom3D(x, y, z)]; }
-            set { m_currStorage[Helpers.GetIndex1DFrom3D(x, y, z)] = value; }
+            get { return m_currStorage[x, y, z]; }
+            set { m_currStorage[x, y, z] = value; }
         }
 
         public void Set(ref BlockData[] data)
