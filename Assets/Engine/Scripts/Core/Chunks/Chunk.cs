@@ -498,7 +498,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		public override void OnNotified(ChunkState state)
 		{
-		    int eventIndex = 0;
+		    int eventIndex = -1;
 		    switch (state)
 		    {
 #if ENABLE_BLUEPRINTS
@@ -511,7 +511,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 break;
 		    }
 
-		    if (eventIndex>0)
+		    if (eventIndex>=0)
 		    {
                 // Check completition
                 int cnt = ++m_eventCnt[eventIndex];
@@ -612,15 +612,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
             return m_taskRunning;
         }
-
-        public bool IsExecutingTask()
-		{
-		    lock (m_lock)
-		    {
-		        return IsExecutingTask_Internal();
-		    }
-		}
-
+        
         private void ProcessNotifyState()
         {
             if (m_notifyState==ChunkState.Idle)
