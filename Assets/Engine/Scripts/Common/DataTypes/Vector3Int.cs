@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Assets.Engine.Scripts.Common.DataTypes
 {
-    public struct Vector3Int: IEquatable<Vector3Int>
+    public struct Vector3Int: IEquatable<Vector3Int>, IComparable<Vector3Int>
     {
         #region Public statics
 
@@ -109,6 +109,11 @@ namespace Assets.Engine.Scripts.Common.DataTypes
         #endregion IEquatable implementation
 
         #region Object overrides
+
+        public int CompareTo(Vector3Int other)
+        {
+            return X==other.X && Y==other.Y && Z==other.Z ? 0 : 1;
+        }
 
         public override bool Equals(object other)
         {

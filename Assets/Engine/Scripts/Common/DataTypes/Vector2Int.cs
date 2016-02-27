@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Assets.Engine.Scripts.Common.DataTypes
 {
-    public struct Vector2Int: IEquatable<Vector2Int>
+    public struct Vector2Int: IEquatable<Vector2Int>, IComparable<Vector2Int>
     {
         #region Public statics
 
@@ -62,14 +62,14 @@ namespace Assets.Engine.Scripts.Common.DataTypes
             return new Vector2Int(vec.X*i, vec.Z*i);
         }
 
-        public static bool operator ==(Vector2Int lhs, Vector2Int rhs)
+        public static bool operator==(Vector2Int lhs, Vector2Int rhs)
         {
-            return lhs.X == rhs.X && lhs.Z == rhs.Z;
+            return lhs.X==rhs.X && lhs.Z==rhs.Z;
         }
 
-        public static bool operator !=(Vector2Int lhs, Vector2Int rhs)
+        public static bool operator!=(Vector2Int lhs, Vector2Int rhs)
         {
-            return lhs.X != rhs.X || lhs.Z != rhs.Z;
+            return lhs.X!=rhs.X || lhs.Z!=rhs.Z;
         }
 
         #endregion
@@ -84,6 +84,11 @@ namespace Assets.Engine.Scripts.Common.DataTypes
         #endregion
 
         #region Object overrides
+
+        public int CompareTo(Vector2Int other)
+        {
+            return X==other.X && Z==other.Z ? 0 : 1;
+        }
 
         public override bool Equals(object other)
         {
@@ -101,7 +106,7 @@ namespace Assets.Engine.Scripts.Common.DataTypes
 
         public override string ToString()
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             sb.AppendFormat("<{0}, {1}>", X, Z);
             return sb.ToString();
         }
