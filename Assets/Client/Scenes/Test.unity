@@ -194,8 +194,12 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: ShowMapBounds
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 11455066, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: Map
+      value: 
+      objectReference: {fileID: 297728906}
     m_RemovedComponents:
     - {fileID: 11412252, guid: a4db001565d61294aae75f13fc68c869, type: 2}
     - {fileID: 11464542, guid: a4db001565d61294aae75f13fc68c869, type: 2}

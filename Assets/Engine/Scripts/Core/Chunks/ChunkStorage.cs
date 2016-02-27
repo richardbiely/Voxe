@@ -7,6 +7,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
     {
         private readonly Dictionary<Vector3Int, Chunk> m_chunks;
 
+        public int Count
+        {
+            get { return m_chunks.Count; }
+        }
+
         public ChunkStorage()
         {
             m_chunks = new Dictionary<Vector3Int, Chunk>();

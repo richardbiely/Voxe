@@ -4,6 +4,7 @@ using System.Text;
 using Assets.Engine.Scripts.Core;
 using UnityEngine;
 using Assets.Engine.Scripts.Common.Extensions;
+using Assets.Engine.Scripts.Core.Chunks;
 
 namespace Assets.Client.Scripts.Misc
 {
@@ -12,6 +13,7 @@ namespace Assets.Client.Scripts.Misc
     {
         public bool Show = true;
         public bool ShowInEditor = false;
+        public Map Map;
 
         private bool m_stop = false;
         private float m_lastCollect = 0;
@@ -93,6 +95,8 @@ namespace Assets.Client.Scripts.Misc
                 (1F / m_lastDeltaTime).ToString("0.0")
                 );
             
+            if(Map!=null)
+                m_text.AppendFormat("Chunks {0}\n", Map.Chunks.ToString());
             m_text.AppendFormat("ThreadPool items {0}\n", Globals.WorkPool.Size.ToString());
             m_text.AppendFormat("TaskPool items {0}\n", Globals.IOPool.Size.ToString());
 

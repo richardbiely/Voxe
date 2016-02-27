@@ -17,7 +17,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 	public class Chunk: ChunkEvent
     {
         #region Public variables
-
+        
         public Map Map { get; private set; }
         
         public readonly BlockStorage Blocks;
@@ -181,6 +181,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
         
         public void UpdateChunk()
         {
+            if (!m_pendingTasks.Check(ChunkState.Remove))
+                Restore();
+
 			ProcessSetBlockQueue();
 			ProcessPendingTasks(PossiblyVisible);
 
@@ -449,7 +452,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             }
         }
 
-        public void Restore()
+        private void Restore()
         {
 			if (!RequestedRemoval)
 				return;
@@ -461,28 +464,16 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			m_pendingTasks = m_pendingTasks.Reset(ChunkState.Remove);
         }
 
-        public bool Finish()
+        public void Finish()
         {
-            // Try to process what's left in case there's still something to do
-            ProcessSetBlockQueue();
-			ProcessPendingTasks(false);
+            if (RequestedRemoval)
+                return;
 
-			if (!RequestedRemoval)
-			{
-				RequestedRemoval = true;
+            RequestedRemoval = true;
 
-				if(EngineSettings.WorldConfig.Streaming)
-					OnNotified(ChunkState.Serialize);
-				OnNotified(ChunkState.Remove);
-			}
-
-			// Wait until all work is finished on a given chunk
-            bool isWorking;
-            lock (m_lock)
-            {
-                isWorking = IsExecutingTask_Internal() || !IsFinished_Internal();
-            }
-			return !isWorking;
+            if (EngineSettings.WorldConfig.Streaming)
+                OnNotified(ChunkState.Serialize);
+            OnNotified(ChunkState.Remove);            
         }
 
 #region ChunkEvent implementation
@@ -612,7 +603,15 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
             return m_taskRunning;
         }
-        
+
+        public bool IsExecutingTask()
+        {
+            lock (m_lock)
+            {
+                return IsExecutingTask_Internal();
+            }
+        }
+
         private void ProcessNotifyState()
         {
             if (m_notifyState==ChunkState.Idle)
@@ -636,7 +635,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             m_notifyState = ChunkState.Idle;
         }
-
+        
         public void ProcessPendingTasks(bool possiblyVisible)
         {
             lock (m_lock)
@@ -709,7 +708,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateGenerateData);
 			chunk.m_notifyState = NextStateGenerateData;
 			chunk.m_taskRunning = false;
-		}
+        }
 
 		private bool GenerateData(bool possiblyVisible)
         {
@@ -741,10 +740,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
             return true;
 		}
 
-#endregion Generate chunk data
+        #endregion Generate chunk data
 
 #if ENABLE_BLUEPRINTS
-#region Generate blueprints
+        #region Generate blueprints
 
 		private static readonly ChunkState CurrStateGenerateBlueprints = ChunkState.GenerateBlueprints;
 		private static readonly ChunkState NextStateGenerateBlueprints = ChunkState.FinalizeData;
@@ -795,12 +794,12 @@ namespace Assets.Engine.Scripts.Core.Chunks
             return true;
 		}
 
-#endregion Generate blueprints
+        #endregion Generate blueprints
 #endif
 
-#region Finalize chunk data
+        #region Finalize chunk data
 
-		private static readonly ChunkState CurrStateFinalizeData = ChunkState.FinalizeData;
+        private static readonly ChunkState CurrStateFinalizeData = ChunkState.FinalizeData;
 		private static readonly ChunkState NextStateFinalizeData = ChunkState.BuildVertices;
 
 		private static void OnFinalizeData(Chunk chunk)
@@ -911,7 +910,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		{
 			chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateSerializeChunk);
 			chunk.m_taskRunning = false;
-		}
+        }
 
 		private bool SerializeChunk()
 		{
@@ -1035,7 +1034,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateGenerateVertices);
 			chunk.m_notifyState = NextStateGenerateVertices;
 			chunk.m_taskRunning = false;
-		}
+        }
 
 		/// <summary>
 		///     Build this minichunk's render buffers

@@ -8,6 +8,7 @@ using UnityEngine.Assertions;
 using System.Linq;
 using Assets.Engine.Scripts.Builders.Geometry;
 using Assets.Engine.Scripts.Common.Math;
+using Assets.Engine.Scripts.Core.Threading;
 using Assets.Engine.Scripts.Generators;
 using Assets.Engine.Scripts.Rendering;
 
@@ -57,7 +58,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         
         //! Position of viewer in chunk coordinates
         public Vector2Int ViewerChunkPos { get; private set; }
-
+        
         public OcclusionCuller Occlusion;
 
         public float LODCoef = 1f;
@@ -70,7 +71,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         #endregion Public Fields
 
         #region Public Methods
-
+        
         /// <summary>
         ///     Returns a block at a given world position
         /// </summary>
@@ -187,7 +188,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 {
                     chunk.LOD = item.LOD;
                     chunk.SetPossiblyVisible(true);
-                    chunk.Restore();
 
                     // If occlusion culling is enabled we need to register it
                     if (EngineSettings.WorldConfig.OcclusionCulling && Occlusion!=null)
@@ -203,8 +203,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     }
                     else
                         chunk.SetVisible(true);
-                        
-                    chunk.UpdateChunk();
                 }
                 // Chunk is within cached range. Full update except for geometry generation
                 else// if (item.IsWithinCachedRange)
@@ -212,8 +210,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     chunk.LOD = item.LOD;
                     chunk.SetPossiblyVisible(false);
                     chunk.SetVisible(false);
-                    chunk.Restore();
-                    chunk.UpdateChunk();
                 }
             }
             else
@@ -231,13 +227,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     chunk.LOD = item.LOD;
                     chunk.SetPossiblyVisible(false);
                     chunk.SetVisible(false);
-                    chunk.Restore();
-                    chunk.UpdateChunk();
                 }
             }
 
             if (removeChunk)
-                UnregisterChunk(chunk.Pos);
+                chunk.Finish();
         }
 
         protected override void OnPostProcessChunks()
@@ -276,12 +270,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         private void UpdateCache()
         {
+            // Register new chunks in chunk manager
             foreach(var chunkPos in m_chunksToLoadByPos)
             {
                 int xx = ViewerChunkPos.X + chunkPos.X;
                 int zz = ViewerChunkPos.Z + chunkPos.Z;
                 RegisterChunk(new Vector2Int(xx,zz));
             }
+
+            // Commit collected work items
+            WorkPoolManager.Commit();
+            IOPoolManager.Commit();
         }
         
         public void Shutdown()
@@ -291,8 +290,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 UnregisterAll();
 
                 // With streaming enabled, wait until all chunks are stored to disk before exiting
-                while (!IsEmpty())
+                while (!IsEmpty)
                 {
+                    ProcessChunks();
                 }
             }
         }
@@ -430,12 +430,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
             if (m_chunks!=null)
             {
-                foreach (ChunkController controller in m_chunks.Values)
+                foreach (Chunk chunk in m_chunks.Values)
                 {
-                    Chunk chunk = controller.Chunk;
-                    if (chunk==null)
-                        continue;
-
                     if (ShowGeomBounds && chunk.IsFinalized())
                     {
                         Gizmos.color = Color.white;

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Core.Chunks.Providers;
 using Assets.Engine.Scripts.Core.Threading;
@@ -16,30 +15,59 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         #endregion Public Fields
 
+        public int Chunks
+        {
+            get { return m_chunks.Count; }
+        }
+
+        public bool IsEmpty
+        {
+            get { return m_chunks.Count<=0; }
+        }
+
+        #region Helper methods
+
+        private void ProcessUpdateRequests()
+        {
+            // Process removal requests
+            for (int i = 0; i<m_updateRequests.Count;)
+            {
+                Chunk chunk = m_updateRequests[i];
+
+                OnProcessChunk(chunk);
+
+                // Process chunk events
+                chunk.UpdateChunk();
+
+                // Automatically collect chunks which are ready to be removed form the world
+                if (chunk.IsFinished())
+                {
+                    // Remove the chunk from our provider and unregister it from chunk storage
+                    ChunkProvider.ReleaseChunk(chunk);
+                    m_chunks.Remove(chunk.Pos.X, chunk.Pos.Z);
+
+                    // Unregister from updates
+                    m_updateRequests.RemoveAt(i);
+                    continue;
+                }
+
+                ++i;
+            }
+
+            // Commit collected work items
+            WorkPoolManager.Commit();
+            IOPoolManager.Commit();
+        }
+
+        #endregion
+
         #region Private vars
 
         //! Chunk storage
-        protected Dictionary<Vector2Int, ChunkController> m_chunks;
+        protected ChunkStorage m_chunks;
 
-        //! A list of chunks to load
-        private List<ChunkController> m_chunksToLoad;
-
-        //! A list of chunks to remove
-        private List<ChunkController> m_chunksToRemove;
-
-        [Flags]
-        protected enum RequestFlags: byte
-        {
-            Load = 0x01,
-            Unload = 0x02
-        }
-
-        protected class ChunkController
-        {
-            public RequestFlags Flags { get; set; }
-            public Chunk Chunk { get; set; }
-            public Vector2Int Pos { get; set; }
-        }
+        //! A list of chunks to update
+        private List<Chunk> m_updateRequests;
 
         #endregion Private vars
 
@@ -47,9 +75,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         private void Awake()
         {
-            m_chunks = new Dictionary<Vector2Int, ChunkController>();
-            m_chunksToLoad = new List<ChunkController>();
-            m_chunksToRemove = new List<ChunkController>();
+            m_chunks = new ChunkStorage();
+            m_updateRequests = new List<Chunk>();
 
             OnAwake();
         }
@@ -68,128 +95,38 @@ namespace Assets.Engine.Scripts.Core.Chunks
         /// </summary>
         public Chunk GetChunk(int cx, int cz)
         {
-            ChunkController controller;
-            if (!m_chunks.TryGetValue(new Vector2Int(cx, cz), out controller))
-                return null;
-
-            Debug.Assert(controller!=null);
-            return controller.Chunk;
+            return m_chunks[cx, cz];
         }
 
         public void ProcessChunks()
         {
             OnPreProcessChunks();
 
-            ProcessUnloadRequests();
-            ProcessLoadRequests();
-
-            // Commit collected work items
-            WorkPoolManager.Commit();
-            IOPoolManager.Commit();
-
-            foreach (ChunkController controller in m_chunks.Values)
-            {
-                Chunk chunk = controller.Chunk;
-                OnProcessChunk(chunk);
-
-                // Automatically collect chunks which are ready to be removed form the world
-                if (chunk.IsFinished())
-                {
-                    // Reset loading flag
-                    controller.Flags &= ~RequestFlags.Load;
-                    // Request removal
-                    controller.Flags |= RequestFlags.Unload;
-                    // Register our request
-                    m_chunksToRemove.Add(controller);
-                }
-            }
-
-            // Commit collected work items
-            WorkPoolManager.Commit();
-            IOPoolManager.Commit();
+            ProcessUpdateRequests();
 
             OnPostProcessChunks();
         }
 
         public void RegisterChunk(Vector2Int pos)
         {
-            ChunkController controller;
-
-            if (m_chunks.TryGetValue(pos, out controller))
-            {
-                // There should always be a valid controller inside!
-                Debug.Assert(controller!=null);
-
-                // Reset the flags
-                controller.Flags &= ~RequestFlags.Load;
-                controller.Flags &= ~RequestFlags.Unload;
-
-                Debug.Assert(controller.Chunk != null);
-
-                // Make sure the chunk will no longer want to be unloaded
-                //controller.Chunk.Restore();
-            }
-            else
-            {
-                controller = new ChunkController
-                {
-                    Chunk = null,
-                    Flags = RequestFlags.Load,
-                    Pos = pos
-                };
-
-                m_chunksToLoad.Add(controller);
-            }
-        }
-
-        public void UnregisterChunk(Vector2Int pos)
-        {
-            ChunkController controller;
-
-            // Make sure that a chunk exists
-            if (!m_chunks.TryGetValue(pos, out controller))
+            Chunk chunk = m_chunks[pos.X, pos.Z];
+            if (chunk!=null)
                 return;
 
-            // There should always be a valid controller inside!
-            Debug.Assert(controller!=null);
+            // Let chunk provider hand us a new chunk
+            chunk = ChunkProvider.RequestChunk(this, pos.X, pos.Z);
 
-            // Reset loading flag
-            controller.Flags &= ~RequestFlags.Load;
+            // Add the chunk to chunk storage
+            m_chunks[pos.X, pos.Z] = chunk;
 
-            // Ignore the request if there already has been one
-            if ((controller.Flags&RequestFlags.Unload)==RequestFlags.Unload)
-                return;
-
-            controller.Flags |= RequestFlags.Unload;
-
-            // Chunk has to exist
-            Debug.Assert(controller.Chunk!=null);
-
-            m_chunksToRemove.Add(controller);
+            // Register for updates
+            m_updateRequests.Add(chunk);
         }
 
         public void UnregisterAll()
         {
-            m_chunksToLoad.Clear();
-            m_chunksToRemove.Clear();
-
-            foreach (ChunkController controller in m_chunks.Values)
-            {
-                controller.Flags &= ~RequestFlags.Load;
-                controller.Flags |= RequestFlags.Unload;
-
-                m_chunksToRemove.Add(controller);
-            }
-        }
-
-        public int ChunkCount
-        {
-            get { return m_chunks.Count; }
-        }
-
-        public bool IsEmpty()
-        {
-            return m_chunks.Count<=0;
+            foreach (Chunk chunk in m_chunks.Values)
+                chunk.Finish();
         }
 
         #endregion
@@ -204,7 +141,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
         }
 
-        protected virtual void OnPostProcessChunks()
+        protected virtual void OnPreProcessChunks()
         {
         }
 
@@ -212,61 +149,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
         }
 
-        protected virtual void OnPreProcessChunks()
+        protected virtual void OnPostProcessChunks()
         {
-        }
-
-        #endregion
-
-        #region Helper methods
-
-        private void ProcessLoadRequests()
-        {
-            // Process loading requests
-            for (int i = 0; i<m_chunksToLoad.Count; i++)
-            {
-                ChunkController controller = m_chunksToLoad[i];
-
-                // An unload request might have overriden this load request
-                if ((controller.Flags&RequestFlags.Load)!=RequestFlags.Load)
-                    continue;
-
-                // Request a new chunk from our provider and register it in chunk storage
-                controller.Chunk = ChunkProvider.RequestChunk(this, controller.Pos.X, controller.Pos.Z);
-                m_chunks.Add(controller.Pos, controller);
-            }
-            m_chunksToLoad.Clear();
-        }
-
-        private void ProcessUnloadRequests()
-        {
-            // Process removal requests
-            for (int i = 0; i<m_chunksToRemove.Count;)
-            {
-                ChunkController controller = m_chunksToRemove[i];
-
-                // A load request might have overriden this unload request
-                if ((controller.Flags&RequestFlags.Unload)!=RequestFlags.Unload)
-                {
-                    m_chunksToRemove.RemoveAt(i);
-                    continue;
-                }
-
-                Chunk chunk = controller.Chunk;
-
-                // We need to make sure that the chunk is ready to be released
-                if (!chunk.Finish())
-                {
-                    ++i;
-                    continue;
-                }
-
-                // Remove the chunk from our provider and unregister it from chunk storage
-                ChunkProvider.ReleaseChunk(chunk);
-                m_chunks.Remove(chunk.Pos);
-
-                m_chunksToRemove.RemoveAt(i);
-            }
         }
 
         #endregion
