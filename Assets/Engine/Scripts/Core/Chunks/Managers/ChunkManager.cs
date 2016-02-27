@@ -233,16 +233,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
                 // Request a new chunk from our provider and register it in chunk storage
                 controller.Chunk = ChunkProvider.RequestChunk(this, controller.Pos.X, controller.Pos.Z);
-
-                try
-                {
-                    m_chunks.Add(controller.Pos, controller);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogException(ex);
-                }
-                
+                m_chunks.Add(controller.Pos, controller);
             }
             m_chunksToLoad.Clear();
         }
