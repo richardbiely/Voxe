@@ -36,7 +36,7 @@ namespace Assets.Engine.Scripts.Core.Blocks
 
         private static bool AreEqual(ref SetBlockContext a, ref SetBlockContext b)
         {
-            return a.Chunk==b.Chunk && a.BX==b.BX && a.BY==b.BY && a.BZ==b.BZ && a.Block.BlockType==b.Block.BlockType;
+            return a.Chunk.Equals(b.Chunk) && a.BX==b.BX && a.BY==b.BY && a.BZ==b.BZ && a.Block.BlockType==b.Block.BlockType;
         }
 
         public static bool operator==(SetBlockContext lhs, SetBlockContext rhs)
@@ -54,9 +54,31 @@ namespace Assets.Engine.Scripts.Core.Blocks
             return AreEqual(ref this, ref other) ? 0 : 1;
         }
 
+        public override bool Equals(object other)
+        {
+            if (!(other is SetBlockContext))
+                return false;
+
+            SetBlockContext vec = (SetBlockContext)other;
+            return AreEqual(ref this, ref vec);
+        }
+
         public bool Equals(SetBlockContext other)
         {
             return AreEqual(ref this, ref other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hashCode = (Chunk!=null ? Chunk.GetHashCode() : 0);
+                hashCode = (hashCode*397)^(int)Block.BlockType;
+                hashCode = (hashCode*397)^BX;
+                hashCode = (hashCode*397)^BY;
+                hashCode = (hashCode*397)^BZ;
+                return hashCode;
+            }
         }
     }
 }

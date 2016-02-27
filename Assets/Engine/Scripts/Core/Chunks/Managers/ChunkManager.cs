@@ -64,10 +64,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
         #region Private vars
 
         //! Chunk storage
-        protected ChunkStorage m_chunks;
-
+        protected readonly ChunkStorage m_chunks = new ChunkStorage();
+        
         //! A list of chunks to update
-        private List<Chunk> m_updateRequests;
+        private readonly List<Chunk> m_updateRequests = new List<Chunk>();
 
         #endregion Private vars
 
@@ -75,9 +75,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         private void Awake()
         {
-            m_chunks = new ChunkStorage();
-            m_updateRequests = new List<Chunk>();
-
             OnAwake();
         }
 

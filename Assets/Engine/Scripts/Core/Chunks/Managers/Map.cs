@@ -20,9 +20,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         //! Clipmap with precomputed static data useful for map processing
         private ChunkClipmap m_clipmap;
-
-        //! Chunks to be removed
-        private List<Chunk> m_chunksToRemove;
         
         private Plane[] m_cameraPlanes = new Plane[6];
 
@@ -38,7 +35,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
             // ChunkGenerator - set from the editor
 
             m_clipmap = new ChunkClipmap();
-            m_chunksToRemove = new List<Chunk>();
         }
 
         protected override void OnStart()

@@ -103,6 +103,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c91ee507e5d06f46993555dc203bec8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Path: 
 --- !u!114 &11455066
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -116,6 +117,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Show: 1
   ShowInEditor: 1
+  Map: {fileID: 11473596}
 --- !u!114 &11473596
 MonoBehaviour:
   m_ObjectHideFlags: 1

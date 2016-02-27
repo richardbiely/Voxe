@@ -168,72 +168,17 @@ Prefab:
       propertyPath: m_RootOrder
       value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 11423040, guid: a4db001565d61294aae75f13fc68c869, type: 2}
-      propertyPath: CursorRenderer
-      value: 
-      objectReference: {fileID: 1645071061}
-    - target: {fileID: 11415314, guid: a4db001565d61294aae75f13fc68c869, type: 2}
-      propertyPath: CharacterController
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 11415314, guid: a4db001565d61294aae75f13fc68c869, type: 2}
-      propertyPath: ViewerCamera
-      value: 
-      objectReference: {fileID: 812507054}
-    - target: {fileID: 11455066, guid: a4db001565d61294aae75f13fc68c869, type: 2}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
-      propertyPath: Occlusion
-      value: 
-      objectReference: {fileID: 1914990388}
-    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
-      propertyPath: GizmoGeometryBounds
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
-      propertyPath: Scale
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
-      propertyPath: ChunkScale
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
-      propertyPath: LODCoef
-      value: 1.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
-      propertyPath: ShowMapBounds
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
-      propertyPath: ShowGeomBounds
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 11423040, guid: a4db001565d61294aae75f13fc68c869, type: 2}
-      propertyPath: LocalMap
-      value: 
-      objectReference: {fileID: 1775201074}
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: Camera
       value: 
       objectReference: {fileID: 829896160}
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
-      propertyPath: ChunkGenerator
+      propertyPath: Occlusion
       value: 
-      objectReference: {fileID: 297728906}
-    m_RemovedComponents:
-    - {fileID: 11423040, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      objectReference: {fileID: 1914990388}
+    m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: a4db001565d61294aae75f13fc68c869, type: 2}
   m_IsPrefabParent: 0
---- !u!114 &297728906 stripped
-MonoBehaviour:
-  m_PrefabParentObject: {fileID: 11479704, guid: a4db001565d61294aae75f13fc68c869,
-    type: 2}
-  m_PrefabInternal: {fileID: 297728905}
-  m_Script: {fileID: 11500000, guid: bddd13805c0442d45805e26defc2d558, type: 3}
 --- !u!1 &423721370
 GameObject:
   m_ObjectHideFlags: 0
@@ -385,10 +330,6 @@ Light:
   m_ShadowRadius: 0
   m_ShadowAngle: 0
   m_AreaSize: {x: 1, y: 1}
---- !u!4 &812507054 stripped
-Transform:
-  m_PrefabParentObject: {fileID: 400004, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
-  m_PrefabInternal: {fileID: 1324421060}
 --- !u!20 &829896160 stripped
 Camera:
   m_PrefabParentObject: {fileID: 2000000, guid: 276ec6ff205a51947bd7ffda6065715a,

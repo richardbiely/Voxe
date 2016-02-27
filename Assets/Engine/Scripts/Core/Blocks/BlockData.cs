@@ -21,7 +21,7 @@ namespace Assets.Engine.Scripts.Core.Blocks
         /// <summary>
         /// The type of this block
         /// </summary>
-        public BlockType BlockType;
+        public readonly BlockType BlockType;
 	
         /// <summary>
         /// Meta data for this block
@@ -113,13 +113,7 @@ namespace Assets.Engine.Scripts.Core.Blocks
         }
 
         #endregion
-
-        private BlockData SetBlockType(BlockType type)
-        {
-            BlockType = type;
-            return this;
-        }
-
+        
         public void Binarize(BinaryWriter bw)
         {
             bw.Write((byte)BlockType);
