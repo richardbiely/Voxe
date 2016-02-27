@@ -120,17 +120,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 // There should always be a valid controller inside!
                 Debug.Assert(controller!=null);
 
-                // Reset unloading flag
+                // Reset the flags
+                controller.Flags &= ~RequestFlags.Load;
                 controller.Flags &= ~RequestFlags.Unload;
 
-                // Ignore the request if there already has been one
-                if ((controller.Flags&RequestFlags.Load)==RequestFlags.Load)
-                    return;
+                Debug.Assert(controller.Chunk != null);
 
-                controller.Flags |= RequestFlags.Load;
-
-                // Chunk has to exist
-                Debug.Assert(controller.Chunk!=null);
+                // Make sure the chunk will no longer want to be unloaded
+                //controller.Chunk.Restore();
             }
             else
             {
@@ -140,9 +137,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     Flags = RequestFlags.Load,
                     Pos = pos
                 };
-            }
 
-            m_chunksToLoad.Add(controller);
+                m_chunksToLoad.Add(controller);
+            }
         }
 
         public void UnregisterChunk(Vector2Int pos)
@@ -236,7 +233,16 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
                 // Request a new chunk from our provider and register it in chunk storage
                 controller.Chunk = ChunkProvider.RequestChunk(this, controller.Pos.X, controller.Pos.Z);
-                m_chunks.Add(controller.Pos, controller);
+
+                try
+                {
+                    m_chunks.Add(controller.Pos, controller);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogException(ex);
+                }
+                
             }
             m_chunksToLoad.Clear();
         }

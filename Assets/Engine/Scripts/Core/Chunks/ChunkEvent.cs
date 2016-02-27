@@ -57,6 +57,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
                         return false;
                 }
 
+                if (firstNullIndex < 0)
+                    return false;
+
                 Assert.IsTrue(section != this, "Trying to register the section to itself");
                 Assert.IsTrue(SubscribersCurr < Subscribers.Length, string.Format("ChunkEvent.Register: Condition {0} < {1} not met", SubscribersCurr, Subscribers.Length));
                 
