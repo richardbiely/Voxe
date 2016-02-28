@@ -378,6 +378,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             }
             else
             {
+                NonEmptyBlocks = 0;
                 MinRenderX = EngineSettings.ChunkConfig.Mask;
                 MaxRenderX = 0;
                 MinRenderY = EngineSettings.ChunkConfig.Mask;
@@ -1017,11 +1018,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			if (NonEmptyBlocks>0)
 			{
 			    IsBuilt = false;
-
-				int lowest = Mathf.Max(MinRenderY, 0);
-				int highest = Mathf.Min(MaxRenderY, EngineSettings.ChunkConfig.Mask);
+                
 				var workItem = new SGenerateVerticesWorkItem(
-                    this, MinRenderX, MaxRenderX, lowest, highest, MinRenderZ, MaxRenderZ, LOD
+                    this, MinRenderX, MaxRenderX, MinRenderY, MaxRenderY, MinRenderZ, MaxRenderZ, LOD
                     );
                 
                 m_taskRunning = true;
