@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Text;
+using Assets.Engine.Scripts;
 using Assets.Engine.Scripts.Core;
 using UnityEngine;
 using Assets.Engine.Scripts.Common.Extensions;
@@ -94,11 +95,14 @@ namespace Assets.Client.Scripts.Misc
                 m_lastDeltaTime.ToString("0.000"),
                 (1F / m_lastDeltaTime).ToString("0.0")
                 );
-            
-            if(Map!=null)
-                m_text.AppendFormat("Chunks {0}\n", Map.Chunks.ToString());
-            m_text.AppendFormat("ThreadPool items {0}\n", Globals.WorkPool.Size.ToString());
-            m_text.AppendFormat("TaskPool items {0}\n", Globals.IOPool.Size.ToString());
+
+            if (Map!=null)
+            {
+                m_text.AppendFormat("Chunks {0}\n", Map.Chunks);
+                m_text.AppendFormat("Blocks {0}/{1}\n", Map.Blocks, Map.Chunks*EngineSettings.ChunkConfig.Volume);
+            }
+            m_text.AppendFormat("ThreadPool items {0}\n", Globals.WorkPool.Size);
+            m_text.AppendFormat("TaskPool items {0}\n", Globals.IOPool.Size);
 
             GUI.Box(new Rect(5, 5, 300, 160), "");
             GUI.Label(new Rect(10, 5, 1000, 200), m_text.ToString());

@@ -15,6 +15,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         #endregion Public Fields
 
+        public int Blocks { get; private set; }
+
         public int Chunks
         {
             get { return m_chunks.Count; }
@@ -29,6 +31,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         private void ProcessUpdateRequests()
         {
+            Blocks = 0;
+
             // Process removal requests
             for (int i = 0; i<m_updateRequests.Count;)
             {
@@ -38,6 +42,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
                 // Process chunk events
                 chunk.UpdateChunk();
+
+                Blocks += chunk.NonEmptyBlocks;
 
                 // Automatically collect chunks which are ready to be removed form the world
                 if (chunk.IsFinished())
