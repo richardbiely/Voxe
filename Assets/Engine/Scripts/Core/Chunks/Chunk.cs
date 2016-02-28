@@ -38,6 +38,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public int MinRenderX { get; private set; }
         public int MinRenderZ { get; private set; }
         public int MaxRenderZ { get; private set; }
+        private int m_lowestEmptyBlock;
         
         //! Chunk's level of detail. 0=max detail. Every other LOD half the detail of a previous one
         public int LOD {
@@ -221,6 +222,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             MaxRenderY = 0;
             MinRenderZ = EngineSettings.ChunkConfig.Mask;
             MaxRenderZ = 0;
+            m_lowestEmptyBlock = EngineSettings.ChunkConfig.Mask;
 
             // Reset sections
             NonEmptyBlocks = 0;
@@ -347,17 +349,18 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     MinRenderX = x;
                 if (z < MinRenderZ)
                     MinRenderZ = z;
+                if (y < MinRenderY)
+                    MinRenderY = y;
 
                 if (x > MaxRenderX)
                     MaxRenderX = x;
                 if (z > MaxRenderZ)
                     MaxRenderZ = z;
-
                 if (y > MaxRenderY)
                     MaxRenderY = y;
             }
-            else if (y < MinRenderY)
-                MinRenderY = y;
+            else if (y < m_lowestEmptyBlock)
+                m_lowestEmptyBlock = y;
         }
 
         public void GenerateBlock(int x, int y, int z, BlockData data)
@@ -385,6 +388,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 MaxRenderY = 0;
                 MinRenderZ = EngineSettings.ChunkConfig.Mask;
                 MaxRenderZ = 0;
+                m_lowestEmptyBlock = EngineSettings.ChunkConfig.Mask;
 
                 for (int y = EngineSettings.ChunkConfig.Mask; y>=0; y--)
                 {
@@ -398,8 +402,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 }
             }
 
-            MinRenderY = Math.Max(MinRenderY, 0);
-            MaxRenderY = Math.Min(MaxRenderY, EngineSettings.ChunkConfig.Mask);
+            // This is an optimization - if this chunk is flat than there's no need to consider it as a whole.
+            // Its' top part is sufficient enough. However, we never want this value be smaller than chunk's
+            // lowest solid part.
+            // E.g. a sphere floating above the group would be considered from its topmost solid block to
+            // the ground without this. With this check, the lowest part above ground will be taken as minimum
+            // render value.
+            MinRenderY = Mathf.Max(m_lowestEmptyBlock-1, MinRenderY);
+            MinRenderY = Mathf.Max(MinRenderY, 0);
 
             if (NonEmptyBlocks > 0)
             {
@@ -408,9 +418,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 int posInWorldZ = Pos.Z<<EngineSettings.ChunkConfig.LogSize;
 
                 // Build bounding mesh for each section
-                float width = Mathf.Max(MaxRenderX - MinRenderX, 1);
-                float height = Mathf.Max(MaxRenderY - MinRenderY, 1);
-                float depth = Mathf.Max(MaxRenderZ - MinRenderZ, 1);
+                float width = MaxRenderX - MinRenderX + 1;
+                float height = MaxRenderY - MinRenderY + 1;
+                float depth = MaxRenderZ - MinRenderZ + 1;
                 
                 Bounds geomBounds = new Bounds(
                     new Vector3(

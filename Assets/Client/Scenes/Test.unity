@@ -183,7 +183,7 @@ Prefab:
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: ChunkGenerator
       value: 
-      objectReference: {fileID: 297728918}
+      objectReference: {fileID: 537476079}
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: MeshBuilder
       value: 
@@ -216,6 +216,10 @@ Prefab:
       propertyPath: CachedRange
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: ForceLOD
+      value: -1
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 11412252, guid: a4db001565d61294aae75f13fc68c869, type: 2}
     - {fileID: 11464542, guid: a4db001565d61294aae75f13fc68c869, type: 2}
@@ -236,7 +240,7 @@ MonoBehaviour:
     type: 2}
   m_PrefabInternal: {fileID: 297728905}
   m_Script: {fileID: 11500000, guid: 8c91ee507e5d06f46993555dc203bec8, type: 3}
---- !u!114 &297728918 stripped
+--- !u!114 &537476079 stripped
 MonoBehaviour:
   m_PrefabParentObject: {fileID: 11479704, guid: a4db001565d61294aae75f13fc68c869,
     type: 2}
