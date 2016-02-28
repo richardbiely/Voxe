@@ -14,17 +14,15 @@ namespace Assets.Engine.Scripts.Core.Chunks
     {
         private readonly AxisInfo[] m_axes;
         private readonly int m_diffCachedVisibleRange;
-        private readonly int m_size;
 
         public ChunkClipmap(Map map, int rangeYMin, int rangeYMax)
         {
             m_diffCachedVisibleRange = map.CachedRange-map.VisibleRange;
-            m_size = map.CachedRange;
 
-            if (rangeYMin<-m_size)
-                rangeYMin = -m_size;
-            if (rangeYMax>m_size)
-                rangeYMax = m_size;
+            if (rangeYMin<-map.CachedRange)
+                rangeYMin = -map.CachedRange;
+            if (rangeYMax> map.CachedRange)
+                rangeYMax = map.CachedRange;
 
             RangeYMin = rangeYMin;
             RangeYMax = rangeYMax;
@@ -33,21 +31,21 @@ namespace Assets.Engine.Scripts.Core.Chunks
             {
                 new AxisInfo
                 {
-                    Map = new CircularArray1D<ChunkClipmapItem>(2*m_size+1),
-                    RangeMin = -m_size,
-                    RangeMax = m_size
+                    Map = new CircularArray1D<ChunkClipmapItem>(2*map.CachedRange+1),
+                    RangeMin = -map.CachedRange,
+                    RangeMax = map.CachedRange
                 },
                 new AxisInfo
                 {
-                    Map = new CircularArray1D<ChunkClipmapItem>(2*m_size+1),
+                    Map = new CircularArray1D<ChunkClipmapItem>(2*map.CachedRange+1),
                     RangeMin = rangeYMin,
                     RangeMax = rangeYMax
                 },
                 new AxisInfo
                 {
-                    Map = new CircularArray1D<ChunkClipmapItem>(2*m_size+1),
-                    RangeMin = -m_size,
-                    RangeMax = m_size
+                    Map = new CircularArray1D<ChunkClipmapItem>(2*map.CachedRange+1),
+                    RangeMin = -map.CachedRange,
+                    RangeMax = map.CachedRange
                 }
             };
         }
