@@ -257,16 +257,19 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     for (int x = -CachedRange; x <= CachedRange; ++x)
                         chunksToLoad.Add(new Vector3Int(x, y, z));
 
+            // Center y around zero
+            int yRange = Mathf.Abs(m_clipmap.RangeYMin)+Mathf.Abs(m_clipmap.RangeYMax) / 2;
+
             // Take the coordinates and sort them according to their distance from the center
             m_chunksToLoadByPos = chunksToLoad
                 // Load as sphere
-                .Where(pos =>
-                    Mathf.Abs(pos.X)+Mathf.Abs(pos.Y)<1.41f*CachedRange &&
-                    Mathf.Abs(pos.X)+Mathf.Abs(pos.Z)<1.41f*CachedRange &&
-                    Mathf.Abs(pos.Y)+Mathf.Abs(pos.Z)<1.41f*CachedRange
-                    )
+                .Where(
+                    pos =>
+                    Mathf.Abs(pos.Y)<1.41f*yRange &&
+                    Mathf.Abs(pos.X)+Mathf.Abs(pos.Z)<1.41f*CachedRange
+                )
                 // Vectors with smallest magnitude first
-                .OrderBy(pos => Mathf.Abs(pos.X)+Mathf.Abs(pos.Y)+Mathf.Abs(pos.Z))
+                .OrderBy(pos => pos.X*pos.X+pos.Y*pos.Y+pos.Z*pos.Z)
                 // Beware cases like (-4,0) vs. (2,2). The second one is closer to the center
                 .ThenBy(pos => Mathf.Abs(pos.Y))
                 .ThenBy(pos => Mathf.Abs(pos.X))
