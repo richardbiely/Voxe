@@ -2,6 +2,6 @@
 {
     public interface IChunkManager
     {
-        Chunk GetChunk(int cx, int cz);
+        Chunk GetChunk(int cx, int cy, int cz);
     }
 }

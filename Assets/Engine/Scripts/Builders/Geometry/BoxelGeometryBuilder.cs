@@ -195,26 +195,10 @@ namespace Assets.Engine.Scripts.Builders.Geometry
                                 // 3--2
                                 Vector3[] vecs =
                                 {
-                                    new Vector3(
-                                        (float)v4.X,
-                                        (float)v4.Y+offsetY,
-                                        (float)v4.Z
-                                        ),
-                                    new Vector3(
-                                        (float)v3.X,
-                                        (float)v3.Y+offsetY,
-                                        (float)v3.Z
-                                        ),
-                                    new Vector3(
-                                        (float)v2.X,
-                                        (float)v2.Y+offsetY,
-                                        (float)v2.Z
-                                        ),
-                                    new Vector3(
-                                        (float)v1.X,
-                                        (float)v1.Y+offsetY,
-                                        (float)v1.Z
-                                        )
+                                    new Vector3(v4.X,v4.Y,v4.Z),
+                                    new Vector3(v3.X,v3.Y,v3.Z),
+                                    new Vector3(v2.X,v2.Y,v2.Z),
+                                    new Vector3(v1.X,v1.Y,v1.Z)
                                 };
 
                                 // Build the face

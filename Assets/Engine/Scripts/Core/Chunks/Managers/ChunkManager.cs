@@ -44,7 +44,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 {
                     // Remove the chunk from our provider and unregister it from chunk storage
                     ChunkProvider.ReleaseChunk(chunk);
-                    m_chunks.Remove(chunk.Pos.X, chunk.Pos.Z);
+                    m_chunks.Remove(chunk.Pos.X, chunk.Pos.Y, chunk.Pos.Z);
 
                     // Unregister from updates
                     m_updateRequests.RemoveAt(i);
@@ -90,9 +90,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
         /// <summary>
         ///     Returns a chunk at given chunk coordinates.
         /// </summary>
-        public Chunk GetChunk(int cx, int cz)
+        public Chunk GetChunk(int cx, int cy, int cz)
         {
-            return m_chunks[cx, cz];
+            return m_chunks[cx, cy, cz];
         }
 
         public void ProcessChunks()
@@ -104,17 +104,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
             OnPostProcessChunks();
         }
 
-        public void RegisterChunk(Vector2Int pos)
+        public void RegisterChunk(Vector3Int pos)
         {
-            Chunk chunk = m_chunks[pos.X, pos.Z];
+            Chunk chunk = m_chunks[pos.X, pos.Y, pos.Z];
             if (chunk!=null)
                 return;
 
             // Let chunk provider hand us a new chunk
-            chunk = ChunkProvider.RequestChunk(this, pos.X, pos.Z);
+            chunk = ChunkProvider.RequestChunk(this, pos.X, pos.Y, pos.Z);
 
             // Add the chunk to chunk storage
-            m_chunks[pos.X, pos.Z] = chunk;
+            m_chunks[pos.X, pos.Y, pos.Z] = chunk;
 
             // Register for updates
             m_updateRequests.Add(chunk);

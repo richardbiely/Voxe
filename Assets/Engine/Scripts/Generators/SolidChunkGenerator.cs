@@ -12,7 +12,7 @@ namespace Assets.Engine.Scripts.Generators
 
         public override void Generate(Chunk chunk)
         {
-            for (int y = EngineSettings.ChunkConfig.MaskYTotal; y>=0; y--)
+            for (int y = EngineSettings.ChunkConfig.Mask; y>=0; y--)
             {
                 for (int z = 0; z<EngineSettings.ChunkConfig.Size; z++)
                 {

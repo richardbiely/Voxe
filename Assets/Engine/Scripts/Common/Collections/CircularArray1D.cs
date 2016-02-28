@@ -31,7 +31,7 @@ namespace Assets.Engine.Scripts.Common.Collections
         /// <summary>
         ///     Offset off the beggining
         /// </summary>
-        public int Offset { get; private set; }
+        public int Offset { get; set; }
 
         /// <summary>
         ///     Access internal array in a circular way
@@ -48,11 +48,6 @@ namespace Assets.Engine.Scripts.Common.Collections
                 int pos = Helpers.Mod(i + Offset, m_items.Length);
                 m_items[pos] = value;
             }
-        }
-
-        public void SetOffset(int x)
-        {
-            Offset = x;
         }
 
         public IEnumerator GetEnumerator()

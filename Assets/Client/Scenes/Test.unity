@@ -187,19 +187,35 @@ Prefab:
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: MeshBuilder
       value: 
-      objectReference: {fileID: 297728915}
+      objectReference: {fileID: 816302467}
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: ShowGeomBounds
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: ShowMapBounds
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 11455066, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: Map
       value: 
       objectReference: {fileID: 297728906}
+    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: LODCoef
+      value: 0.75
+      objectReference: {fileID: 0}
+    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: MaxMapY
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: MinMapY
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: CachedRange
+      value: 6
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 11412252, guid: a4db001565d61294aae75f13fc68c869, type: 2}
     - {fileID: 11464542, guid: a4db001565d61294aae75f13fc68c869, type: 2}
@@ -220,12 +236,6 @@ MonoBehaviour:
     type: 2}
   m_PrefabInternal: {fileID: 297728905}
   m_Script: {fileID: 11500000, guid: 8c91ee507e5d06f46993555dc203bec8, type: 3}
---- !u!114 &297728915 stripped
-MonoBehaviour:
-  m_PrefabParentObject: {fileID: 11435722, guid: a4db001565d61294aae75f13fc68c869,
-    type: 2}
-  m_PrefabInternal: {fileID: 297728905}
-  m_Script: {fileID: 11500000, guid: bfe42fce6d47f8e419120f3d17d227ae, type: 3}
 --- !u!114 &297728918 stripped
 MonoBehaviour:
   m_PrefabParentObject: {fileID: 11479704, guid: a4db001565d61294aae75f13fc68c869,
@@ -293,6 +303,12 @@ Light:
   m_ShadowRadius: 0
   m_ShadowAngle: 0
   m_AreaSize: {x: 1, y: 1}
+--- !u!114 &816302467 stripped
+MonoBehaviour:
+  m_PrefabParentObject: {fileID: 11434312, guid: a4db001565d61294aae75f13fc68c869,
+    type: 2}
+  m_PrefabInternal: {fileID: 297728905}
+  m_Script: {fileID: 11500000, guid: c6f92a5d4f7f76444b78e6ee5392a085, type: 3}
 --- !u!20 &829896160 stripped
 Camera:
   m_PrefabParentObject: {fileID: 2000000, guid: 276ec6ff205a51947bd7ffda6065715a,

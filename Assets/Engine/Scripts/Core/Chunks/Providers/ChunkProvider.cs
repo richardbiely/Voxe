@@ -38,11 +38,11 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
 
         #region Public Methods
 
-        public string GetFilePathFromIndex(int cx, int cz)
+        public string GetFilePathFromIndex(int cx, int cy, int cz)
         {
             // E.g. D:\VoxelData\0FF21_22F00_00001.chn
             m_filePathStringBuilder.Remove(0, m_filePathStringBuilder.Length);
-            m_filePathStringBuilder.AppendFormat(@"{0}\{1}_{2}.chn", m_dataPath, cx.ToString("X8"), cz.ToString("X8"));
+            m_filePathStringBuilder.AppendFormat(@"{0}\{1}_{2}_{3}.chn", m_dataPath, cx.ToString("X8"), cy.ToString("X8"), cz.ToString("X8"));
             return m_filePathStringBuilder.ToString();
         }
 
@@ -64,16 +64,14 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
                     using (var br = new BinaryReader(fs))
                     {
                         // Read filled block count
-                        for (int i = 0; i < EngineSettings.ChunkConfig.StackSize; i++)
-                            chunk.Sections[i].NonEmptyBlocks = br.ReadInt16();
+                        chunk.NonEmptyBlocks = br.ReadInt16();
 
                         // Read section offsets
                         chunk.MaxRenderY = br.ReadInt16();
                         chunk.MinRenderY = br.ReadInt16();
 
                         // Read chunk data
-                        int headerLen = (EngineSettings.ChunkConfig.StackSize << 1) + 4; // Size of previous data
-                        filedata = br.ReadBytes((int)(fs.Length - headerLen));
+                        filedata = br.ReadBytes((int)(fs.Length - 6)); // 6 = size of previous data (NonEmptyBlocks + MaxRenderY + MinRenderY)
 
                         fs = null;
                     }
@@ -93,7 +91,7 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
             }
             catch (Exception ex)
             {
-                string s = string.Format("Cannot load chunk '{0}' ([{1},{2}]): {3}", filePath, chunk.Pos.X, chunk.Pos.Z, ex);
+                string s = string.Format("Cannot load chunk '{0}' ([{1},{2},{3}]): {4}", filePath, chunk.Pos.X, chunk.Pos.Y, chunk.Pos.Z, ex);
                 Debug.LogError(s);
                 return false;
             }
@@ -121,8 +119,7 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
                         fs = null;
 
                         // Store number of filled block for each section. Using short limits max section size to 16x16x16
-                        for (int i = 0; i<EngineSettings.ChunkConfig.StackSize; i++)
-                            bw.Write((short)chunk.Sections[i].NonEmptyBlocks);
+                        bw.Write((short)chunk.NonEmptyBlocks);
 
                         // Store chunk offsets
                         bw.Write((short)chunk.MaxRenderY);
@@ -140,7 +137,7 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
             }
             catch (Exception ex)
             {
-                Debug.LogErrorFormat("Cannot save chunk '{0}' ([{1},{2}]): {3}", filePath, chunk.Pos.X, chunk.Pos.Z, ex);
+                Debug.LogErrorFormat("Cannot save chunk '{0}' ([{1},{2},{3}]): {4}", filePath, chunk.Pos.X, chunk.Pos.Y, chunk.Pos.Z, ex);
                 return false;
             }
 
@@ -172,18 +169,18 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
         #region IChunkProvider implementation
         
         // load or generate a chunk
-        public override Chunk RequestChunk(ChunkManager map, int cx, int cz)
+        public override Chunk RequestChunk(ChunkManager map, int cx, int cy, int cz)
         {
             Chunk chunk = GlobalPools.ChunkPool.Pop();
 #if DEBUG
             Assert.IsTrue(!chunk.IsUsed, "Popped a chunk which is still in use!");
 #endif
 
-            chunk.Init((Map)map, cx, cz);
+            chunk.Init((Map)map, cx, cy, cz);
 
             if (EngineSettings.WorldConfig.Streaming)
             {
-                string filePath = GetFilePathFromIndex(chunk.Pos.X, chunk.Pos.Z);
+                string filePath = GetFilePathFromIndex(chunk.Pos.X, chunk.Pos.Y, chunk.Pos.Z);
                 if (File.Exists(filePath))
                 {
                     // Data is on disk

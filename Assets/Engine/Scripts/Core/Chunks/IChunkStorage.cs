@@ -4,10 +4,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
 {
     public interface IChunkStorage
     {
-        Chunk this[int x, int z] { get; set; }
+        Chunk this[int x, int y, int z] { get; set; }
 
-        bool Check(int x, int z);
-        void Remove(int x, int z);
+        bool Check(int x, int y, int z);
+        void Remove(int x, int y, int z);
 
         IEnumerable<Chunk> Values { get; }
     }

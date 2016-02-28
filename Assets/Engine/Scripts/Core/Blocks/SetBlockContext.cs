@@ -20,10 +20,7 @@ namespace Assets.Engine.Scripts.Core.Blocks
         //! Mask of subscriber indexes to notify
         public readonly int SubscribersMask;
 
-        public readonly int SectionsMask;
-
-        public SetBlockContext(Chunk chunk, int bx, int by, int bz, BlockData block, int subscribersMask,
-            int sectionsMask)
+        public SetBlockContext(Chunk chunk, int bx, int by, int bz, BlockData block, int subscribersMask)
         {
             Chunk = chunk;
             Block = block;
@@ -31,7 +28,6 @@ namespace Assets.Engine.Scripts.Core.Blocks
             BY = by;
             BZ = bz;
             SubscribersMask = subscribersMask;
-            SectionsMask = sectionsMask;
         }
 
         private static bool AreEqual(ref SetBlockContext a, ref SetBlockContext b)

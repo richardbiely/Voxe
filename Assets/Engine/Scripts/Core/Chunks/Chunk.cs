@@ -7,28 +7,29 @@ using Assets.Engine.Scripts.Core.Threading;
 using UnityEngine;
 using Assert = UnityEngine.Assertions.Assert;
 using System.Collections.Generic;
+using Assets.Engine.Scripts.Builders;
 using Assets.Engine.Scripts.Core.Chunks.Providers;
+using Assets.Engine.Scripts.Rendering;
+using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
 namespace Assets.Engine.Scripts.Core.Chunks
 {
     /// <summary>
     ///     Represents a chunk consisting of several even sized mini chunks
     /// </summary>
-	public class Chunk: ChunkEvent
+	public class Chunk: ChunkEvent, IOcclusionEntity
     {
         #region Public variables
         
         public Map Map { get; private set; }
         
         public readonly BlockStorage Blocks;
-
-        public readonly MiniChunk[] Sections;
-
+        
         //! Bounding box in world coordinates
         public Bounds WorldBounds { get; private set; }
 
         // Chunk coordinates
-        public Vector2Int Pos { get; private set; }
+        public Vector3Int Pos { get; private set; }
 
         //! Chunk bound in terms of geometry
         public int MaxRenderY { get; set; }
@@ -37,11 +38,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public int MinRenderX { get; private set; }
         public int MinRenderZ { get; private set; }
         public int MaxRenderZ { get; private set; }
-
-        //! Range in which sections are to be iterated
-        public int MinFilledSection { get; private set; }
-        public int MaxFilledSection { get; private set; }
-
+        
         //! Chunk's level of detail. 0=max detail. Every other LOD half the detail of a previous one
         public int LOD {
             get
@@ -55,13 +52,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     // Request new lod
                     m_lod = value;
 
-                    // Request update for each chunk section
-                    for (int i = 0; i < EngineSettings.ChunkConfig.StackSize; i++)
-                        m_setBlockSections = m_setBlockSections | (1 << i);
+                    // Request an update of geometry
                     RefreshState(ChunkState.BuildVertices);
                 }
             }
         }
+
+        //! True if MiniSection has already been built
+        public bool IsBuilt { get; set; }
+
+        //! Number of blocks which not air (non-empty blocks)
+        public int NonEmptyBlocks { get; set; }
 
         public bool PossiblyVisible { get; private set; }
 
@@ -77,10 +78,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         //! A list of event requiring counter
         private readonly int [] m_eventCnt = {0, 0};
-
-        //! Sections queued for building
-        // TODO: StackSize can be at most 31 with this approach (32 bits). Implement a generic solution for arbitrary StackSize values
-        private int m_setBlockSections;
+        
         //! Queue of setBlock operations to execute
         private readonly List<SetBlockContext> m_setBlockQueue = new List<SetBlockContext>();
 
@@ -103,19 +101,25 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		private bool m_taskRunning;
 		private readonly object m_lock = new object();
 
+        //! Draw call batcher for this chunk
+        private readonly DrawCallBatcher m_drawCallBatcher;
+        //! The render buffer used for building MiniChunk geometry
+        public RenderBuffer SolidRenderBuffer { get; private set; }
+
         #endregion Private variables
 
         #region Constructors
 
         public Chunk():
-			base(4)
+			base(6)
         {
             Blocks = new BlockStorage();
 
-            Sections = new MiniChunk[EngineSettings.ChunkConfig.StackSize];
-            for (int i = 0; i<Sections.Length; i++)
-                Sections[i] = new MiniChunk(this, i);
-            
+            m_drawCallBatcher = new DrawCallBatcher(Globals.CubeMeshBuilder);
+            SolidRenderBuffer = new RenderBuffer(Globals.CubeMeshBuilder);
+            BBoxVertices = new List<Vector3>();
+            BBoxVerticesTransformed = new List<Vector3>();
+
             Reset();
         }
 
@@ -140,42 +144,36 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         #endregion Accessors
         
-        public void Init(Map map, int cx, int cz)
+        public void Init(Map map, int cx, int cy, int cz)
         {
             Map = map;
-            Pos = new Vector2Int(cx, cz);
+            Pos = new Vector3Int(cx, cy, cz);
             m_lod = 0;
-
+            
             WorldBounds = new Bounds(
-                new Vector3(EngineSettings.ChunkConfig.Size*(cx+0.5f), EngineSettings.ChunkConfig.SizeYTotal*0.5f, EngineSettings.ChunkConfig.Size*(cz+0.5f)),
-                new Vector3(EngineSettings.ChunkConfig.Size, EngineSettings.ChunkConfig.SizeYTotal, EngineSettings.ChunkConfig.Size)
+                new Vector3(EngineSettings.ChunkConfig.Size*(cx+0.5f), EngineSettings.ChunkConfig.Size*(cy+0.5f), EngineSettings.ChunkConfig.Size*(cz+0.5f)),
+                new Vector3(EngineSettings.ChunkConfig.Size, EngineSettings.ChunkConfig.Size, EngineSettings.ChunkConfig.Size)
                 );
-
-            foreach (MiniChunk section in Sections)
-            {
-                section.WorldBounds = new Bounds(
-                    new Vector3(EngineSettings.ChunkConfig.Size*(cx+0.5f), section.OffsetY + EngineSettings.ChunkConfig.Size*0.5f, EngineSettings.ChunkConfig.Size*(cz+0.5f)),
-                    new Vector3(EngineSettings.ChunkConfig.Size, EngineSettings.ChunkConfig.Size, EngineSettings.ChunkConfig.Size)
-                    );
-            }
         }
 
 		public void RegisterNeighbors()
 		{
-			Chunk left = Map.GetChunk(Pos.X - 1, Pos.Z);
-			Chunk right = Map.GetChunk(Pos.X + 1, Pos.Z);
-			Chunk front = Map.GetChunk(Pos.X, Pos.Z - 1);
-			Chunk behind = Map.GetChunk(Pos.X, Pos.Z + 1);
+            // Retrieve neighbors
+			Chunk left = Map.GetChunk(Pos.X - 1, Pos.Y, Pos.Z);
+			Chunk right = Map.GetChunk(Pos.X + 1, Pos.Y, Pos.Z);
+			Chunk front = Map.GetChunk(Pos.X, Pos.Y, Pos.Z - 1);
+			Chunk behind = Map.GetChunk(Pos.X, Pos.Y, Pos.Z + 1);
+		    Chunk top = Map.GetChunk(Pos.X, Pos.Y+1, Pos.Z);
+		    Chunk bottom = Map.GetChunk(Pos.X, Pos.Y-1, Pos.Z);
 
-			// Left
+			// Register neighbors
 			RegisterNeighbor(left);
-			// Right
 			RegisterNeighbor(right);
-			// Front
 			RegisterNeighbor(front);
-			// Behind
 			RegisterNeighbor(behind);
-		}
+            RegisterNeighbor(top);
+            RegisterNeighbor(bottom);
+        }
 
         #region Public Methods
         
@@ -188,10 +186,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			ProcessPendingTasks(PossiblyVisible);
 
             if (m_completedTasks.Check(ChunkState.BuildVertices))
-            {
-                foreach (MiniChunk section in Sections)
-                    section.Build();
-            }
+                Build();
         }
 
         public void Reset()
@@ -212,9 +207,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			m_pendingTasks = m_pendingTasks.Reset();            
             m_completedTasks = m_completedTasks.Reset();
             m_refreshTasks = m_refreshTasks.Reset();
-
-			for(int i=0; i<EngineSettings.ChunkConfig.StackSize; i++)
-				m_setBlockSections = m_setBlockSections | (1<<i);
+            
             m_setBlockQueue.Clear();
 
             // Reset blocks
@@ -222,19 +215,21 @@ namespace Assets.Engine.Scripts.Core.Chunks
             
             PossiblyVisible = false;
 
-            MinRenderY = EngineSettings.ChunkConfig.MaskYTotal;
-            MaxRenderY = 0;
             MinRenderX = EngineSettings.ChunkConfig.Mask;
             MaxRenderX = 0;
+            MinRenderY = EngineSettings.ChunkConfig.Mask;
+            MaxRenderY = 0;
             MinRenderZ = EngineSettings.ChunkConfig.Mask;
-            MaxRenderX = 0;
+            MaxRenderZ = 0;
 
-            MinFilledSection = 0;
-            MaxFilledSection = EngineSettings.ChunkConfig.StackSize-1;
-            
             // Reset sections
-            foreach (MiniChunk section in Sections)
-                section.Reset();
+            NonEmptyBlocks = 0;
+            IsBuilt = false;
+
+            m_drawCallBatcher.Clear();
+            SolidRenderBuffer.Clear();
+
+            ResetGeometryBoundingMesh();
 
             ResetEvent();
         }
@@ -244,8 +239,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		/// </summary>
         public void SetVisible(bool show)
         {
-            foreach (MiniChunk section in Sections)
-                section.Visible = show;
+            Visible = show;
         }
 
         public void SetPossiblyVisible(bool show)
@@ -304,25 +298,50 @@ namespace Assets.Engine.Scripts.Core.Chunks
         /// </summary>
         public bool CheckFrustum(Plane[] frustum)
         {
-            foreach (MiniChunk section in Sections)
-            {
-                if (GeometryUtility.TestPlanesAABB(frustum, section.WorldBounds))
-                    return true;
-            }
-            
-            return false;
+            return GeometryUtility.TestPlanesAABB(frustum, WorldBounds);
         }
-        
-        public void GenerateBlock(int x, int y, int z, BlockData data)
+
+        public void ResetGeometryBoundingMesh()
         {
-            Blocks[x, y, z] = data;
-            
+            GeometryBounds = new Bounds();
+            BBoxVertices.Clear();
+            BBoxVerticesTransformed.Clear();
+        }
+
+        public void Build()
+        {
+            if (IsBuilt || SolidRenderBuffer.Vertices.Count <= 0)
+                return;
+
+            m_drawCallBatcher.Clear();
+            m_drawCallBatcher.Pos = new Vector3Int(Pos.X, Pos.Y, Pos.Z);
+            m_drawCallBatcher.Batch(SolidRenderBuffer);
+            m_drawCallBatcher.FinalizeDrawCalls();
+
+            // Make sure the data is not regenerated all the time
+            IsBuilt = true;
+
+            // Clear original buffer
+            SolidRenderBuffer.Clear();
+        }
+
+        public void BuildGeometryBoundingMesh(ref Bounds bounds)
+        {
+            GeometryBounds = bounds;
+
+            // Build a bounding box for the mini chunk
+            CubeBuilderSimple.Build(BBoxVertices, ref bounds);
+
+            // Make a copy of the bounding box
+            BBoxVerticesTransformed.AddRange(BBoxVertices);
+        }
+
+        private void AdjustMinMaxRenderBounds(int x, int y, int z, BlockData data)
+        {
             bool isEmpty = data.IsEmpty();
             if (!isEmpty)
             {
-                int sectionIndex = y >> EngineSettings.ChunkConfig.LogSize;
-                MiniChunk section = Sections[sectionIndex];
-                ++section.NonEmptyBlocks;
+                ++NonEmptyBlocks;
 
                 if (x < MinRenderX)
                     MinRenderX = x;
@@ -341,114 +360,70 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 MinRenderY = y;
         }
 
+        public void GenerateBlock(int x, int y, int z, BlockData data)
+        {
+            Blocks[x, y, z] = data;
+            AdjustMinMaxRenderBounds(x, y, z, data);
+        }
+
         // Calculate lowest empty and highest solid block position
 		/* TODO: Lowest/highest block can be computed while the terrain is generated. This
 		 * would speed things up for initial chunk generation.
 		*/
         public void CalculateProperties()
         {
-            int nonEmptyBlocks = 0;
-
             if (m_firstFinalization)
             {
-                foreach (MiniChunk section in Sections)
-                    nonEmptyBlocks += section.NonEmptyBlocks;
-
                 m_firstFinalization = false;
             }
             else
             {
-                MinRenderY = EngineSettings.ChunkConfig.MaskYTotal;
-                MaxRenderY = 0;
                 MinRenderX = EngineSettings.ChunkConfig.Mask;
                 MaxRenderX = 0;
+                MinRenderY = EngineSettings.ChunkConfig.Mask;
+                MaxRenderY = 0;
                 MinRenderZ = EngineSettings.ChunkConfig.Mask;
-                MaxRenderX = 0;
+                MaxRenderZ = 0;
 
-                for (int y = EngineSettings.ChunkConfig.MaskYTotal; y>=0; y--)
+                for (int y = EngineSettings.ChunkConfig.Mask; y>=0; y--)
                 {
-                    int sectionIndex = y>>EngineSettings.ChunkConfig.LogSize;
-                    MiniChunk section = Sections[sectionIndex];
-
                     for (int z = 0; z<EngineSettings.ChunkConfig.Size; z++)
                     {
                         for (int x = 0; x<EngineSettings.ChunkConfig.Size; x++)
                         {
-                            bool isEmpty = Blocks[x, y, z].IsEmpty();
-                            if (!isEmpty)
-                            {
-                                ++nonEmptyBlocks;
-                                ++section.NonEmptyBlocks;
-
-                                if (x<MinRenderX)
-                                    MinRenderX = x;
-                                if (z<MinRenderZ)
-                                    MinRenderZ = z;
-
-                                if (x>MaxRenderX)
-                                    MaxRenderX = x;
-                                if (z>MaxRenderZ)
-                                    MaxRenderZ = z;
-
-                                if (y>MaxRenderY)
-                                    MaxRenderY = y;
-                            }
-                            else if (y<MinRenderY)
-                                MinRenderY = y;
+                            AdjustMinMaxRenderBounds(x,y,z,Blocks[x,y,z]);
                         }
                     }
                 }
             }
 
-            MinRenderY = Math.Max(MinRenderY-1, 0);
-            MaxRenderY = Math.Min(MaxRenderY+1, EngineSettings.ChunkConfig.MaskYTotal);
+            MinRenderY = Math.Max(MinRenderY, 0);
+            MaxRenderY = Math.Min(MaxRenderY, EngineSettings.ChunkConfig.Mask);
 
-            MinFilledSection = MinRenderY>>EngineSettings.ChunkConfig.LogSize;
-            MaxFilledSection = MaxRenderY>>EngineSettings.ChunkConfig.LogSize;
-
-            if (nonEmptyBlocks > 0)
+            if (NonEmptyBlocks > 0)
             {
                 int posInWorldX = Pos.X<<EngineSettings.ChunkConfig.LogSize;
+                int posInWorldY = Pos.Y<<EngineSettings.ChunkConfig.LogSize;
                 int posInWorldZ = Pos.Z<<EngineSettings.ChunkConfig.LogSize;
 
                 // Build bounding mesh for each section
-                float width = (MaxRenderX - MinRenderX) + 1;
-                float depth = (MaxRenderZ - MinRenderZ) + 1;
-                int startY = MinRenderY;
-                for (int i = 0; i < Sections.Length; i++)
-                {
-                    MiniChunk section = Sections[i];
-                    section.ResetBoundingMesh();
-
-                    if (startY>=MaxRenderY)
-                        continue;
-
-                    int sectionMaxY = section.OffsetY + EngineSettings.ChunkConfig.Mask;
-                    if (startY>=sectionMaxY)
-                        continue;
-
-                    int heightMax = startY+EngineSettings.ChunkConfig.Size;
-                    heightMax = Mathf.Min(heightMax, sectionMaxY);
-                    heightMax = Mathf.Min(heightMax, MaxRenderY);
-
-                    float height = heightMax - startY;
-
-                    Bounds bounds = new Bounds(
-                        new Vector3(posInWorldX + width*0.5f, startY + height*0.5f, posInWorldZ + depth*0.5f),
-                        new Vector3(width, height, depth)
-                        );
-                    section.BuildBoundingMesh(ref bounds);
-
-                    startY = sectionMaxY;
-                }
+                float width = Mathf.Max(MaxRenderX - MinRenderX, 1);
+                float height = Mathf.Max(MaxRenderY - MinRenderY, 1);
+                float depth = Mathf.Max(MaxRenderZ - MinRenderZ, 1);
+                
+                Bounds geomBounds = new Bounds(
+                    new Vector3(
+                        posInWorldX + MinRenderX + width *0.5f,
+                        posInWorldY + MinRenderY + height *0.5f,
+                        posInWorldZ + MinRenderZ + depth *0.5f
+                        ),
+                    new Vector3(width, height, depth)
+                    );
+                BuildGeometryBoundingMesh(ref geomBounds);
             }
             else
             {
-                for (int i = 0; i<Sections.Length; i++)
-                {
-                    MiniChunk section = Sections[i];
-                    section.ResetBoundingMesh();
-                }
+                ResetGeometryBoundingMesh();
             }
         }
 
@@ -766,7 +741,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		private bool GenerateBlueprints()
 		{
 			Assert.IsTrue(m_completedTasks.Check(ChunkState.Generate),
-				string.Format("[{0},{1}] - GenerateBlueprints set sooner than Generate completed. Pending:{2}, Completed:{3}", Pos.X, Pos.Z, m_pendingTasks, m_completedTasks)
+				string.Format("[{0},{1},{2}] - GenerateBlueprints set sooner than Generate completed. Pending:{3}, Completed:{4}", Pos.X, Pos.Y, Pos.Z, m_pendingTasks, m_completedTasks)
             );
 			if (!m_completedTasks.Check(ChunkState.Generate))
 				return true;
@@ -836,14 +811,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
             // All sections must have blueprints generated first
 		    Assert.IsTrue(
 				m_completedTasks.Check(ChunkState.GenerateBlueprints),
-				string.Format("[{0},{1}] - FinalizeData set sooner than GenerateBlueprints completed. Pending:{2}, Completed:{3}", Pos.X, Pos.Z, m_pendingTasks, m_completedTasks)
+				string.Format("[{0},{1},{2}] - FinalizeData set sooner than GenerateBlueprints completed. Pending:{3}, Completed:{4}", Pos.X, Pos.Y, Pos.Z, m_pendingTasks, m_completedTasks)
             );
 		    if (!m_completedTasks.Check(ChunkState.GenerateBlueprints))
                 return true;
 #else
             Assert.IsTrue(
                 m_completedTasks.Check(ChunkState.Generate),
-                string.Format("[{0},{1}] - FinalizeData set sooner than Generate completed. Pending:{2}, Completed:{3}", Pos.X, Pos.Z, m_pendingTasks, m_completedTasks)
+                string.Format("[{0},{1},{2}] - FinalizeData set sooner than Generate completed. Pending:{3}, Completed:{4}", Pos.X, Pos.Y, Pos.Z, m_pendingTasks, m_completedTasks)
             );
             if (!m_completedTasks.Check(ChunkState.Generate))
                 return true;
@@ -945,7 +920,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		    ChunkProvider provider = (ChunkProvider)Map.ChunkProvider;
 			SSerializeWorkItem workItem = new SSerializeWorkItem(
 				this,
-                provider.GetFilePathFromIndex(Pos.X, Pos.Z)
+                provider.GetFilePathFromIndex(Pos.X, Pos.Y, Pos.Z)
 			);
 
             m_taskRunning = true;
@@ -968,7 +943,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		private struct SGenerateVerticesWorkItem
 		{
 			public readonly Chunk Chunk;
-			public readonly int SetBlockSections;
 		    public readonly int MinX;
 		    public readonly int MaxX;
 			public readonly int MinY;
@@ -977,10 +951,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
             public readonly int MaxZ;
             public readonly int LOD;
 
-			public SGenerateVerticesWorkItem(Chunk chunk, int setBlockSections, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod)
+			public SGenerateVerticesWorkItem(Chunk chunk, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod)
 			{
 				Chunk = chunk;
-				SetBlockSections = setBlockSections;
 			    MinX = minX;
 			    MaxX = maxX;
 				MinY = minY;
@@ -994,34 +967,15 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		private static readonly ChunkState CurrStateGenerateVertices = ChunkState.BuildVertices;
 		private static readonly ChunkState NextStateGenerateVertices = ChunkState.Idle;
         
-		private static void OnGenerateVerices(Chunk chunk, int setBlockSections, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod)
+		private static void OnGenerateVerices(Chunk chunk, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod)
 		{
-			int minSection = minY >> EngineSettings.ChunkConfig.LogSize;
-			int maxSection = maxY >> EngineSettings.ChunkConfig.LogSize;
+            Map map = chunk.Map;
 
-		    for (int sectionIndex=minSection; sectionIndex<=maxSection; sectionIndex++)
-		    {
-		        // Only rebuild sections which requested it
-		        // E.g. 00100110b means that sections 1,2 and 5 need to be rebuilt
-		        int sectionIndexBit = 1<<sectionIndex;
-		        if ((setBlockSections&sectionIndexBit)==0)
-		            continue;
-		        setBlockSections = setBlockSections&(~sectionIndexBit);
+            int offsetX = chunk.Pos.X << EngineSettings.ChunkConfig.LogSize;
+            int offsetY = chunk.Pos.Y << EngineSettings.ChunkConfig.LogSize;
+            int offsetZ = chunk.Pos.Z << EngineSettings.ChunkConfig.LogSize;
 
-                Map map = chunk.Map;
-                MiniChunk section = chunk.Sections[sectionIndex];
-
-                int offsetX = chunk.Pos.X * EngineSettings.ChunkConfig.Size;
-                int offsetZ = chunk.Pos.Z * EngineSettings.ChunkConfig.Size;
-
-		        int minSectionY = Mathf.Max(minY, section.OffsetY) - section.OffsetY;
-		        int maxSectionY = Mathf.Min(maxY, section.OffsetY+EngineSettings.ChunkConfig.Size) - section.OffsetY;
-
-		        minSectionY = Mathf.Max(0, minSectionY);
-		        maxSectionY = Mathf.Min(maxSectionY, EngineSettings.ChunkConfig.Mask);
-                
-                map.MeshBuilder.BuildMesh(map, section.SolidRenderBuffer, offsetX, section.OffsetY, offsetZ, minX, maxX, minSectionY, maxSectionY, minZ, maxZ, lod);
-		    }
+            map.MeshBuilder.BuildMesh(map, chunk.SolidRenderBuffer, offsetX, offsetY, offsetZ, minX, maxX, minY, maxY, minZ, maxZ, lod);
 
 		    lock (chunk.m_lock)
 		    {
@@ -1043,7 +997,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		{
 			/*Assert.IsTrue(
 				m_completedTasks.Check(ChunkState.FinalizeData),
-				string.Format("[{0},{1}] - GenerateVertices set sooner than FinalizeData completed. Pending:{2}, Completed:{3}", Pos.X, Pos.Z, m_pendingTasks, m_completedTasks)
+				string.Format("[{0},{1},{2}] - GenerateVertices set sooner than FinalizeData completed. Pending:{3}, Completed:{4}", Pos.X, Pos.Y, Pos.Z, m_pendingTasks, m_completedTasks)
             );*/
             if (!m_completedTasks.Check(ChunkState.FinalizeData))
                 return;
@@ -1059,31 +1013,23 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             m_refreshTasks = m_refreshTasks.Reset(CurrStateGenerateVertices);
             m_completedTasks = m_completedTasks.Reset(CurrStateGenerateVertices);
-
-			int nonEmptyBlocks = 0;
-            foreach (MiniChunk section in Sections)
-            {
-                nonEmptyBlocks = nonEmptyBlocks + section.NonEmptyBlocks;
-                if (section.NonEmptyBlocks > 0)
-                    section.IsBuilt = false;
-            }
-			
-			if (nonEmptyBlocks>0)
+            
+			if (NonEmptyBlocks>0)
 			{
+			    IsBuilt = false;
+
 				int lowest = Mathf.Max(MinRenderY, 0);
-				int highest = Mathf.Min(MaxRenderY, EngineSettings.ChunkConfig.SizeYTotal-1);
+				int highest = Mathf.Min(MaxRenderY, EngineSettings.ChunkConfig.Mask);
 				var workItem = new SGenerateVerticesWorkItem(
-                    this, m_setBlockSections, MinRenderX, MaxRenderX, lowest, highest, MinRenderZ, MaxRenderZ, LOD
+                    this, MinRenderX, MaxRenderX, lowest, highest, MinRenderZ, MaxRenderZ, LOD
                     );
                 
-				m_setBlockSections = 0;
-
                 m_taskRunning = true;
 				WorkPoolManager.Add(new ThreadItem(
 					arg =>
 					{
 						SGenerateVerticesWorkItem item = (SGenerateVerticesWorkItem)arg;
-                        OnGenerateVerices(item.Chunk, item.SetBlockSections, item.MinX, item.MaxX, item.MinY, item.MaxY, item.MinZ, item.MaxZ, item.LOD);
+                        OnGenerateVerices(item.Chunk, item.MinX, item.MaxX, item.MinY, item.MaxY, item.MinZ, item.MaxZ, item.LOD);
                     },
 					workItem)
 				);
@@ -1135,18 +1081,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 #region Chunk modification
 
-		private void QueueSection(int sectionIndex)
-		{
-            Assert.IsTrue(sectionIndex >= 0 && sectionIndex < EngineSettings.ChunkConfig.StackSize,
-                string.Format("QueueSection called with wrong section index {0} on chunk [{1},{2}]", sectionIndex, Pos.X, Pos.Z)
-                );
-			
-			m_setBlockSections = m_setBlockSections | (1 << sectionIndex);
-
-            // We want this chunk rebuilt
-            RefreshState(ChunkState.BuildVertices);
-        }
-
         private void RefreshState(ChunkState state)
         {
             m_refreshTasks = m_refreshTasks.Set(state);
@@ -1160,11 +1094,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 return;
 
             int cx = chunk.Pos.X;
+		    int cy = chunk.Pos.Y;
 			int cz = chunk.Pos.Z;
-			int sectionIndex = by >> EngineSettings.ChunkConfig.LogSize;
 
             int subscribersMask = 0;
-            int sectionsMask = 0;
 
 			// Iterate over neighbors and decide which ones should be notified to rebuild
 			for (int i = 0; i < Subscribers.Length; i++)
@@ -1175,7 +1108,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 				Chunk subscriberChunk = (Chunk)subscriber;
 
-                if (subscriberChunk.Pos.Z == cz && (
+                if (subscriberChunk.Pos.X == cx && (
                     // Section to the left
                     ((bx == 0) && (subscriberChunk.Pos.X + 1 == cx)) ||
                     // Section to the right
@@ -1183,34 +1116,26 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 ))
                     subscribersMask = subscribersMask | (1 << i);
 
-				if (subscriberChunk.Pos.X == cx && (
-					// Section to the front
-					((bz == EngineSettings.ChunkConfig.Mask) && (subscriberChunk.Pos.Z - 1 == cz)) ||
-					// Section to the back
-					((bz == 0) && (subscriberChunk.Pos.Z + 1 == cz))
-				))
+                if (subscriberChunk.Pos.Y == cy && (
+                    // Section to the bottom
+                    ((by == 0) && (subscriberChunk.Pos.Y + 1 == cy)) ||
+                    // Section to the top
+                    ((by == EngineSettings.ChunkConfig.Mask) && (subscriberChunk.Pos.Y - 1 == cy))
+                ))
+                    subscribersMask = subscribersMask | (1 << i);
+
+                if (subscriberChunk.Pos.Z == cz && (
+                    // Section to the back
+                    ((bz == 0) && (subscriberChunk.Pos.Z + 1 == cz)) ||
+                    // Section to the front
+                    ((bz == EngineSettings.ChunkConfig.Mask) && (subscriberChunk.Pos.Z - 1 == cz))
+                ))
                     subscribersMask = subscribersMask | (1 << i);
             }
-            
-            int diff = by - sectionIndex * EngineSettings.ChunkConfig.Size;
-            // Section to the bottom
-            if (diff == 0)
-            {
-                int index = Math.Max(sectionIndex - 1, 0);
-                sectionsMask = sectionsMask | (1 << index);
-            }
-            // Section to the top
-            else if (diff == EngineSettings.ChunkConfig.Mask)
-            {
-                int index = Math.Min(sectionIndex + 1, EngineSettings.ChunkConfig.StackSize - 1);
-                sectionsMask = sectionsMask | (1 << index);
-            }
-            // This section
-            sectionsMask = sectionsMask | (1 << sectionIndex);
 
             // Request update for the block
             m_setBlockQueue.Add(
-                new SetBlockContext(chunk, bx, by, bz, block, subscribersMask, sectionsMask)
+                new SetBlockContext(chunk, bx, by, bz, block, subscribersMask)
                 );
         }
 
@@ -1222,8 +1147,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 SetBlockContext context = m_setBlockQueue[i];
                 
                 Blocks[context.BX, context.BY, context.BZ] = context.Block;
-                                
-                int section = context.BY >> EngineSettings.ChunkConfig.LogSize;
 
                 // Chunk needs to be finialized again
                 /*
@@ -1239,11 +1162,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 m_refreshTasks = m_refreshTasks.Set(ChunkState.Serialize);
 
                 // Ask for rebuild of geometry
-                for (int s = 0; s < Sections.Length; s++)
-                {
-                    if (((context.SectionsMask >> s) & 1) != 0)
-                        QueueSection(s);
-                }
+                RefreshState(ChunkState.BuildVertices);
 
                 // Notify subscribers
                 if (context.SubscribersMask > 0)
@@ -1252,7 +1171,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     {
                         Chunk subscriber = (Chunk)Subscribers[j];
                         if (subscriber!=null && ((context.SubscribersMask >> j)&1)!=0)
-                            subscriber.QueueSection(section);
+                            subscriber.RefreshState(ChunkState.BuildVertices);
                     }
                 }
             }
@@ -1260,8 +1179,37 @@ namespace Assets.Engine.Scripts.Core.Chunks
             m_setBlockQueue.Clear();
 		}
 
-#endregion Chunk modification
+        #endregion Chunk modification
 
-#endregion Public Methods
+        #endregion Public Methods
+
+        #region IOcclusionEntity
+
+        //! Boundaries of the mini chunk
+        public Bounds GeometryBounds { get; set; }
+
+        //! Make the occluder visible/invisible
+        public bool Visible
+        {
+            get { return m_drawCallBatcher.IsVisible(); }
+            set { m_drawCallBatcher.SetVisible(value); }
+        }
+
+        public bool IsOccluder()
+        {
+            // For now let's consider all chunks with bounding box as occluders
+            // TODO! Make this inteligent - don't include half empty or transparent chunks
+            return BBoxVertices.Count > 0;
+        }
+
+        #endregion
+
+        #region IRasterizationEntity
+
+        public List<Vector3> BBoxVertices { get; set; }
+
+        public List<Vector3> BBoxVerticesTransformed { get; set; }
+
+        #endregion
     }
 }

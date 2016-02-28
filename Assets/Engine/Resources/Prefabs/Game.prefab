@@ -132,9 +132,14 @@ MonoBehaviour:
   ChunkProvider: {fileID: 11451724}
   Camera: {fileID: 0}
   ChunkGenerator: {fileID: 11479704}
-  MeshBuilder: {fileID: 11435722}
+  MeshBuilder: {fileID: 11434312}
   Occlusion: {fileID: 0}
-  LODCoef: 1.5
+  VisibleRange: 5
+  CachedRange: 6
+  MinMapY: -2
+  MaxMapY: 5
+  FollowCamera: 0
+  LODCoef: 0.75
   ForceLOD: -1
   ShowGeomBounds: 0
   ShowMapBounds: 0

@@ -16,17 +16,23 @@ namespace Assets.Engine.Scripts.Generators
 
         public override void Generate(Chunk chunk)
         {
-            for (int y = EngineSettings.ChunkConfig.MaskYTotal; y>=0; y--)
+            int xOffset = chunk.Pos.X<<EngineSettings.ChunkConfig.LogSize;
+            int yOffset = chunk.Pos.Y<<EngineSettings.ChunkConfig.LogSize;
+            int zOffset = chunk.Pos.Z<<EngineSettings.ChunkConfig.LogSize;
+
+            for (int y = EngineSettings.ChunkConfig.Mask; y>=0; y--)
             {
+                int wy = y+yOffset;
+
                 for (int z = 0; z<EngineSettings.ChunkConfig.Size; z++)
                 {
-                    int wz = z+(chunk.Pos.Z<<EngineSettings.ChunkConfig.LogSize);
+                    int wz = z+zOffset;
 
                     for (int x = 0; x<EngineSettings.ChunkConfig.Size; x++)
                     {
-                        int wx = x+(chunk.Pos.X<<EngineSettings.ChunkConfig.LogSize);
+                        int wx = x+xOffset;
 
-                        if (m_noise.GetValue(new Vector3(wx, y, wz)*0.1f)>0f)
+                        if (m_noise.GetValue(new Vector3(wx, wy, wz)*0.1f)>0f)
                         {
                             chunk.GenerateBlock(x, y, z, new BlockData(BlockType.Dirt));
                         }
