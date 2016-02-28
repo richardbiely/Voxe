@@ -227,7 +227,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             MinRenderX = EngineSettings.ChunkConfig.Mask;
             MaxRenderX = 0;
             MinRenderZ = EngineSettings.ChunkConfig.Mask;
-            MaxRenderX = 0;
+            MaxRenderZ = 0;
 
             MinFilledSection = 0;
             MaxFilledSection = EngineSettings.ChunkConfig.StackSize-1;
@@ -363,7 +363,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 MinRenderX = EngineSettings.ChunkConfig.Mask;
                 MaxRenderX = 0;
                 MinRenderZ = EngineSettings.ChunkConfig.Mask;
-                MaxRenderX = 0;
+                MaxRenderZ = 0;
 
                 for (int y = EngineSettings.ChunkConfig.MaskYTotal; y>=0; y--)
                 {
