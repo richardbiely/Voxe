@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using Assets.Engine.Scripts.Core;
 
 namespace Assets.Engine.Scripts.Common.Threading
 {
     public sealed class TaskPool: IDisposable
     {
+        //! Each thread contains an object pool
+        public GlobalPools Pools { get; private set; }
+
         private List<ThreadItem> m_items; // list of tasks
         private readonly object m_lock = new object();
 
@@ -16,9 +20,14 @@ namespace Assets.Engine.Scripts.Common.Threading
 
         public TaskPool()
         {
+            Pools = new GlobalPools();
+
             m_items = new List<ThreadItem>();
             m_event = new AutoResetEvent(false);
-            m_thread = new Thread(ThreadFunc) { IsBackground = true };
+            m_thread = new Thread(ThreadFunc)
+            {
+                IsBackground = true
+            };
         }
 
         ~TaskPool()
@@ -41,7 +50,7 @@ namespace Assets.Engine.Scripts.Common.Threading
         public void Dispose()
         {
             Dispose(true);
-	          GC.SuppressFinalize(this);
+            GC.SuppressFinalize(this);
         }
 
         public void Start()

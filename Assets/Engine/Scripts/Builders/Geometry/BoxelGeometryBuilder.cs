@@ -18,7 +18,8 @@ namespace Assets.Engine.Scripts.Builders.Geometry
     {
         public override void BuildMesh(
             Map map, RenderBuffer renderBuffer, int offsetX, int offsetY, int offsetZ,
-            int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod
+            int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod,
+            GlobalPools pools
             )
         {
             renderBuffer.Clear();
@@ -38,8 +39,8 @@ namespace Assets.Engine.Scripts.Builders.Geometry
             int[] du = { 0, 0, 0 }; // Width in a given dimension (du[u] is our current dimension)
             int[] dv = { 0, 0, 0 }; // Height in a given dimension (dv[v] is our current dimension)
 
-            BlockData[] mask = Helpers.CreateArray1D<BlockData>(width*width);
-            //GlobalPools.PopBlockDataArrayMT(width * width, out mask); // Unfortunatelly, this makes geometry generation twice as slow :(
+            BlockData[] mask;
+            pools.PopBlockDataArray(width * width, out mask);
 
             // Iterate over 3 dimensions. Once for front faces, once for back faces
             for (int dd = 0; dd < 2 * 3; dd++)
@@ -226,7 +227,7 @@ namespace Assets.Engine.Scripts.Builders.Geometry
                 }
             }
 
-            //GlobalPools.PushBlockDataArrayMT(ref mask);
+            pools.PushBlockDataArray(ref mask);
         }
     }
 }

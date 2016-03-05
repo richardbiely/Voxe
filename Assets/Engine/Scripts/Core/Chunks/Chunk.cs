@@ -18,6 +18,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
     /// </summary>
 	public class Chunk: ChunkEvent, IOcclusionEntity
     {
+        private static int s_id = 0;
+
         #region Public variables
         
         public Map Map { get; private set; }
@@ -72,9 +74,15 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public bool IsUsed = false;
 #endif
 
-#endregion Public variables
+        #endregion Public variables
 
         #region Private variables
+
+        //! ID of a thread from a thread pool - each chunk is associated with a specific thread pool thread
+        private readonly int m_threadID;
+
+        //! Object pools used by this chunk
+        public GlobalPools Pools { get; private set; }
 
         //! A list of event requiring counter
         private readonly int [] m_eventCnt = {0, 0};
@@ -113,6 +121,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public Chunk():
 			base(6)
         {
+            m_threadID = Globals.WorkPool.GetThreadIDFromIndex(s_id++);
+
             Blocks = new BlockStorage();
 
             m_drawCallBatcher = new DrawCallBatcher(Globals.CubeMeshBuilder);
@@ -146,6 +156,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
         
         public void Init(Map map, int cx, int cy, int cz)
         {
+            Pools = Globals.WorkPool.GetPool(m_threadID);
+
             Map = map;
             Pos = new Vector3Int(cx, cy, cz);
             m_lod = 0;
@@ -688,6 +700,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             m_taskRunning = true;
 			WorkPoolManager.Add(new ThreadItem(
+                m_threadID,
 				arg =>
 				{
 					Chunk chunk = (Chunk)arg;
@@ -742,6 +755,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             m_taskRunning = true;
 			WorkPoolManager.Add(new ThreadItem(
+                m_threadID,
 				arg =>
 				{
 					Chunk chunk = (Chunk)arg;
@@ -822,6 +836,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             m_taskRunning = true;
 			WorkPoolManager.Add(new ThreadItem(
+                m_threadID,
 				arg =>
 				{
 					Chunk chunk = (Chunk)arg;
@@ -959,7 +974,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             int offsetY = chunk.Pos.Y << EngineSettings.ChunkConfig.LogSize;
             int offsetZ = chunk.Pos.Z << EngineSettings.ChunkConfig.LogSize;
 
-            map.MeshBuilder.BuildMesh(map, chunk.SolidRenderBuffer, offsetX, offsetY, offsetZ, minX, maxX, minY, maxY, minZ, maxZ, lod);
+            map.MeshBuilder.BuildMesh(map, chunk.SolidRenderBuffer, offsetX, offsetY, offsetZ, minX, maxX, minY, maxY, minZ, maxZ, lod, chunk.Pools);
 
 		    lock (chunk.m_lock)
 		    {
@@ -1008,6 +1023,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 
                 m_taskRunning = true;
 				WorkPoolManager.Add(new ThreadItem(
+                    m_threadID,
 					arg =>
 					{
 						SGenerateVerticesWorkItem item = (SGenerateVerticesWorkItem)arg;

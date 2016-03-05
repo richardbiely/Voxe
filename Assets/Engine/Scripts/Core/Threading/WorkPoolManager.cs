@@ -20,7 +20,10 @@ namespace Assets.Engine.Scripts.Core.Threading
                 for (int i = 0; i<WorkItems.Count; i++)
                 {
                     var item = WorkItems[i];
-                    Globals.WorkPool.AddItem(item.Action, item.Arg);
+                    if(item.ThreadID>=0)
+                        Globals.WorkPool.AddItem(item.ThreadID, item.Action, item.Arg);
+                    else
+                        Globals.WorkPool.AddItem(item.Action, item.Arg);
                 }
             }
             else
