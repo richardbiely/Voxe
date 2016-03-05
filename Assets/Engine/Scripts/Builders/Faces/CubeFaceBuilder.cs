@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Assets.Engine.Scripts.Atlas;
 using Assets.Engine.Scripts.Common.Extensions;

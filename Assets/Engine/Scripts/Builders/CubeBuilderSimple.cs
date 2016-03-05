@@ -44,7 +44,8 @@ namespace Assets.Engine.Scripts.Builders
             vertices[23] = new Vector3(bounds.max.x, bounds.min.y, bounds.min.z);
 
             // Add vertices to buffer
-            targetBuffer.AddRange(vertices);
+            for(int i=0; i<24; i++)
+                targetBuffer.Add(vertices[i]);
 
             pools.PushVector3Array(ref vertices);
         }
