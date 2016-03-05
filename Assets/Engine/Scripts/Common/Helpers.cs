@@ -55,11 +55,11 @@ namespace Assets.Engine.Scripts.Common
             return new T[size];
         }
 
-        public static T[] CreateAndInitArray1D<T>(int size) where T: new()
+        public static T[] CreateAndInitArray1D<T>(int size)
         {
             var arr = new T[size];
             for (int i = 0; i<arr.Length; i++)
-                arr[i] = new T();
+                arr[i] = default(T);
 
             return arr;
         }
@@ -74,7 +74,7 @@ namespace Assets.Engine.Scripts.Common
             return arr;
         }
 
-        public static T[][] CreateAndInitArray2D<T>(int sizeX, int sizeY) where T: new()
+        public static T[][] CreateAndInitArray2D<T>(int sizeX, int sizeY)
         {
             var arr = new T[sizeX][];
 
@@ -82,7 +82,7 @@ namespace Assets.Engine.Scripts.Common
             {
                 arr[i] = new T[sizeY];
                 for(int j=0; j<arr[i].Length; j++)
-                    arr[i][j] = new T();
+                    arr[i][j] = default(T);
             }
 
             return arr;

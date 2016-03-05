@@ -11,7 +11,7 @@ namespace Assets.Engine.Scripts.Builders.Geometry
         public virtual void BuildMesh(
             Map map, RenderBuffer renderBuffer, int offsetX, int offsetY, int offsetZ,
             int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod,
-            GlobalPools pools
+            LocalPools pools
             )
         {
             throw new NotImplementedException();

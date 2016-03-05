@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Threading;
 using Assets.Engine.Scripts.Core;
+using UnityEngine;
 
 namespace Assets.Engine.Scripts.Common.Threading
 {
     public sealed class TaskPool: IDisposable
     {
         //! Each thread contains an object pool
-        public GlobalPools Pools { get; private set; }
+        public LocalPools Pools { get; private set; }
 
         private List<ThreadItem> m_items; // list of tasks
         private readonly object m_lock = new object();
@@ -20,7 +21,7 @@ namespace Assets.Engine.Scripts.Common.Threading
 
         public TaskPool()
         {
-            Pools = new GlobalPools();
+            Pools = new LocalPools();
 
             m_items = new List<ThreadItem>();
             m_event = new AutoResetEvent(false);
@@ -114,10 +115,23 @@ namespace Assets.Engine.Scripts.Common.Threading
                 // Execute all tasks in a row
                 for (int i = 0; i < actions.Count; i++)
                 {
-                    // Exectute the action
+                    // Execute the action
                     // Note, it's up to action to provide exception handling
                     ThreadItem item = actions[i];
-                    item.Action(item.Arg);
+
+#if DEBUG
+                    try
+                    {
+#endif
+                        item.Action(item.Arg);
+#if DEBUG
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(ex);
+                        throw;
+                    }
+#endif
                 }
                 actions.Clear();
 

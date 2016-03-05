@@ -82,7 +82,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         private readonly int m_threadID;
 
         //! Object pools used by this chunk
-        public GlobalPools Pools { get; private set; }
+        public LocalPools Pools { get; private set; }
 
         //! A list of event requiring counter
         private readonly int [] m_eventCnt = {0, 0};
@@ -317,7 +317,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             GeometryBounds = bounds;
 
             // Build a bounding box for the mini chunk
-            CubeBuilderSimple.Build(BBoxVertices, ref bounds);
+            CubeBuilderSimple.Build(BBoxVertices, ref bounds, Pools);
 
             // Make a copy of the bounding box
             BBoxVerticesTransformed.AddRange(BBoxVertices);

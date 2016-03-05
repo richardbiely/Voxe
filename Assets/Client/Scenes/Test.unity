@@ -85,12 +85,6 @@ NavMeshSettings:
     cellSize: 0.16666666
     manualCellSize: 0
   m_NavMeshData: {fileID: 0}
---- !u!114 &174718625 stripped
-MonoBehaviour:
-  m_PrefabParentObject: {fileID: 11435722, guid: a4db001565d61294aae75f13fc68c869,
-    type: 2}
-  m_PrefabInternal: {fileID: 297728905}
-  m_Script: {fileID: 11500000, guid: bfe42fce6d47f8e419120f3d17d227ae, type: 3}
 --- !u!1 &288781658
 GameObject:
   m_ObjectHideFlags: 0
@@ -193,7 +187,7 @@ Prefab:
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: MeshBuilder
       value: 
-      objectReference: {fileID: 174718625}
+      objectReference: {fileID: 1522546889}
     - target: {fileID: 11473596, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: ShowGeomBounds
       value: 0
@@ -396,6 +390,12 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
   m_IsPrefabParent: 0
+--- !u!114 &1522546889 stripped
+MonoBehaviour:
+  m_PrefabParentObject: {fileID: 11434312, guid: a4db001565d61294aae75f13fc68c869,
+    type: 2}
+  m_PrefabInternal: {fileID: 297728905}
+  m_Script: {fileID: 11500000, guid: c6f92a5d4f7f76444b78e6ee5392a085, type: 3}
 --- !u!1 &1914990386
 GameObject:
   m_ObjectHideFlags: 0

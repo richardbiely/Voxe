@@ -1,5 +1,5 @@
 using Assets.Engine.Scripts.Atlas;
-using Assets.Engine.Scripts.Builders.Block;
+using Assets.Engine.Scripts.Builders.Faces;
 using Assets.Engine.Scripts.Core.Blocks;
 using UnityEngine;
 
@@ -8,10 +8,10 @@ namespace Assets.Engine.Scripts.Utils
     // TODO: Make this configurable
     public static class BlockDatabase
     {
-        private static readonly IBlockBuilder[] SBlockBuilders =
+        private static readonly IFaceBuilder[] SFaceBuilders =
         {
             null, // AIR
-            new CubeBuilder
+            new CubeFaceBuilder
                 (new[]
                 {
                     BlockTexture.Dirt,
@@ -21,7 +21,7 @@ namespace Assets.Engine.Scripts.Utils
                     BlockTexture.Dirt,
                     BlockTexture.Dirt
                 }), // DIRT
-            new CubeBuilder
+            new CubeFaceBuilder
                 (new[]
                 {
                     BlockTexture.GrassSide,
@@ -31,7 +31,7 @@ namespace Assets.Engine.Scripts.Utils
                     BlockTexture.Grass,
                     BlockTexture.Dirt
                 }), // GRASS
-            new CubeBuilder
+            new CubeFaceBuilder
                 (new[]
                 {
                     BlockTexture.Stone,
@@ -58,9 +58,9 @@ namespace Assets.Engine.Scripts.Utils
         /// <summary>
         /// Gets the block builder for the given block type
         /// </summary>
-        public static IBlockBuilder GetBlockBuilder(BlockType type)
+        public static IFaceBuilder GetFaceBuilder(BlockType type)
         {
-            return SBlockBuilders[(int) type];
+            return SFaceBuilders[(int) type];
         }
 
         /// <summary>

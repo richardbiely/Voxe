@@ -1,6 +1,6 @@
 ﻿namespace Assets.Engine.Scripts.Common.Memory
 {
-    internal interface IArrayPool<T>
+    public interface IArrayPool<T>
     {
 
         /// <summary>

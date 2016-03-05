@@ -20,7 +20,7 @@ namespace Assets.Engine.Scripts.Common.Memory
 
                 for (int i = 0; i<initialSize; ++i)
                 {
-                    var item = new T[length];
+                    var item = Helpers.CreateAndInitArray1D<T>(length);
                     m_arrays.Push(item);
                 }
             }

@@ -1,5 +1,4 @@
-﻿using Assets.Engine.Scripts.Builders.Block;
-using Assets.Engine.Scripts.Common;
+﻿using Assets.Engine.Scripts.Builders.Faces;
 using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Core.Blocks;
@@ -19,7 +18,7 @@ namespace Assets.Engine.Scripts.Builders.Geometry
         public override void BuildMesh(
             Map map, RenderBuffer renderBuffer, int offsetX, int offsetY, int offsetZ,
             int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod,
-            GlobalPools pools
+            LocalPools pools
             )
         {
             renderBuffer.Clear();
@@ -41,6 +40,8 @@ namespace Assets.Engine.Scripts.Builders.Geometry
 
             BlockData[] mask;
             pools.PopBlockDataArray(width * width, out mask);
+            Vector3[] vecs;
+            pools.PopVector3Array(4, out vecs);
 
             // Iterate over 3 dimensions. Once for front faces, once for back faces
             for (int dd = 0; dd < 2 * 3; dd++)
@@ -197,17 +198,14 @@ namespace Assets.Engine.Scripts.Builders.Geometry
                                 // |  |
                                 // |  |
                                 // 3--2
-                                Vector3[] vecs =
-                                {
-                                    new Vector3(v4.X,v4.Y,v4.Z),
-                                    new Vector3(v3.X,v3.Y,v3.Z),
-                                    new Vector3(v2.X,v2.Y,v2.Z),
-                                    new Vector3(v1.X,v1.Y,v1.Z)
-                                };
+                                vecs[0] = new Vector3(v4.X, v4.Y, v4.Z);
+                                vecs[1] = new Vector3(v3.X, v3.Y, v3.Z);
+                                vecs[2] = new Vector3(v2.X, v2.Y, v2.Z);
+                                vecs[3] = new Vector3(v1.X, v1.Y, v1.Z);
 
                                 // Build the face
-                                IBlockBuilder builder = BlockDatabase.GetBlockBuilder(type);
-                                builder.Build(renderBuffer, ref mask[n], face, backFace, ref vecs);
+                                IFaceBuilder builder = BlockDatabase.GetFaceBuilder(type);
+                                builder.Build(renderBuffer, ref mask[n], face, backFace, ref vecs, pools);
                             }
 
                             // Zero out the mask
@@ -228,6 +226,7 @@ namespace Assets.Engine.Scripts.Builders.Geometry
             }
 
             pools.PushBlockDataArray(ref mask);
+            pools.PushVector3Array(ref vecs);
         }
     }
 }

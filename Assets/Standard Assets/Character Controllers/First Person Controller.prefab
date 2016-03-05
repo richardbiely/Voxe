@@ -373,6 +373,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 988f41cca41e2c841a476778c464af8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  LocalMap: {fileID: 0}
   CursorRenderer: {fileID: 2300002}
   PickDistance: 20
 --- !u!114 &11400026

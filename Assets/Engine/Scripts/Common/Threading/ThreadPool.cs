@@ -29,7 +29,7 @@ namespace Assets.Engine.Scripts.Common.Threading
             return Helpers.Mod(index, m_pools.Length);
         }
 
-        public GlobalPools GetPool(int index)
+        public LocalPools GetPool(int index)
         {
             int id = GetThreadIDFromIndex(index);
             return m_pools[id].Pools;

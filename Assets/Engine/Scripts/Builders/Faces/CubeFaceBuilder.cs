@@ -1,28 +1,30 @@
+using System;
 using System.Collections.Generic;
 using Assets.Engine.Scripts.Atlas;
 using Assets.Engine.Scripts.Common.Extensions;
+using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Core.Blocks;
 using Assets.Engine.Scripts.Rendering;
 using Assets.Engine.Scripts.Utils;
 using UnityEngine;
 using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
-namespace Assets.Engine.Scripts.Builders.Block
+namespace Assets.Engine.Scripts.Builders.Faces
 {
     /// <summary>
     ///     Builds solid cubic blocks
     /// </summary>
-    public class CubeBuilder: IBlockBuilder
+    public class CubeFaceBuilder: IFaceBuilder
     {
         #region Private vars
-
+        
         private readonly Rect[] m_faceTextures;
 
         #endregion Private vars
         
         #region Constructor
 
-        public CubeBuilder(IList<BlockTexture> textures)
+        public CubeFaceBuilder(IList<BlockTexture> textures)
         {
             m_faceTextures = new Rect[textures.Count];
             for (int i = 0; i<textures.Count; i++)
@@ -72,27 +74,28 @@ namespace Assets.Engine.Scripts.Builders.Block
             return m_faceTextures[face];
         }
 
-        public void Build(RenderBuffer targetBuffer, ref BlockData block, BlockFace face, bool backFace, ref Vector3[] vecs)
+        public void Build(RenderBuffer targetBuffer, ref BlockData block, BlockFace face, bool backFace, ref Vector3[] vecs, LocalPools pools)
         {
             int iface = (int)face;
             Color32 color = BlockDatabase.GetBlockInfo(block.BlockType).Color;
-            
+
             targetBuffer.AddIndices(backFace);
 
-            VertexData []vertexData = new VertexData[4];
+            VertexData[] vertexData;
+            pools.PopVertexDataArray(4, out vertexData);
 
             for (int i = 0; i<4; i++)
             {
-                vertexData[i] = new VertexData
-                {
-                    Vertex = vecs[i],
-                    Color = color,
-                    UV = AddFaceUV(i, GetTexture(iface), backFace),
-                    Normal = SNormals[iface][i]
-                };
+                VertexData data = vertexData[i] ?? new VertexData();
+                data.Vertex = vecs[i];
+                data.Color = color;
+                data.UV = AddFaceUV(i, GetTexture(iface), backFace);
+                data.Normal = SNormals[iface][i];
+
+                targetBuffer.Vertices.Add(data);
             }
 
-            targetBuffer.AddVertices(ref vertexData);
+            pools.PushVertexDataArray(ref vertexData);
         }
 
         /// <summary>

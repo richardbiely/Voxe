@@ -29,7 +29,7 @@ namespace Assets.Engine.Scripts.Core.Blocks
         /// Second nibble is damage
         /// </summary>
         private byte MetaData;
-
+        
         public BlockData (BlockType blockType)
         {
             BlockType = blockType;
