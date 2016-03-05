@@ -1,5 +1,4 @@
-﻿using Assets.Engine.Scripts.Provider;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Assets.Engine.Scripts.Core.Chunks.Providers
 {

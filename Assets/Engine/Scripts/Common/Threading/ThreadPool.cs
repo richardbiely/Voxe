@@ -86,7 +86,6 @@ namespace Assets.Engine.Scripts.Common.Threading
 
             lock (m_lock)
             {
-                // TODO: Incorporate priority info into ThreadItem somehow
                 m_items.Enqueue(new ThreadItem(action, null));
                 Monitor.Pulse(m_lock);
             }

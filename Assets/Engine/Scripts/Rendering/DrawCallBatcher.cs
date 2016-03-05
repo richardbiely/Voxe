@@ -42,7 +42,7 @@ namespace Assets.Engine.Scripts.Rendering
 
                 var filter = go.GetComponent<MeshFilter>();
                 filter.sharedMesh.Clear(false);
-                GlobalPools.MeshPool.Push(filter.sharedMesh);
+                Globals.Pools.MeshPool.Push(filter.sharedMesh);
                 filter.sharedMesh = null;
 
                 GameObjectProvider.PushObject(GOPChunk, go);
@@ -108,7 +108,7 @@ namespace Assets.Engine.Scripts.Rendering
                 go.name = string.Format("[{0},{1},{2}]:{3}", Pos.X, Pos.Z, Pos.Y, m_drawCalls.Count);
 #endif
 
-                Mesh mesh = GlobalPools.MeshPool.Pop();
+                Mesh mesh = Globals.Pools.MeshPool.Pop();
                 Assert.IsTrue(mesh.vertices.Length<=0);
                 m_renderBuffer.BuildMesh(mesh);
 

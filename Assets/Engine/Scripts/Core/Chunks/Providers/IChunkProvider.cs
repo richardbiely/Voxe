@@ -1,6 +1,4 @@
-﻿using Assets.Engine.Scripts.Core.Chunks;
-
-namespace Assets.Engine.Scripts.Core.Chunks.Providers
+﻿namespace Assets.Engine.Scripts.Core.Chunks.Providers
 {
     /// <summary>
     /// 	Interface for chunk providers

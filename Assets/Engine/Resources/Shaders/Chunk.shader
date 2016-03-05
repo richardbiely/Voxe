@@ -3,7 +3,6 @@ Shader "Voxe/TexturedCube"
 	Properties
 	{
 		_MainTex ("Base Texture", 2D) = "white" {}
-		_DamageTex ("Damage Texture", 2D) = "white" {}
 		_BumpMap ("Normal Texture", 2D) = "bump" {}
 		_SunAmount ("Sun factor", Range(0,1)) = 1
 	}
@@ -20,13 +19,11 @@ Shader "Voxe/TexturedCube"
 		{
 			float2 uv_MainTex: TEXCOORD0;
 			float2 uv_BumpMap: TEXCOORD1;
-			float2 uv_DamageTex: TEXCOORD2;			
 			float4 color: COLOR;
 		};
 
 		uniform sampler2D _MainTex;
 		uniform sampler2D _BumpMap;
-		uniform sampler2D _DamageTex;		
 		uniform float _SunAmount;
 		
 		void surf(Input IN, inout SurfaceOutput o)
@@ -40,7 +37,7 @@ Shader "Voxe/TexturedCube"
 
 			o.Emission = o.Albedo * ambient;
 			o.Normal = UnpackNormal (tex2D (_BumpMap, IN.uv_BumpMap));
-			o.Albedo = tex2D (_MainTex, IN.uv_MainTex).rgb * tex2D (_DamageTex, IN.uv_DamageTex).rgb;		
+			o.Albedo = tex2D(_MainTex, IN.uv_MainTex).rgb;
 		}
 		
 		ENDCG

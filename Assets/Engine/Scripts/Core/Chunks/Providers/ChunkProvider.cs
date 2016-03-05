@@ -171,7 +171,7 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
         // load or generate a chunk
         public override Chunk RequestChunk(ChunkManager map, int cx, int cy, int cz)
         {
-            Chunk chunk = GlobalPools.ChunkPool.Pop();
+            Chunk chunk = Globals.Pools.ChunkPool.Pop();
 #if DEBUG
             Assert.IsTrue(!chunk.IsUsed, "Popped a chunk which is still in use!");
 #endif
@@ -208,7 +208,7 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
 #if DEBUG
             chunk.IsUsed = false;
 #endif
-            GlobalPools.ChunkPool.Push(chunk);
+            Globals.Pools.ChunkPool.Push(chunk);
 
             return true;
         }

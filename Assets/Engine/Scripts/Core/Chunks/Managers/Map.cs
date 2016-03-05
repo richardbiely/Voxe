@@ -102,26 +102,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
         }
 
         /// <summary>
-        ///     Damage the block at the world position
-        /// </summary>
-        public void DamageBlock(int wx, int wy, int wz, int damage)
-        {
-            int cx = wx>>EngineSettings.ChunkConfig.LogSize;
-            int cy = wy>>EngineSettings.ChunkConfig.LogSize;
-            int cz = wz>>EngineSettings.ChunkConfig.LogSize;
-
-            Chunk chunk = GetChunk(cx, cy, cz);
-            if (chunk==null)
-                return;
-
-            int lx = wx&EngineSettings.ChunkConfig.Mask;
-            int ly = wy&EngineSettings.ChunkConfig.Mask;
-            int lz = wz&EngineSettings.ChunkConfig.Mask;
-
-            chunk.DamageBlock(lx, ly, lz, damage);
-        }
-
-        /// <summary>
         ///     Set the block at the world position
         /// </summary>
         public void SetBlock(BlockData block, int wx, int wy, int wz)

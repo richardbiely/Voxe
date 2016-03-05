@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Assets.Engine.Scripts.Rendering;
+using UnityEngine;
 using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
 namespace Assets.Engine.Scripts.Common.Extensions
@@ -42,59 +43,9 @@ namespace Assets.Engine.Scripts.Common.Extensions
         /// <summary>
         ///     Adds the vertices to the render buffer.
         /// </summary>
-        public static void AddVertices(this RenderBuffer target, ref Vector3[] vertices)
+        public static void AddVertices(this RenderBuffer target, ref VertexData[] vertices)
         {
             target.Vertices.AddRange(vertices);
-        }
-
-        /// <summary>
-        ///     Adds the face colors.
-        /// </summary>
-        public static void AddFaceColors(this RenderBuffer target, ref Color32 color)
-        {
-            target.Colors.Add(color);
-            target.Colors.Add(color);
-            target.Colors.Add(color);
-            target.Colors.Add(color);
-        }
-
-        /// <summary>
-        ///     Adds the face UVs.
-        /// </summary>
-        public static void AddFaceUv(this RenderBuffer target, Rect texCoords, bool backFace)
-        {
-            // 0--1
-            // |  |
-            // |  |
-            // 3--2 --> 0, 1, 3, 2
-            target.UV1.Add(new Vector2(texCoords.xMax, 1f - texCoords.yMax));
-            target.UV1.Add(new Vector2(texCoords.xMax, 1f - texCoords.yMin));
-            target.UV1.Add(new Vector2(texCoords.xMin, 1f - texCoords.yMin));
-            target.UV1.Add(new Vector2(texCoords.xMin, 1f - texCoords.yMax));
-        }
-
-        public const int DamageFrames = 10;
-        // frames of damage. First frame is no damage, frame 1 is minimum damage and 10 is maximum damage
-        public const float DamageMultiplier = 1f / DamageFrames;
-
-        /// <summary>
-        ///     Adds secondary UVs for showing damage.
-        /// </summary>
-        public static void AddDamageUVs(this RenderBuffer target, float damage)
-        {
-            damage *= (DamageFrames - 1);
-            int dmgFrame = Mathf.FloorToInt(damage);
-            Rect texCoords = new Rect(dmgFrame * DamageMultiplier, 0f, DamageMultiplier, 1f);
-
-            target.UV2.Add(new Vector2(texCoords.xMax, 1f - texCoords.yMax));
-            target.UV2.Add(new Vector2(texCoords.xMax, 1f - texCoords.yMin));
-            target.UV2.Add(new Vector2(texCoords.xMin, 1f - texCoords.yMin));
-            target.UV2.Add(new Vector2(texCoords.xMin, 1f - texCoords.yMax));
-        }
-
-        public static void AddNormals(this RenderBuffer target, ref Vector3[] normals)
-        {
-            target.Normals.AddRange(normals);
         }
     }
 }

@@ -6,45 +6,56 @@ namespace Assets.Engine.Scripts.Core
     public static class Globals
     {
         // Thread pool
-        private static ThreadPool _sThreadPool;
+        private static ThreadPool s_threadPool;
         public static ThreadPool WorkPool
         {
             get
             {
-                if (_sThreadPool == null)
+                if (s_threadPool == null)
                 {
-                    _sThreadPool = new ThreadPool();
-                    _sThreadPool.Start();
+                    s_threadPool = new ThreadPool();
+                    s_threadPool.Start();
                 }
-                return _sThreadPool;
+                return s_threadPool;
             }
         }
 
         // Task pool for IO-related tasks
-        private static TaskPool _sIOPool;
+        private static TaskPool s_IOPool;
         public static TaskPool IOPool
         {
             get
             {
-                if (_sIOPool == null)
+                if (s_IOPool == null)
                 {
-                    _sIOPool = new TaskPool();
-                    _sIOPool.Start();
+                    s_IOPool = new TaskPool();
+                    s_IOPool.Start();
                 }
-                return _sIOPool;
+                return s_IOPool;
             }
         }
 
         // Mesh builder
-        private static IMeshBuilder _sCubeMeshBuilder;
-
+        private static IMeshBuilder s_cubeMeshBuilder;
         public static IMeshBuilder CubeMeshBuilder
         {
             get
             {
-                if (_sCubeMeshBuilder == null)
-                    _sCubeMeshBuilder = new CubeMeshBuilder();
-                return _sCubeMeshBuilder;
+                if (s_cubeMeshBuilder == null)
+                    s_cubeMeshBuilder = new CubeMeshBuilder();
+                return s_cubeMeshBuilder;
+            }
+        }
+
+        // Global object pools
+        private static GlobalPools s_pools;
+        public static GlobalPools Pools
+        {
+            get
+            {
+                if (s_pools == null)
+                    s_pools = new GlobalPools();
+                return s_pools;
             }
         }
     }

@@ -1,41 +1,38 @@
 ﻿using Assets.Engine.Scripts.Core;
+using Assets.Engine.Scripts.Rendering;
 using UnityEngine;
+using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
 namespace Assets.Engine.Scripts.Common.Extensions
 {
     public static class MeshExtensions
     {
-        public static void GenerateTangents(Mesh mesh)
+        public static void GenerateTangents(RenderBuffer buffer)
         {
-            // Speed up math by copying the mesh arrays
-            int[] triangles = mesh.triangles;
-            Vector3[] vertices = mesh.vertices;
-            Vector2[] uv = mesh.uv;
-            Vector3[] normals = mesh.normals;
-
-            // Variable definitions
-            int triangleCount = triangles.Length;
-            int vertexCount = vertices.Length;
+            var vertices = buffer.Vertices;
+            var triangles = buffer.Triangles;
 
             Vector3[] tan1, tan2;
-            Vector4[] tangents; 
-            GlobalPools.PopVector3Array(vertexCount, out tan1);
-            GlobalPools.PopVector3Array(vertexCount, out tan2);
-            GlobalPools.PopVector4Array(vertexCount, out tangents);
-
-            for (long t = 0; t < triangleCount; t += 3)
+            Globals.Pools.PopVector3Array(vertices.Count, out tan1);
+            Globals.Pools.PopVector3Array(vertices.Count, out tan2);
+            
+            for (int t = 0; t < triangles.Count; t += 3)
             {
-                long i1 = triangles[t + 0];
-                long i2 = triangles[t + 1];
-                long i3 = triangles[t + 2];
+                int i1 = triangles[t + 0];
+                int i2 = triangles[t + 1];
+                int i3 = triangles[t + 2];
 
-                Vector3 v1 = vertices[i1];
-                Vector3 v2 = vertices[i2];
-                Vector3 v3 = vertices[i3];
+                VertexData vd1 = vertices[i1];
+                VertexData vd2 = vertices[i2];
+                VertexData vd3 = vertices[i3];
 
-                Vector2 w1 = uv[i1];
-                Vector2 w2 = uv[i2];
-                Vector2 w3 = uv[i3];
+                Vector3 v1 = vd1.Vertex;
+                Vector3 v2 = vd2.Vertex;
+                Vector3 v3 = vd3.Vertex;
+
+                Vector2 w1 = vd1.UV;
+                Vector2 w2 = vd2.UV;
+                Vector2 w3 = vd3.UV;
 
                 float x1 = v2.x - v1.x;
                 float y1 = v2.y - v1.y;
@@ -67,26 +64,28 @@ namespace Assets.Engine.Scripts.Common.Extensions
                 tan2[i3] += tdir;
             }
 
-            for (long v = 0; v < vertexCount; ++v)
+            for (int v = 0; v < vertices.Count; ++v)
             {
-                Vector3 n = normals[v];
+                VertexData vd = vertices[v];
+
+                Vector3 n = vd.Normal;
                 Vector3 t = tan1[v];
 
                 //Vector3 tmp = (t - n*Vector3.Dot(n, t)).normalized;
                 //tangents[v] = new Vector4(tmp.x, tmp.y, tmp.z);
                 Vector3.OrthoNormalize(ref n, ref t);
 
-                tangents[v].x = t.x;
-                tangents[v].y = t.y;
-                tangents[v].z = t.z;
-                tangents[v].w = (Vector3.Dot(Vector3.Cross(n, t), tan2[v]) < 0.0f) ? -1.0f : 1.0f;
+                vd.Tangent = new Vector4(
+                    t.x, t.y, t.z,
+                    (Vector3.Dot(Vector3.Cross(n, t), tan2[v]) < 0.0f) ? -1.0f : 1.0f
+                    );
+
+                tan1[v] = Vector3.zero;
+                tan2[v] = Vector3.zero;
             }
 
-            mesh.tangents = tangents;
-
-            GlobalPools.PushVector3Array(ref tan1);
-            GlobalPools.PushVector3Array(ref tan2);
-            GlobalPools.PushVector4Array(ref tangents);
+            Globals.Pools.PushVector3Array(ref tan1);
+            Globals.Pools.PushVector3Array(ref tan2);
         }
     }
 }

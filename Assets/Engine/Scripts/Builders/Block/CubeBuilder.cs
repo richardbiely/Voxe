@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Assets.Engine.Scripts.Atlas;
 using Assets.Engine.Scripts.Common.Extensions;
 using Assets.Engine.Scripts.Core.Blocks;
+using Assets.Engine.Scripts.Rendering;
 using Assets.Engine.Scripts.Utils;
 using UnityEngine;
 using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
@@ -74,15 +75,44 @@ namespace Assets.Engine.Scripts.Builders.Block
         public void Build(RenderBuffer targetBuffer, ref BlockData block, BlockFace face, bool backFace, ref Vector3[] vecs)
         {
             int iface = (int)face;
-            float dmg = block.GetDamagePercent();
             Color32 color = BlockDatabase.GetBlockInfo(block.BlockType).Color;
             
             targetBuffer.AddIndices(backFace);
-            targetBuffer.AddVertices(ref vecs);
-            targetBuffer.AddFaceColors(ref color);
-            targetBuffer.AddFaceUv(GetTexture(iface), backFace);
-            targetBuffer.AddDamageUVs(dmg);
-            targetBuffer.AddNormals(ref SNormals[iface]);
+
+            VertexData []vertexData = new VertexData[4];
+
+            for (int i = 0; i<4; i++)
+            {
+                vertexData[i] = new VertexData
+                {
+                    Vertex = vecs[i],
+                    Color = color,
+                    UV = AddFaceUV(i, GetTexture(iface), backFace),
+                    Normal = SNormals[iface][i]
+                };
+            }
+
+            targetBuffer.AddVertices(ref vertexData);
+        }
+
+        /// <summary>
+        ///     Adds the face UVs.
+        /// </summary>
+        private static Vector2 AddFaceUV(int vertex, Rect texCoords, bool backFace)
+        {
+            // 0--1
+            // |  |
+            // |  |
+            // 3--2 --> 0, 1, 3, 2
+            switch (vertex)
+            {
+                case 0: return new Vector2(texCoords.xMax, 1f-texCoords.yMax);
+                case 1: return new Vector2(texCoords.xMax, 1f-texCoords.yMin);
+                case 2: return new Vector2(texCoords.xMin, 1f-texCoords.yMin);
+                case 3: return new Vector2(texCoords.xMin, 1f-texCoords.yMax);
+            }
+
+            return Vector2.zero;
         }
 
         #endregion IBlockBuilder implementation

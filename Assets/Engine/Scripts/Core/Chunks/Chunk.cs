@@ -1,4 +1,3 @@
-using System;
 using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Common.Extensions;
 using Assets.Engine.Scripts.Common.Threading;
@@ -248,32 +247,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
             PossiblyVisible = show;
         }
-
-		/// <summary>
-		///     Damages a given block. Destroys the block if the damage reaches a certain threshold
-		/// </summary>
-		/* TODO!
-		* This needs to be done differently. Each block type will be configurable and
-		* depending on the configration different kinds of interaction / damage will
-		* be possible.
-		*/
-		public void DamageBlock(int x, int y, int z, int damage)
-		{			
-			if (damage == 0)
-				return;
-
-			var thisBlock = this[x, y, z];
-
-			int blockDmgLevel = thisBlock.GetDamage();
-			if (blockDmgLevel + damage >= 15)
-			{
-				QueueSetBlock(this, x, y, z, BlockData.Air);
-				return;
-			}
-
-			thisBlock.SetDamage((byte)(blockDmgLevel+damage));
-			QueueSetBlock(this, x, y, z, thisBlock);
-		}
 
 		/// <summary>
 		///     Changes a given block to a block of a different type
