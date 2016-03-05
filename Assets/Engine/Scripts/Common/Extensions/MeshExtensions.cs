@@ -17,9 +17,11 @@ namespace Assets.Engine.Scripts.Common.Extensions
             int triangleCount = triangles.Length;
             int vertexCount = vertices.Length;
 
-            Vector3[] tan1 = GlobalPools.PopVector3Array(vertexCount);
-            Vector3[] tan2 = GlobalPools.PopVector3Array(vertexCount);
-            Vector4[] tangents = GlobalPools.PopVector4Array(vertexCount);
+            Vector3[] tan1, tan2;
+            Vector4[] tangents; 
+            GlobalPools.PopVector3Array(vertexCount, out tan1);
+            GlobalPools.PopVector3Array(vertexCount, out tan2);
+            GlobalPools.PopVector4Array(vertexCount, out tangents);
 
             for (long t = 0; t < triangleCount; t += 3)
             {
@@ -82,9 +84,9 @@ namespace Assets.Engine.Scripts.Common.Extensions
 
             mesh.tangents = tangents;
 
-            GlobalPools.PushVector3Array(tan1);
-            GlobalPools.PushVector3Array(tan2);
-            GlobalPools.PushVector4Array(tangents);
+            GlobalPools.PushVector3Array(ref tan1);
+            GlobalPools.PushVector3Array(ref tan2);
+            GlobalPools.PushVector4Array(ref tangents);
         }
     }
 }

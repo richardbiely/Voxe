@@ -1,5 +1,7 @@
 ﻿using Assets.Engine.Scripts.Builders.Block;
+using Assets.Engine.Scripts.Common;
 using Assets.Engine.Scripts.Common.DataTypes;
+using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Core.Blocks;
 using Assets.Engine.Scripts.Core.Chunks;
 using Assets.Engine.Scripts.Utils;
@@ -36,7 +38,8 @@ namespace Assets.Engine.Scripts.Builders.Geometry
             int[] du = { 0, 0, 0 }; // Width in a given dimension (du[u] is our current dimension)
             int[] dv = { 0, 0, 0 }; // Height in a given dimension (dv[v] is our current dimension)
 
-            BlockData[] mask = new BlockData[width * width];
+            BlockData[] mask = Helpers.CreateArray1D<BlockData>(width*width);
+            //GlobalPools.PopBlockDataArrayMT(width * width, out mask); // Unfortunatelly, this makes geometry generation twice as slow :(
 
             // Iterate over 3 dimensions. Once for front faces, once for back faces
             for (int dd = 0; dd < 2 * 3; dd++)
@@ -222,6 +225,8 @@ namespace Assets.Engine.Scripts.Builders.Geometry
                     }
                 }
             }
+
+            //GlobalPools.PushBlockDataArrayMT(ref mask);
         }
     }
 }
