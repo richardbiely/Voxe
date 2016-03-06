@@ -37,6 +37,7 @@ namespace Assets.Engine.Scripts.Builders.Geometry
             int[] q = { 0, 0, 0 }; // Direction in which we compare neighbors when building mask (q[d] is our current direction)
             int[] du = { 0, 0, 0 }; // Width in a given dimension (du[u] is our current dimension)
             int[] dv = { 0, 0, 0 }; // Height in a given dimension (dv[v] is our current dimension)
+            int[] s = { map.VoxelLogScaleX, map.VoxelLogScaleY, map.VoxelLogScaleZ }; // Scale in each dimension
 
             BlockData[] mask;
             pools.PopBlockDataArray(width * width, out mask);
@@ -57,7 +58,7 @@ namespace Assets.Engine.Scripts.Builders.Geometry
                 q[0] = 0;
                 q[1] = 0;
                 q[2] = 0;
-                q[d] = stepSize;
+                q[d] = stepSize << s[d];
 
                 // Determine which side we're meshing
                 bool backFace = dd < 3;
@@ -92,9 +93,9 @@ namespace Assets.Engine.Scripts.Builders.Geometry
 
                         for (x[u] = mins[u]; x[u] <= maxes[u]; x[u]++)
                         {
-                            int realX = (x[0] << lod) + offsetX;
-                            int realY = (x[1] << lod) + offsetY;
-                            int realZ = (x[2] << lod) + offsetZ;
+                            int realX = (x[0] << lod << s[0]) + offsetX;
+                            int realY = (x[1] << lod << s[1]) + offsetY;
+                            int realZ = (x[2] << lod << s[2]) + offsetZ;
 
                             BlockData voxelFace0 = map.GetBlock(realX, realY, realZ);
                             BlockData voxelFace1 = map.GetBlock(realX + q[0], realY + q[1], realZ + q[2]);
@@ -170,14 +171,14 @@ namespace Assets.Engine.Scripts.Builders.Geometry
                                 x[u] = i;
                                 x[v] = j;
 
-                                xx[0] = x[0] << lod;
-                                xx[1] = x[1] << lod;
-                                xx[2] = x[2] << lod;
+                                xx[0] = (x[0] << lod) << s[0];
+                                xx[1] = (x[1] << lod) << s[1];
+                                xx[2] = (x[2] << lod) << s[2];
 
                                 du[0] = du[1] = du[2] = 0;
                                 dv[0] = dv[1] = dv[2] = 0;
-                                du[u] = w << lod;
-                                dv[v] = h << lod;
+                                du[u] = (w << lod) << s[u];
+                                dv[v] = (h << lod) << s[v];
 
                                 // Face vertices
                                 Vector3Int v1 = new Vector3Int(

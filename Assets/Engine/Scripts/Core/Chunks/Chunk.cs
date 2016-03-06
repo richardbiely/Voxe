@@ -161,10 +161,13 @@ namespace Assets.Engine.Scripts.Core.Chunks
             Map = map;
             Pos = new Vector3Int(cx, cy, cz);
             m_lod = 0;
-            
+
+            int sizeX = EngineSettings.ChunkConfig.Size<<map.VoxelLogScaleX;
+            int sizeY = EngineSettings.ChunkConfig.Size<<map.VoxelLogScaleY;
+            int sizeZ = EngineSettings.ChunkConfig.Size<<map.VoxelLogScaleZ;
             WorldBounds = new Bounds(
-                new Vector3(EngineSettings.ChunkConfig.Size*(cx+0.5f), EngineSettings.ChunkConfig.Size*(cy+0.5f), EngineSettings.ChunkConfig.Size*(cz+0.5f)),
-                new Vector3(EngineSettings.ChunkConfig.Size, EngineSettings.ChunkConfig.Size, EngineSettings.ChunkConfig.Size)
+                new Vector3(sizeX*(cx+0.5f), sizeY*(cy+0.5f), sizeZ*(cz+0.5f)),
+                new Vector3(sizeX, sizeY, sizeZ)
                 );
         }
 
@@ -301,7 +304,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 return;
 
             m_drawCallBatcher.Clear();
-            m_drawCallBatcher.Pos = new Vector3Int(Pos.X, Pos.Y, Pos.Z);
+            m_drawCallBatcher.Pos = new Vector3Int(
+                Pos.X<<EngineSettings.ChunkConfig.LogSize<<Map.VoxelLogScaleX,
+                Pos.Y<<EngineSettings.ChunkConfig.LogSize<<Map.VoxelLogScaleY,
+                Pos.Z<<EngineSettings.ChunkConfig.LogSize<<Map.VoxelLogScaleZ
+                );
             m_drawCallBatcher.Batch(SolidRenderBuffer);
             m_drawCallBatcher.FinalizeDrawCalls();
 
@@ -398,14 +405,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             if (NonEmptyBlocks > 0)
             {
-                int posInWorldX = Pos.X<<EngineSettings.ChunkConfig.LogSize;
-                int posInWorldY = Pos.Y<<EngineSettings.ChunkConfig.LogSize;
-                int posInWorldZ = Pos.Z<<EngineSettings.ChunkConfig.LogSize;
+                int posInWorldX = (Pos.X<<EngineSettings.ChunkConfig.LogSize)<<Map.VoxelLogScaleX;
+                int posInWorldY = (Pos.Y<<EngineSettings.ChunkConfig.LogSize)<<Map.VoxelLogScaleY;
+                int posInWorldZ = (Pos.Z<<EngineSettings.ChunkConfig.LogSize)<<Map.VoxelLogScaleZ;
 
                 // Build bounding mesh for each section
-                float width = MaxRenderX - MinRenderX + 1;
-                float height = MaxRenderY - MinRenderY + 1;
-                float depth = MaxRenderZ - MinRenderZ + 1;
+                float width = (MaxRenderX - MinRenderX + 1) << Map.VoxelLogScaleX;
+                float height = (MaxRenderY - MinRenderY + 1) << Map.VoxelLogScaleY;
+                float depth = (MaxRenderZ - MinRenderZ + 1) << Map.VoxelLogScaleZ;
                 
                 Bounds geomBounds = new Bounds(
                     new Vector3(
@@ -970,9 +977,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		{
             Map map = chunk.Map;
 
-            int offsetX = chunk.Pos.X << EngineSettings.ChunkConfig.LogSize;
-            int offsetY = chunk.Pos.Y << EngineSettings.ChunkConfig.LogSize;
-            int offsetZ = chunk.Pos.Z << EngineSettings.ChunkConfig.LogSize;
+            int offsetX = (chunk.Pos.X << EngineSettings.ChunkConfig.LogSize) << map.VoxelLogScaleX;
+            int offsetY = (chunk.Pos.Y << EngineSettings.ChunkConfig.LogSize) << map.VoxelLogScaleY;
+            int offsetZ = (chunk.Pos.Z << EngineSettings.ChunkConfig.LogSize) << map.VoxelLogScaleZ;
 
             map.MeshBuilder.BuildMesh(map, chunk.SolidRenderBuffer, offsetX, offsetY, offsetZ, minX, maxX, minY, maxY, minZ, maxZ, lod, chunk.Pools);
 

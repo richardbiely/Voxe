@@ -184,6 +184,30 @@ Prefab:
       propertyPath: RasterizerCamera
       value: 
       objectReference: {fileID: 829896160}
+    - target: {fileID: 11465964, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: VoxelSizeX
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11465964, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: VoxelSizeY
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 11465964, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: VoxelSizeZ
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11465964, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: MeshBuilder
+      value: 
+      objectReference: {fileID: 297728907}
+    - target: {fileID: 11465964, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: VoxelLogScaleZ
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 11465964, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: VoxelLogScaleX
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: a4db001565d61294aae75f13fc68c869, type: 2}
   m_IsPrefabParent: 0
@@ -193,6 +217,12 @@ MonoBehaviour:
     type: 2}
   m_PrefabInternal: {fileID: 297728905}
   m_Script: {fileID: 11500000, guid: d1851deb9790aa444a040a2f320b62f8, type: 3}
+--- !u!114 &297728907 stripped
+MonoBehaviour:
+  m_PrefabParentObject: {fileID: 11435848, guid: a4db001565d61294aae75f13fc68c869,
+    type: 2}
+  m_PrefabInternal: {fileID: 297728905}
+  m_Script: {fileID: 11500000, guid: bfe42fce6d47f8e419120f3d17d227ae, type: 3}
 --- !u!1 &423721370
 GameObject:
   m_ObjectHideFlags: 0

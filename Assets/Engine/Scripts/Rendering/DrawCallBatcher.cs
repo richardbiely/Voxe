@@ -103,11 +103,6 @@ namespace Assets.Engine.Scripts.Rendering
             var go = GameObjectProvider.PopObject(GOPChunk);
             if (go != null)
             {
-#if DEBUG
-                // [X, Z, Y]:<part> - name the gameobject so that it can be easily identified with a naked eye
-                go.name = string.Format("[{0},{1},{2}]:{3}", Pos.X, Pos.Z, Pos.Y, m_drawCalls.Count);
-#endif
-
                 Mesh mesh = Globals.Pools.MeshPool.Pop();
                 Assert.IsTrue(mesh.vertices.Length<=0);
                 m_renderBuffer.BuildMesh(mesh);
@@ -115,11 +110,7 @@ namespace Assets.Engine.Scripts.Rendering
                 MeshFilter filter = go.GetComponent<MeshFilter>();
                 filter.sharedMesh = null;
                 filter.sharedMesh = mesh;
-                filter.transform.position = new Vector3(
-                    Pos.X << EngineSettings.ChunkConfig.LogSize,
-                    Pos.Y << EngineSettings.ChunkConfig.LogSize,
-                    Pos.Z << EngineSettings.ChunkConfig.LogSize
-                    );
+                filter.transform.position = new Vector3(Pos.X, Pos.Y, Pos.Z);
 
                 m_drawCalls.Add(go);
                 m_drawCallRenderers.Add(go.GetComponent<Renderer>());

@@ -11,7 +11,7 @@ namespace Assets.Engine.Scripts.Common
         // Unity objects cannot be compared outside the main thread. Because of that we use a helper
         // variable which tells whether the object instance has already been created. First call has
         // to be made from the main thread, though.
-        private static T _sInstance;
+        private static T s_instance;
 
         public bool DestroyOnLoad = false;
 
@@ -27,8 +27,8 @@ namespace Assets.Engine.Scripts.Common
                 lock (SLock)
                 {
                     // No instance of this class created yet
-                    if (_sInstance!=null)
-                        return _sInstance;
+                    if (s_instance != null)
+                        return s_instance;
 
                     //if (s_instanceIsNull) {
                     // Only one instance of the object is allowed. Anything else is an error
@@ -37,21 +37,21 @@ namespace Assets.Engine.Scripts.Common
 
                     // Find an instance of this class in the project
                     // If no other instance is found create a new object
-                    _sInstance = FindObjectOfType<T>();
-                    if (_sInstance!=null)
-                        return _sInstance;
+                    s_instance = FindObjectOfType<T>();
+                    if (s_instance != null)
+                        return s_instance;
 
                     //s_instanceIsNull = false;
 
                     GameObject go = new GameObject("Singleton "+typeof (T));
-                    _sInstance = go.AddComponent<T>();
+                    s_instance = go.AddComponent<T>();
 
-                    if (!_sInstance.DestroyOnLoad)
+                    if (!s_instance.DestroyOnLoad)
                         DontDestroyOnLoad(go);
                     //else
                     //	s_instanceIsNull = false;
 
-                    return _sInstance;
+                    return s_instance;
                 }
             }
         }

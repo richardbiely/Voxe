@@ -24,7 +24,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 465260}
-  - 114: {fileID: 11424330}
+  - 114: {fileID: 11435848}
   m_Layer: 0
   m_Name: Boxel_MergedFaces
   m_TagString: Untagged
@@ -56,7 +56,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 498982}
-  - 114: {fileID: 11452526}
+  - 114: {fileID: 11412266}
   m_Layer: 0
   m_Name: Boxel
   m_TagString: Untagged
@@ -347,6 +347,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 495296}
   m_RootOrder: 1
+--- !u!114 &11412266
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 117404}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6f92a5d4f7f76444b78e6ee5392a085, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &11414346
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -371,7 +382,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   GameMap: {fileID: 11465964}
---- !u!114 &11424330
+--- !u!114 &11435848
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -379,7 +390,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 104344}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c6f92a5d4f7f76444b78e6ee5392a085, type: 3}
+  m_Script: {fileID: 11500000, guid: bfe42fce6d47f8e419120f3d17d227ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &11437348
@@ -394,17 +405,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Path: 
---- !u!114 &11452526
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 117404}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bfe42fce6d47f8e419120f3d17d227ae, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &11455066
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -418,7 +418,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Show: 1
   ShowInEditor: 1
-  Map: {fileID: 0}
+  Map: {fileID: 11465964}
 --- !u!114 &11455494
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -471,7 +471,7 @@ MonoBehaviour:
   ChunkProvider: {fileID: 11437348}
   Camera: {fileID: 0}
   ChunkGenerator: {fileID: 11455494}
-  MeshBuilder: {fileID: 11424330}
+  MeshBuilder: {fileID: 11412266}
   Occlusion: {fileID: 11414346}
   VisibleRange: 5
   CachedRange: 6
@@ -480,9 +480,9 @@ MonoBehaviour:
   FollowCamera: 0
   LODCoef: 0.75
   ForceLOD: -1
-  VoxelSizeX: 1
-  VoxelSizeY: 1
-  VoxelSizeZ: 1
+  VoxelLogScaleX: 0
+  VoxelLogScaleY: 0
+  VoxelLogScaleZ: 0
   ShowGeomBounds: 0
   ShowMapBounds: 0
 --- !u!114 &11483752
@@ -521,6 +521,14 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: m_Enabled
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: VoxelLogScaleX
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: VoxelLogScaleZ
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

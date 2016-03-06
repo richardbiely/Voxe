@@ -29,13 +29,19 @@ namespace Assets.Client.Scripts
             Ray ray = new Ray(transform.position, transform.forward);
             if (LocalMap.Raycast(ray, PickDistance, out hit))
             {
-                m_cursorTransform.position = hit.HitBlock + Vector3.one * 0.5f;
+                Vector3 size = new Vector3(
+                    1 << LocalMap.VoxelLogScaleX,
+                    1 << LocalMap.VoxelLogScaleY,
+                    1 << LocalMap.VoxelLogScaleZ
+                    );
+
+                m_cursorTransform.position = hit.HitBlock + size*0.5f;
+                m_cursorTransform.localScale = size;
                 m_cursorTransform.rotation = Quaternion.identity;
                 CursorRenderer.enabled = true;
 
                 if (Input.GetMouseButtonDown(0))
                 {
-                    //LocalMap.DamageBlock(hit.HitBlock.X, hit.HitBlock.Y, hit.HitBlock.Z, 16);
                     LocalMap.SetBlock(BlockData.Air, hit.HitBlock.X, hit.HitBlock.Y, hit.HitBlock.Z);
                 }
             }

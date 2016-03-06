@@ -52,6 +52,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public float LODCoef = 1f;
         public int ForceLOD = -1;
 
+        [Header("Voxel dimensions")]
+        //! Scale of voxel on X axis
+        public int VoxelLogScaleX = 0;
+        //! Scale of voxel on Y axis
+        public int VoxelLogScaleY = 0;
+        //! Scale of voxel on Z axis
+        public int VoxelLogScaleZ = 0;
+
         [Header("Debugging")]
         public bool ShowGeomBounds;
         public bool ShowMapBounds;
@@ -86,17 +94,21 @@ namespace Assets.Engine.Scripts.Core.Chunks
         /// </summary>
         public BlockData GetBlock(int wx, int wy, int wz)
         {
-            int cx = wx>>EngineSettings.ChunkConfig.LogSize;
-            int cy = wy>>EngineSettings.ChunkConfig.LogSize;
-            int cz = wz>>EngineSettings.ChunkConfig.LogSize;
+            int wxScaled = wx>>VoxelLogScaleX;
+            int wyScaled = wy>>VoxelLogScaleY;
+            int wzScaled = wz>>VoxelLogScaleZ;
+
+            int cx = wxScaled>>EngineSettings.ChunkConfig.LogSize;
+            int cy = wyScaled>>EngineSettings.ChunkConfig.LogSize;
+            int cz = wzScaled>>EngineSettings.ChunkConfig.LogSize;
 
             Chunk chunk = GetChunk(cx, cy, cz);
             if (chunk==null)
                 return BlockData.Air;
 
-            int lx = wx&EngineSettings.ChunkConfig.Mask;
-            int ly = wy&EngineSettings.ChunkConfig.Mask;
-            int lz = wz&EngineSettings.ChunkConfig.Mask;
+            int lx = wxScaled&EngineSettings.ChunkConfig.Mask;
+            int ly = wyScaled&EngineSettings.ChunkConfig.Mask;
+            int lz = wzScaled&EngineSettings.ChunkConfig.Mask;
 
             return chunk[lx, ly, lz];
         }
@@ -106,17 +118,21 @@ namespace Assets.Engine.Scripts.Core.Chunks
         /// </summary>
         public void SetBlock(BlockData block, int wx, int wy, int wz)
         {
-            int cx = wx>>EngineSettings.ChunkConfig.LogSize;
-            int cy = wy>>EngineSettings.ChunkConfig.LogSize;
-            int cz = wz>>EngineSettings.ChunkConfig.LogSize;
+            int wxScaled = wx>>VoxelLogScaleX;
+            int wyScaled = wy>>VoxelLogScaleY;
+            int wzScaled = wz>>VoxelLogScaleZ;
+
+            int cx = wxScaled>>EngineSettings.ChunkConfig.LogSize;
+            int cy = wyScaled>>EngineSettings.ChunkConfig.LogSize;
+            int cz = wzScaled>>EngineSettings.ChunkConfig.LogSize;
 
             Chunk chunk = GetChunk(cx, cy, cz);
             if (chunk==null)
                 return;
 
-            int lx = wx&EngineSettings.ChunkConfig.Mask;
-            int ly = wy&EngineSettings.ChunkConfig.Mask;
-            int lz = wz&EngineSettings.ChunkConfig.Mask;
+            int lx = wxScaled&EngineSettings.ChunkConfig.Mask;
+            int ly = wyScaled&EngineSettings.ChunkConfig.Mask;
+            int lz = wzScaled&EngineSettings.ChunkConfig.Mask;
 
 			chunk.ModifyBlock(lx, ly, lz, block);
         }
@@ -130,9 +146,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
         private void UpdateRangeRects()
         {
             // Update camera position
-            int posX = Mathf.FloorToInt(Camera.transform.position.x) >> EngineSettings.ChunkConfig.LogSize;
-            int posY = Mathf.FloorToInt(Camera.transform.position.y) >> EngineSettings.ChunkConfig.LogSize;
-            int posZ = Mathf.FloorToInt(Camera.transform.position.z) >> EngineSettings.ChunkConfig.LogSize;
+            int posX = Mathf.FloorToInt(Camera.transform.position.x) >> EngineSettings.ChunkConfig.LogSize >> VoxelLogScaleX;
+            int posY = Mathf.FloorToInt(Camera.transform.position.y) >> EngineSettings.ChunkConfig.LogSize >> VoxelLogScaleY;
+            int posZ = Mathf.FloorToInt(Camera.transform.position.z) >> EngineSettings.ChunkConfig.LogSize >> VoxelLogScaleZ;
             ViewerChunkPos = new Vector3Int(posX, FollowCamera ? posY : 0, posZ);
 
             // Update clipmap offset
@@ -293,12 +309,12 @@ namespace Assets.Engine.Scripts.Core.Chunks
         /// </summary>
         public bool Raycast(Ray ray, float distance, out TileRaycastHit hit)
         {
-            // break out direction vector
+            // Direction vector
             float dx = ray.direction.x;
             float dy = ray.direction.y;
             float dz = ray.direction.z;
 
-            // avoid infinite loop
+            // Avoid infinite loop - early exit if ray size is too small
             if (Mathf.Approximately(dx, 0f) &&
                 Mathf.Approximately(dy, 0f) &&
                 Mathf.Approximately(dz, 0f))
@@ -307,40 +323,46 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 hit = new TileRaycastHit();
                 return false;
             }
+            
+            // Block containing origin point. Round it according to VoxelLogScale
+            int wx = (Helpers.FastFloor(ray.origin.x) >> VoxelLogScaleX) << VoxelLogScaleX;
+            int wy = (Helpers.FastFloor(ray.origin.y) >> VoxelLogScaleY) << VoxelLogScaleY;
+            int wz = (Helpers.FastFloor(ray.origin.z) >> VoxelLogScaleZ) << VoxelLogScaleZ;
 
-            // block containing origin point
-            int x = Helpers.FastFloor(ray.origin.x);
-            int y = Helpers.FastFloor(ray.origin.y);
-            int z = Helpers.FastFloor(ray.origin.z);
+            // Direction when stepping
+            int nx = Helpers.SigNum(dx);
+            int ny = Helpers.SigNum(dy);
+            int nz = Helpers.SigNum(dz);
 
-            // direction to increment x,y,z when stepping
-            int stepX = Helpers.SigNum(dx);
-            int stepY = Helpers.SigNum(dy);
-            int stepZ = Helpers.SigNum(dz);
+            //Amount by which to increment x,y,z when stepping
+            int stepX = nx << VoxelLogScaleX;
+            int stepY = ny << VoxelLogScaleY;
+            int stepZ = nz << VoxelLogScaleZ;
 
-            float tMaxX = Helpers.IntBound(ray.origin.x, dx);
-            float tMaxY = Helpers.IntBound(ray.origin.y, dy);
-            float tMaxZ = Helpers.IntBound(ray.origin.z, dz);
+            // Initial values depend on the fractional part of the origin
+            float tMaxX = Helpers.IntBound(wx, dx);
+            float tMaxY = Helpers.IntBound(wy, dy);
+            float tMaxZ = Helpers.IntBound(wz, dz);
 
+            // The change in t when taking a step
             float tDeltaX = stepX/dx;
             float tDeltaY = stepY/dy;
             float tDeltaZ = stepZ/dz;
 
-            Vector3 normal = new Vector3();
-
+            // Rescale from units of 1 cube-edge to units of direction so we can compare with t
             distance /= Mathf.Sqrt(dx*dx+dy*dy+dz*dz);
 
-            int worldMinX = ViewerChunkPos.X*EngineSettings.ChunkConfig.Size;
-            int worldMaxX = worldMinX+(CachedRange*EngineSettings.ChunkConfig.Size);
-            int worldMinY = ViewerChunkPos.Y*EngineSettings.ChunkConfig.Size;
-            int worldMaxY = worldMinY+(CachedRange*EngineSettings.ChunkConfig.Size);
-            int worldMinZ = ViewerChunkPos.Z*EngineSettings.ChunkConfig.Size;
-            int worldMaxZ = worldMinZ+(CachedRange*EngineSettings.ChunkConfig.Size);
+            int worldMinX = ViewerChunkPos.X<<EngineSettings.ChunkConfig.LogSize<<VoxelLogScaleX;
+            int worldMaxX = worldMinX+(CachedRange<<EngineSettings.ChunkConfig.LogSize<<VoxelLogScaleX);
+            int worldMinY = ViewerChunkPos.Y<<EngineSettings.ChunkConfig.LogSize<<VoxelLogScaleY;
+            int worldMaxY = worldMinY+(CachedRange<<EngineSettings.ChunkConfig.LogSize<<VoxelLogScaleY);
+            int worldMinZ = ViewerChunkPos.Z<<EngineSettings.ChunkConfig.LogSize<<VoxelLogScaleZ;
+            int worldMaxZ = worldMinZ+(CachedRange<<EngineSettings.ChunkConfig.LogSize<<VoxelLogScaleZ);
 
             while ( // step is still inside world bounds
-                (stepX>0 ? (x<worldMaxX) : x>=worldMinX) &&
-                (stepY>0 ? (y<worldMaxY) : y>=worldMinY) &&
-                (stepZ>0 ? (z<worldMaxZ) : z>=worldMinZ))
+                (stepX>0 ? wx<worldMaxX : wx>=worldMinX) &&
+                (stepY>0 ? wy<worldMaxY : wy>=worldMinY) &&
+                (stepZ>0 ? wz<worldMaxZ : wz>=worldMinZ))
             {
                 // tMaxX stores the t-value at which we cross a cube boundary along the
                 // X axis, and similarly for Y and Z. Therefore, choosing the least tMax
@@ -351,26 +373,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     {
                         if (tMaxX>distance)
                             break;
-
-                        // Update which cube we are now in.
-                        x += stepX;
-                        // Adjust tMaxX to the next X-oriented boundary crossing.
+                        
+                        wx += stepX;
                         tMaxX += tDeltaX;
-                        // Record the normal vector of the cube face we entered.
-                        normal[0] = -stepX;
-                        normal[1] = 0;
-                        normal[2] = 0;
                     }
                     else
                     {
                         if (tMaxZ>distance)
                             break;
 
-                        z += stepZ;
+                        wz += stepZ;
                         tMaxZ += tDeltaZ;
-                        normal[0] = 0;
-                        normal[1] = 0;
-                        normal[2] = -stepZ;
                     }
                 }
                 else
@@ -380,33 +393,25 @@ namespace Assets.Engine.Scripts.Core.Chunks
                         if (tMaxY>distance)
                             break;
 
-                        y += stepY;
+                        wy += stepY;
                         tMaxY += tDeltaY;
-                        normal[0] = 0;
-                        normal[1] = -stepY;
-                        normal[2] = 0;
                     }
                     else
                     {
-                        // Identical to the second case, repeated for simplicity in the conditionals.
                         if (tMaxZ>distance)
                             break;
 
-                        z += stepZ;
+                        wz += stepZ;
                         tMaxZ += tDeltaZ;
-                        normal[0] = 0;
-                        normal[1] = 0;
-                        normal[2] = -stepZ;
                     }
                 }
 
-                if (GetBlock(x, y, z).IsEmpty())
+                if (GetBlock(wx, wy, wz).IsEmpty())
                     continue;
 
                 TileRaycastHit rayhit = new TileRaycastHit
 				{
-					HitBlock = new Vector3Int(x, y, z),
-					HitFace = normal
+					HitBlock = new Vector3Int(wx, wy, wz)
 				};
 
                 hit = rayhit;
@@ -437,16 +442,19 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     {
                         ChunkClipmapItem item = m_clipmap[chunk.Pos.X, chunk.Pos.Y, chunk.Pos.Z];
 
-                        if(!m_clipmap.IsInsideBounds(chunk.Pos.X, chunk.Pos.Y, chunk.Pos.Z))
+                        int sizeX = EngineSettings.ChunkConfig.Size << VoxelLogScaleX;
+                        int sizeY = EngineSettings.ChunkConfig.Size << VoxelLogScaleY;
+                        int sizeZ = EngineSettings.ChunkConfig.Size << VoxelLogScaleZ;
+
+                        if (!m_clipmap.IsInsideBounds(chunk.Pos.X, chunk.Pos.Y, chunk.Pos.Z))
                         {
                             Gizmos.color = Color.red;
                             Gizmos.DrawWireCube(
                                 new Vector3(
-                                    chunk.Pos.X*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2,
-                                    chunk.Pos.Y*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2+0.05f,
-                                    chunk.Pos.Z*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2),
-                                new Vector3(EngineSettings.ChunkConfig.Size-0.05f, 0,
-                                            EngineSettings.ChunkConfig.Size-0.05f)
+                                    chunk.Pos.X*sizeX+sizeX/2,
+                                    chunk.Pos.Y*sizeY+sizeY/2+0.05f,
+                                    chunk.Pos.Z*sizeZ+sizeZ/2),
+                                new Vector3(sizeX-0.05f, 0, sizeZ-0.05f)
                                 );
                         }
                         else if (item.IsWithinVisibleRange)
@@ -454,11 +462,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
                             Gizmos.color = Color.green;
                             Gizmos.DrawWireCube(
                                 new Vector3(
-                                    chunk.Pos.X*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2,
-                                    chunk.Pos.Y*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2+0.05f,
-                                    chunk.Pos.Z*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2),
-                                new Vector3(EngineSettings.ChunkConfig.Size-0.05f, 0,
-                                            EngineSettings.ChunkConfig.Size-0.05f)
+                                    chunk.Pos.X*sizeX+sizeX/2,
+                                    chunk.Pos.Y*sizeY+sizeY/2+0.05f,
+                                    chunk.Pos.Z*sizeZ+sizeZ/2),
+                                new Vector3(sizeX-0.05f, 0, sizeZ-0.05f)
                                 );
                         }
                         else// if (item.IsWithinCachedRange)
@@ -466,11 +473,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
                             Gizmos.color = Color.yellow;
                             Gizmos.DrawWireCube(
                                 new Vector3(
-                                    chunk.Pos.X*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2,
-                                    chunk.Pos.Y*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2+0.05f,
-                                    chunk.Pos.Z*EngineSettings.ChunkConfig.Size+EngineSettings.ChunkConfig.Size/2),
-                                new Vector3(EngineSettings.ChunkConfig.Size-0.05f, 0,
-                                            EngineSettings.ChunkConfig.Size-0.05f)
+                                    chunk.Pos.X*sizeX+sizeX/2,
+                                    chunk.Pos.Y*sizeY+sizeY/2+0.05f,
+                                    chunk.Pos.Z*sizeZ+sizeZ/2),
+                                new Vector3(sizeX-0.05f, 0, sizeZ-0.05f)
                                 );
                         }
                     }

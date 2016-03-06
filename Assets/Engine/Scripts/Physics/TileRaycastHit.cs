@@ -12,10 +12,5 @@ namespace Assets.Engine.Scripts.Physics
         /// The world position of the block hit by the raycast
         /// </summary>
         public Vector3Int HitBlock;
-
-        /// <summary>
-        /// The normal of the block face hit by the raycast
-        /// </summary>
-        public Vector3 HitFace;
     }
 }

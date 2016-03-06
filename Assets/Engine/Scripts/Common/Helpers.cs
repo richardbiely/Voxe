@@ -93,18 +93,20 @@ namespace Assets.Engine.Scripts.Common
             return x0  + (x1-x0)*alpha;
         }
 
+        // Finds the smallest positive t such that s+t*ds is an integer
         public static float IntBound(float s, float ds)
         {
-            /* Recursive version
-			        if (ds < 0)
-			        {
-				        return IntBound(-s, -ds);
-			        }
-			        else
-			        {
-				        s = Mod(s, 1);
-				        return (1 - s) / ds;
-			        }
+            /* Recursive version                
+			    if (ds < 0)
+                {
+				    return IntBound(-s, -ds);
+                }
+			    else
+			    {
+				    s = Mod(s, 1);
+                    // Problem is now s+t*ds = 1
+				    return (1 - s) / ds;
+			    }
              */
             while (true)
             {
@@ -125,6 +127,11 @@ namespace Assets.Engine.Scripts.Common
             return (x>0) ? 1 : ((x<0) ? -1 : 0);
         }
 
+        public static int SigShift(int value, int shift)
+        {
+            return (shift>0) ? value<<shift : value>>shift;
+        }
+
         public static int FastFloor(float val)
         {
             return (val>0) ? (int)val : (int)val-1;
@@ -136,7 +143,7 @@ namespace Assets.Engine.Scripts.Common
             int r = value%modulus;
             return (r<0) ? (r+modulus) : r;
         }
-
+        
         public static float Mod(float value, int modulus)
         {
             return (value%modulus+modulus)%modulus;
