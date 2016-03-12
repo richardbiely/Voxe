@@ -131,7 +131,7 @@ namespace Assets.Engine.Scripts.Rendering
             {
                 Renderer renderer = m_drawCallRenderers[i];
                 renderer.enabled = show;
-                visible = visible|show;
+                visible = visible|show; // Only set visible to true if there are any render calls to begin with
             }
 
             m_visible = visible;
@@ -144,10 +144,11 @@ namespace Assets.Engine.Scripts.Rendering
 
         private void ReleaseOldData()
         {
+            Assert.IsTrue(m_drawCalls.Count==m_drawCallRenderers.Count);
             for (int i = 0; i < m_drawCalls.Count; i++)
             {
                 var go = m_drawCalls[i];
-                // If the component does not exist it means no others have been added as well
+                // If the component does not exist it means nothing else has been added as well
                 if (go == null)
                     continue;
 

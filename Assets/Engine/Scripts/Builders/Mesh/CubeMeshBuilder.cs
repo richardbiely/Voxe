@@ -18,7 +18,7 @@ namespace Assets.Engine.Scripts.Builders.Mesh
 
             // Avoid allocations by retrieving buffers from the pool
             Vector3[] vertices = Globals.Pools.PopVector3Array(size);
-            Vector2[] uvs = Globals.Pools.PopVector2Array(size); ;
+            Vector2[] uvs = Globals.Pools.PopVector2Array(size);
             Color32[] colors = Globals.Pools.PopColor32Array(size);
             Vector3[] normals = Globals.Pools.PopVector3Array(size);
             Vector4[] tangents = Globals.Pools.PopVector4Array(size);

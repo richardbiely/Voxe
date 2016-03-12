@@ -112,7 +112,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         //! A list of generic tasks a chunk has to perform
         private readonly List<Action> m_genericWorkItems = new List<Action>();
-        private int m_genericWorkItemsBeingProcessed;
+        //! Number of generic tasks waiting to be finished
+        private int m_genericWorkItemsLeftToProcess;
 
         //! Manager taking care of render calls
         private readonly DrawCallBatcher m_drawCallBatcher;
@@ -215,7 +216,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 			RequestedRemoval = false;
 			m_taskRunning = false;
-            m_genericWorkItemsBeingProcessed = 0;
+            m_genericWorkItemsLeftToProcess = 0;
             m_firstFinalization = true;
 
             m_lod = 0;
@@ -682,17 +683,16 @@ namespace Assets.Engine.Scripts.Core.Chunks
             // Perform the action
             item.Action();
 
-            int cnt = Interlocked.Decrement(ref chunk.m_genericWorkItemsBeingProcessed);
-            
-            // Something is very wrong if we go below zero
-            Assert.IsTrue(cnt == 0);
-            
-            if (cnt==0)
+            int cnt = Interlocked.Decrement(ref chunk.m_genericWorkItemsLeftToProcess);
+            if (cnt<=0)
             {
+                // Something is very wrong if we go below zero
+                Assert.IsTrue(cnt == 0);
+
                 // All generic work is done
                 lock (chunk.m_lock)
                 {
-                    OnFinalizeDataDone(chunk);
+                    OnGenericWorkDone(chunk);
                 }
             }
         }
@@ -716,30 +716,37 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             m_refreshTasks = m_refreshTasks.Reset(CurrStateGenericWork);
             m_completedTasks = m_completedTasks.Reset(CurrStateGenericWork);
+            
+            // If we get there we expect that all the tasks were properly finished
+            Assert.IsTrue(m_genericWorkItemsLeftToProcess==0);
 
-            m_genericWorkItemsBeingProcessed = 0;
-            if (m_genericWorkItems.Count > 0)
+            // IF there's nothing to do we can skip this state
+            if (m_genericWorkItems.Count<=0)
             {
-                m_taskRunning = true;
-                for (int i = 0; i < m_genericWorkItems.Count; i++)
-                {
-                    SGenericWorkItem workItem = new SGenericWorkItem(this, m_genericWorkItems[i]);
-
-                    WorkPoolManager.Add(
-                        new ThreadItem(
-                            m_threadID,
-                            arg =>
-                            {
-                                SGenericWorkItem item = (SGenericWorkItem)arg;
-                                OnGenericWork(ref item);
-                            },
-                            workItem)
-                        );
-                }
-                m_genericWorkItems.Clear();
-            }
-            else
+                m_genericWorkItemsLeftToProcess = 0;
                 OnGenericWorkDone(this);
+                return false;
+            }
+
+            m_taskRunning = true;
+            m_genericWorkItemsLeftToProcess = m_genericWorkItems.Count;
+
+            for (int i = 0; i<m_genericWorkItems.Count; i++)
+            {
+                SGenericWorkItem workItem = new SGenericWorkItem(this, m_genericWorkItems[i]);
+
+                WorkPoolManager.Add(
+                    new ThreadItem(
+                        m_threadID,
+                        arg =>
+                        {
+                            SGenericWorkItem item = (SGenericWorkItem)arg;
+                            OnGenericWork(ref item);
+                        },
+                        workItem)
+                    );
+            }
+            m_genericWorkItems.Clear();
 
             return true;
         }
@@ -748,6 +755,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
             Assert.IsTrue(action!=null);
             m_genericWorkItems.Add(action);
+            RefreshState(ChunkState.GenericWork);
         }
 
 #endregion
