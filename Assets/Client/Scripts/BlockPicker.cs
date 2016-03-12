@@ -36,7 +36,7 @@ namespace Assets.Client.Scripts
                     );
 
                 m_cursorTransform.position = hit.HitBlock + size*0.5f;
-                m_cursorTransform.localScale = size;
+                m_cursorTransform.localScale = size*1.01f;
                 m_cursorTransform.rotation = Quaternion.identity;
                 CursorRenderer.enabled = true;
 
