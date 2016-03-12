@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Assets.Engine.Plugins.CoherentNoise.Scripts.Generation;
 using Assets.Engine.Scripts.Atlas;
@@ -80,16 +81,16 @@ namespace Assets.Engine.Scripts.Builders.Faces
             // Randomize the color a bit
             Color32 color = BlockDatabase.GetBlockInfo(block.BlockType).Color;
 
-            /*if (block.BlockType!=BlockType.None)
+            if (block.BlockType!=BlockType.None)
             {
-                float value = m_noise.GetValue(vecs[0]+vecs[1]+vecs[2]+vecs[3]) * 0.001f;
-                float noise = (255.0f/Mathf.Max(1, value))*0.1f;
+                float value = m_noise.GetValue(vecs[0]+vecs[1]+vecs[2]+vecs[3]); // -1.0f..1.0f
+                float noise = (255.0f*value)*0.02f; // Deviation of 0.02f points from the original
                 int n = (int)noise;
                 byte r = (byte)Math.Max(0, Math.Min(color.r+n, 255));
                 byte g = (byte)Math.Max(0, Math.Min(color.g+n, 255));
                 byte b = (byte)Math.Max(0, Math.Min(color.b+n, 255));
                 color = new Color32(r, g, b, color.a);
-            }*/
+            }
             
             VertexData[] vertexData = pools.PopVertexDataArray(4);
             
