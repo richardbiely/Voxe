@@ -708,7 +708,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
             m_pendingTasks = m_pendingTasks.Reset(CurrStateGenericWork);
 
-            if (m_completedTasks.Check(CurrStateGenericWork))
+            // Nothing here for us to do if the chunk was not changed
+            if (m_completedTasks.Check(CurrStateGenericWork) && !m_refreshTasks.Check(CurrStateGenericWork))
             {
                 OnGenericWorkDone(this);
                 return false;
