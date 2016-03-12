@@ -2,15 +2,14 @@
 {
     public interface IArrayPool<T>
     {
-
         /// <summary>
         ///     Retrieves an array from the top of the pool
         /// </summary>
-        void Pop(out T[] item);
+        T[] Pop();
         
         /// <summary>
         ///     Returns an array back to the pool
         /// </summary>
-        void Push(ref T[] item);
+        void Push(T[] item);
     }
 }

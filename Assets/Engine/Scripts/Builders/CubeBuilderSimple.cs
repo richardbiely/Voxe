@@ -8,8 +8,7 @@ namespace Assets.Engine.Scripts.Builders
     {
         public static void Build(List<Vector3> targetBuffer, ref Bounds bounds, LocalPools pools)
         {
-            Vector3[] vertices;
-            pools.PopVector3Array(24, out vertices);
+            Vector3[] vertices = pools.PopVector3Array(24);
 
             // Vertices as they are seen in faces
             //Front
@@ -47,7 +46,7 @@ namespace Assets.Engine.Scripts.Builders
             for(int i=0; i<24; i++)
                 targetBuffer.Add(vertices[i]);
 
-            pools.PushVector3Array(ref vertices);
+            pools.PushVector3Array(vertices);
         }
     }
 }

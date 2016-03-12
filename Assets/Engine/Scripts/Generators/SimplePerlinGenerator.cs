@@ -32,7 +32,8 @@ namespace Assets.Engine.Scripts.Generators
                     {
                         int wx = x+xOffset;
 
-                        if (m_noise.GetValue(new Vector3(wx, wy, wz)*0.1f)>0f)
+                        float noise = m_noise.GetValue(new Vector3(wx, wy, wz)*0.10f);//10
+                        if (noise>0f)
                         {
                             chunk.GenerateBlock(x, y, z, new BlockData(BlockType.Dirt));
                         }

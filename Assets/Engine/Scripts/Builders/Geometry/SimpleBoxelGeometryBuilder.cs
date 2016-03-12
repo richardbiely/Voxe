@@ -3,6 +3,7 @@ using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Core.Blocks;
 using Assets.Engine.Scripts.Core.Chunks;
+using Assets.Engine.Scripts.Rendering;
 using Assets.Engine.Scripts.Utils;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -16,13 +17,11 @@ namespace Assets.Engine.Scripts.Builders.Geometry
     public class SimpleBoxelGeometryBuilder: AVoxelGeometryBuilder
     {
         public override void BuildMesh(
-            Map map, RenderBuffer renderBuffer, int offsetX, int offsetY, int offsetZ,
+            Map map, DrawCallBatcher batcher, int offsetX, int offsetY, int offsetZ,
             int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod,
             LocalPools pools
             )
         {
-            renderBuffer.Clear();
-
             BlockFace face = 0;
 
             int stepSize = 1 << lod;
@@ -39,10 +38,8 @@ namespace Assets.Engine.Scripts.Builders.Geometry
             int[] dv = { 0, 0, 0 }; // Height in a given dimension (dv[v] is our current dimension)
             int[] s = { map.VoxelLogScaleX, map.VoxelLogScaleY, map.VoxelLogScaleZ }; // Scale in each dimension
 
-            BlockData[] mask;
-            pools.PopBlockDataArray(width * width, out mask);
-            Vector3[] vecs;
-            pools.PopVector3Array(4, out vecs);
+            BlockData[] mask = pools.PopBlockDataArray(width * width);
+            Vector3[] vecs = pools.PopVector3Array(4);
 
             // Iterate over 3 dimensions. Once for front faces, once for back faces
             for (int dd = 0; dd < 2 * 3; dd++)
@@ -147,9 +144,9 @@ namespace Assets.Engine.Scripts.Builders.Geometry
                                 x[u] = i;
                                 x[v] = j;
 
-                                xx[0] = (x[0] << lod) << s[0];
-                                xx[1] = (x[1] << lod) << s[1];
-                                xx[2] = (x[2] << lod) << s[2];
+                                xx[0] = ((x[0] << lod) << s[0]) + offsetX;
+                                xx[1] = ((x[1] << lod) << s[1]) + offsetY;
+                                xx[2] = ((x[2] << lod) << s[2]) + offsetZ;
 
                                 du[0] = du[1] = du[2] = 0;
                                 dv[0] = dv[1] = dv[2] = 0;
@@ -182,7 +179,7 @@ namespace Assets.Engine.Scripts.Builders.Geometry
 
                                 // Build the face
                                 IFaceBuilder builder = BlockDatabase.GetFaceBuilder(type);
-                                builder.Build(renderBuffer, ref mask[n], face, backFace, ref vecs, pools);
+                                builder.Build(batcher, ref mask[n], face, backFace, ref vecs, pools);
                             }
 
                             // Zero out the mask
@@ -203,8 +200,8 @@ namespace Assets.Engine.Scripts.Builders.Geometry
                 }
             }
 
-            pools.PushBlockDataArray(ref mask);
-            pools.PushVector3Array(ref vecs);
+            pools.PushBlockDataArray(mask);
+            pools.PushVector3Array(vecs);
         }
     }
 }

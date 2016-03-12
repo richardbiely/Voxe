@@ -10,10 +10,8 @@ namespace Assets.Engine.Scripts.Common.Extensions
         /// <summary>
         ///     Adds triangle indices for a quad
         /// </summary>
-        public static void AddIndices(this RenderBuffer target, bool backFace)
+        public static void AddIndices(this RenderBuffer target, int offset, bool backFace)
         {
-            int offset = target.Vertices.Count;
-
             // 0--1
             // |\ |
             // | \|
@@ -44,7 +42,7 @@ namespace Assets.Engine.Scripts.Common.Extensions
         /// <summary>
         ///     Adds the vertices to the render buffer.
         /// </summary>
-        public static void AddVertices(this RenderBuffer target, ref VertexData[] vertices)
+        public static void AddVertices(this RenderBuffer target, VertexData[] vertices)
         {
             target.Vertices.AddRange(vertices);
         }
@@ -59,9 +57,8 @@ namespace Assets.Engine.Scripts.Common.Extensions
             var vertices = buffer.Vertices;
             var triangles = buffer.Triangles;
 
-            Vector3[] tan1, tan2;
-            pools.PopVector3Array(vertices.Count, out tan1);
-            pools.PopVector3Array(vertices.Count, out tan2);
+            var tan1 = pools.PopVector3Array(vertices.Count);
+            var tan2 = pools.PopVector3Array(vertices.Count);
 
             for (int t = 0; t < triangles.Count; t += 3)
             {
@@ -131,8 +128,8 @@ namespace Assets.Engine.Scripts.Common.Extensions
                 tan2[v] = Vector3.zero;
             }
 
-            pools.PushVector3Array(ref tan1);
-            pools.PushVector3Array(ref tan2);
+            pools.PushVector3Array(tan1);
+            pools.PushVector3Array(tan2);
         }
     }
 }

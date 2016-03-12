@@ -1,8 +1,8 @@
 using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Core.Blocks;
+using Assets.Engine.Scripts.Rendering;
 using Assets.Engine.Scripts.Utils;
 using UnityEngine;
-using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
 namespace Assets.Engine.Scripts.Builders.Faces
 {
@@ -13,6 +13,6 @@ namespace Assets.Engine.Scripts.Builders.Faces
     {
         Rect GetTexture(int face);
 
-        void Build(RenderBuffer targetMesh, ref BlockData block, BlockFace face, bool backFace, ref Vector3[] vecs, LocalPools pools);
+        void Build(DrawCallBatcher drawCallBatcher, ref BlockData block, BlockFace face, bool backFace, ref Vector3[] vecs, LocalPools pools);        
     }
 }

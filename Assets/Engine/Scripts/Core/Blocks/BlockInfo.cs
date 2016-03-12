@@ -13,7 +13,7 @@ namespace Assets.Engine.Scripts.Core.Blocks
         public BlockInfo(bool isSolid, Color32 color)
         {
             m_isSolid = isSolid;
-            m_color = Color;
+            m_color = color;
         }
     }
 }

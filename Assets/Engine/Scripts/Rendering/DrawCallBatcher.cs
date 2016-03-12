@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using Assets.Engine.Scripts.Builders.Mesh;
-using Assets.Engine.Scripts.Common.DataTypes;
+using Assets.Engine.Scripts.Common.Extensions;
 using Assets.Engine.Scripts.Core;
+using Assets.Engine.Scripts.Core.Chunks;
 using Assets.Engine.Scripts.Provider;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -12,20 +13,28 @@ namespace Assets.Engine.Scripts.Rendering
     {
         private const string GOPChunk = "Chunk";
 
-        private readonly RenderBuffer m_renderBuffer;
+        private readonly IMeshBuilder m_meshBuilder;
+        private readonly Chunk m_chunk;
+
+        private readonly List<RenderBuffer> m_renderBuffers;
         private readonly List<GameObject> m_drawCalls;
         private readonly List<Renderer> m_drawCallRenderers;
-
-        private bool m_visible;
         
-        public Vector3Int Pos { get; set; }
+        private bool m_visible;
 
-        public DrawCallBatcher(IMeshBuilder builder)
+        public DrawCallBatcher(IMeshBuilder builder, Chunk chunk)
         {
-            m_renderBuffer = new RenderBuffer(builder);
+            m_meshBuilder = builder;
+            m_chunk = chunk;
+            
+            m_renderBuffers = new List<RenderBuffer>(1)
+            {
+                // Default render buffer
+                new RenderBuffer()
+            };
             m_drawCalls = new List<GameObject>();
             m_drawCallRenderers = new List<Renderer>();
-
+            
             m_visible = false;
         }
 
@@ -34,89 +43,85 @@ namespace Assets.Engine.Scripts.Rendering
         /// </summary>
         public void Clear()
         {
-            for (int i = 0; i < m_drawCalls.Count; i++)
-            {
-                var go = m_drawCalls[i];
-                if (go==null)
-                    continue;
+            for (int i = 0; i < m_renderBuffers.Count; i++)
+                m_renderBuffers[i].Clear();
 
-                var filter = go.GetComponent<MeshFilter>();
-                filter.sharedMesh.Clear(false);
-                Globals.Pools.MeshPool.Push(filter.sharedMesh);
-                filter.sharedMesh = null;
-
-                GameObjectProvider.PushObject(GOPChunk, go);
-            }
-
-            m_drawCalls.Clear();
-            m_renderBuffer.Clear();
-            m_drawCallRenderers.Clear();
+            ReleaseOldData();
 
             m_visible = false;
         }
 
         /// <summary>
-        ///     Finalize the draw calls
+        ///     Addds one face to our render buffer
         /// </summary>
-        public void FinalizeDrawCalls()
+        /// <param name="vertexData"> An array of 4 vertices forming the face</param>
+        /// <param name="backFace">Order in which vertices are considered to be oriented. If true, this is a backface (counter clockwise)</param>
+        public void AddFace(VertexData[] vertexData, bool backFace)
         {
-            Flush();
+            Assert.IsTrue(vertexData.Length>=4);
+
+            RenderBuffer buffer = m_renderBuffers[m_renderBuffers.Count - 1];
+            
+            // If there are too many vertices we need to create a new separate buffer for them
+            if (buffer.Vertices.Count>=65000)
+            {
+                buffer = new RenderBuffer();
+                m_renderBuffers.Add(buffer);
+            }
+
+            // Add data to the render buffer
+            buffer.AddIndices(buffer.Vertices.Count, backFace);
+            for(int i=0; i<4; i++)
+                buffer.AddVertex(vertexData[i]);
         }
 
         /// <summary>
-        ///     Batch the given render buffer
+        ///     Finalize the draw calls
         /// </summary>
-        public void Batch(RenderBuffer renderBuffer)
+        public void Commit()
         {
-            // Skip empty inputs
-            if (renderBuffer.IsEmpty())
+            ReleaseOldData();
+
+            // No data means there's no mesh to build
+            if (m_renderBuffers[0].IsEmpty())
                 return;
 
-            // Lets create a separate batch if the number of vertices is too great
-            if (m_renderBuffer.Vertices.Count + renderBuffer.Vertices.Count >= 65000)
+            for (int i = 0; i<m_renderBuffers.Count; i++)
             {
-                Debug.LogWarning("Too many vertices :O");
-                Flush();
+                var go = GameObjectProvider.PopObject(GOPChunk);
+                Assert.IsTrue(go!=null);
+                if (go!=null)
+                {
+                    Mesh mesh = Globals.Pools.MeshPool.Pop();
+                    Assert.IsTrue(mesh.vertices.Length<=0);
+                    m_meshBuilder.BuildMesh(mesh, m_renderBuffers[i]);
+
+                    MeshFilter filter = go.GetComponent<MeshFilter>();
+                    filter.sharedMesh = null;
+                    filter.sharedMesh = mesh;
+                    filter.transform.position = Vector3.zero;
+
+                    m_drawCalls.Add(go);
+                    m_drawCallRenderers.Add(go.GetComponent<Renderer>());
+                }
             }
 
-            // Add data to main buffer
-            int vOffset = m_renderBuffer.Vertices.Count;
-
-            // Further calls to batch need to offset each triangle value by the number of triangles previously present
-            if (vOffset != 0)
-            {
-                for (int j = 0; j < renderBuffer.Triangles.Count; j++)
-                    renderBuffer.Triangles[j] += vOffset;
-            }
-            
-            m_renderBuffer.Combine(renderBuffer);
+            // Make vertex data available again
+            m_chunk.EnqueueGenericWork(FreeResources);
         }
 
-        private void Flush()
+        public void FreeResources()
         {
-            if (m_renderBuffer.Vertices.Count <= 0)
+            LocalPools pools = m_chunk.Pools;
+
+            for (int i = 0; i < m_renderBuffers.Count; i++)
             {
-                Debug.Log("Empty flush");
-                return;
+                RenderBuffer buffer = m_renderBuffers[i];
+                for (int v = 0; v < buffer.Vertices.Count; v++)
+                    pools.PushVertexData(buffer.Vertices[v]);
+
+                buffer.Clear();
             }
-
-            var go = GameObjectProvider.PopObject(GOPChunk);
-            if (go != null)
-            {
-                Mesh mesh = Globals.Pools.MeshPool.Pop();
-                Assert.IsTrue(mesh.vertices.Length<=0);
-                m_renderBuffer.BuildMesh(mesh);
-
-                MeshFilter filter = go.GetComponent<MeshFilter>();
-                filter.sharedMesh = null;
-                filter.sharedMesh = mesh;
-                filter.transform.position = new Vector3(Pos.X, Pos.Y, Pos.Z);
-
-                m_drawCalls.Add(go);
-                m_drawCallRenderers.Add(go.GetComponent<Renderer>());
-            }
-
-            m_renderBuffer.Clear();
         }
 
         public void SetVisible(bool show)
@@ -135,6 +140,27 @@ namespace Assets.Engine.Scripts.Rendering
         public bool IsVisible()
         {
             return m_drawCalls.Count>0 && m_visible;
+        }
+
+        private void ReleaseOldData()
+        {
+            for (int i = 0; i < m_drawCalls.Count; i++)
+            {
+                var go = m_drawCalls[i];
+                // If the component does not exist it means no others have been added as well
+                if (go == null)
+                    continue;
+
+                var filter = go.GetComponent<MeshFilter>();
+                filter.sharedMesh.Clear(false);
+                Globals.Pools.MeshPool.Push(filter.sharedMesh);
+                filter.sharedMesh = null;
+
+                GameObjectProvider.PushObject(GOPChunk, go);
+            }
+
+            m_drawCalls.Clear();
+            m_drawCallRenderers.Clear();
         }
     }
 }

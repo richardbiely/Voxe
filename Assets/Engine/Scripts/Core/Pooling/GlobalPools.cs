@@ -30,44 +30,44 @@ namespace Assets.Engine.Scripts.Core
         private readonly Dictionary<int, IArrayPool<Color32>> m_color32ArrayPools =
             new Dictionary<int, IArrayPool<Color32>>(128);
 
-        public void PopVector2Array(int size, out Vector2[] arr)
+        public Vector2[] PopVector2Array(int size)
         {
-            PopArray(size, m_vector2ArrayPools, out arr);
+            return PopArray(size, m_vector2ArrayPools);
         }
 
-        public void PopVector3Array(int size, out Vector3[] arr)
+        public Vector3[] PopVector3Array(int size)
         {
-            PopArray(size, m_vector3ArrayPools, out arr);
+            return PopArray(size, m_vector3ArrayPools);
         }
 
-        public void PopVector4Array(int size, out Vector4[] arr)
+        public Vector4[] PopVector4Array(int size)
         {
-            PopArray(size, m_vector4ArrayPools, out arr);
+            return PopArray(size, m_vector4ArrayPools);
         }
 
-        public void PopColor32Array(int size, out Color32[] arr)
+        public Color32[] PopColor32Array(int size)
         {
-            PopArray(size, m_color32ArrayPools, out arr);
+            return PopArray(size, m_color32ArrayPools);
         }
 
-        public void PushVector2Array(ref Vector2[] arr)
+        public void PushVector2Array(Vector2[] arr)
         {
-            PushArray(ref arr, m_vector2ArrayPools);
+            PushArray(arr, m_vector2ArrayPools);
         }
 
-        public void PushVector3Array(ref Vector3[] arr)
+        public void PushVector3Array(Vector3[] arr)
         {
-            PushArray(ref arr, m_vector3ArrayPools);
+            PushArray(arr, m_vector3ArrayPools);
         }
 
-        public void PushVector4Array(ref Vector4[] arr)
+        public void PushVector4Array(Vector4[] arr)
         {
-            PushArray(ref arr, m_vector4ArrayPools);
+            PushArray(arr, m_vector4ArrayPools);
         }
 
-        public void PushColor32Array(ref Color32[] arr)
+        public void PushColor32Array(Color32[] arr)
         {
-            PushArray(ref arr, m_color32ArrayPools);
+            PushArray(arr, m_color32ArrayPools);
         }
 
         

@@ -1,3 +1,4 @@
+using System;
 using Assets.Engine.Scripts.Common.DataTypes;
 using Assets.Engine.Scripts.Common.Extensions;
 using Assets.Engine.Scripts.Common.Threading;
@@ -6,10 +7,10 @@ using Assets.Engine.Scripts.Core.Threading;
 using UnityEngine;
 using Assert = UnityEngine.Assertions.Assert;
 using System.Collections.Generic;
+using System.Threading;
 using Assets.Engine.Scripts.Builders;
 using Assets.Engine.Scripts.Core.Chunks.Providers;
 using Assets.Engine.Scripts.Rendering;
-using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
 namespace Assets.Engine.Scripts.Core.Chunks
 {
@@ -109,10 +110,12 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		private bool m_taskRunning;
 		private readonly object m_lock = new object();
 
-        //! Draw call batcher for this chunk
+        //! A list of generic tasks a chunk has to perform
+        private readonly List<Action> m_genericWorkItems = new List<Action>();
+        private int m_genericWorkItemsBeingProcessed;
+
+        //! Manager taking care of render calls
         private readonly DrawCallBatcher m_drawCallBatcher;
-        //! The render buffer used for building MiniChunk geometry
-        public RenderBuffer SolidRenderBuffer { get; private set; }
 
         #endregion Private variables
 
@@ -121,12 +124,12 @@ namespace Assets.Engine.Scripts.Core.Chunks
         public Chunk():
 			base(6)
         {
-            m_threadID = Globals.WorkPool.GetThreadIDFromIndex(s_id++);
-
             Blocks = new BlockStorage();
 
-            m_drawCallBatcher = new DrawCallBatcher(Globals.CubeMeshBuilder);
-            SolidRenderBuffer = new RenderBuffer(Globals.CubeMeshBuilder);
+            m_threadID = Globals.WorkPool.GetThreadIDFromIndex(s_id++);
+            Pools = Globals.WorkPool.GetPool(m_threadID);
+
+            m_drawCallBatcher = new DrawCallBatcher(Globals.CubeMeshBuilder, this);
             BBoxVertices = new List<Vector3>();
             BBoxVerticesTransformed = new List<Vector3>();
 
@@ -156,8 +159,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
         
         public void Init(Map map, int cx, int cy, int cz)
         {
-            Pools = Globals.WorkPool.GetPool(m_threadID);
-
             Map = map;
             Pos = new Vector3Int(cx, cy, cz);
             m_lod = 0;
@@ -214,6 +215,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 			RequestedRemoval = false;
 			m_taskRunning = false;
+            m_genericWorkItemsBeingProcessed = 0;
             m_firstFinalization = true;
 
             m_lod = 0;
@@ -243,7 +245,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
             IsBuilt = false;
 
             m_drawCallBatcher.Clear();
-            SolidRenderBuffer.Clear();
 
             ResetGeometryBoundingMesh();
 
@@ -297,26 +298,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
             BBoxVertices.Clear();
             BBoxVerticesTransformed.Clear();
         }
-
+       
         public void Build()
         {
-            if (IsBuilt || SolidRenderBuffer.Vertices.Count <= 0)
+            if (IsBuilt)
                 return;
-
-            m_drawCallBatcher.Clear();
-            m_drawCallBatcher.Pos = new Vector3Int(
-                Pos.X<<EngineSettings.ChunkConfig.LogSize<<Map.VoxelLogScaleX,
-                Pos.Y<<EngineSettings.ChunkConfig.LogSize<<Map.VoxelLogScaleY,
-                Pos.Z<<EngineSettings.ChunkConfig.LogSize<<Map.VoxelLogScaleZ
-                );
-            m_drawCallBatcher.Batch(SolidRenderBuffer);
-            m_drawCallBatcher.FinalizeDrawCalls();
 
             // Make sure the data is not regenerated all the time
             IsBuilt = true;
 
-            // Clear original buffer
-            SolidRenderBuffer.Clear();
+            // Prepare chunk for rendering
+            m_drawCallBatcher.Commit();
         }
 
         public void BuildGeometryBoundingMesh(ref Bounds bounds)
@@ -630,6 +622,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
             // Go from the least important bit to most important one. If a given bit it set
             // we execute the task tied with it
             
+            ProcessNotifyState();
+            if (m_pendingTasks.Check(ChunkState.GenericWork) && PerformGenericWork())
+                return;
+
 #if ENABLE_BLUEPRINTS
             ProcessNotifyState();
             if (m_pendingTasks.Check(ChunkState.GenerateBlueprints) && GenerateBlueprints())
@@ -662,9 +658,103 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			}
 		}
 
-#region Generate chunk data
+        #region Generic work
 
-		private static readonly ChunkState CurrStateGenerateData = ChunkState.Generate;
+        private struct SGenericWorkItem
+        {
+            public readonly Chunk Chunk;
+            public readonly Action Action;
+
+            public SGenericWorkItem(Chunk chunk, Action action)
+            {
+                Chunk = chunk;
+                Action = action;
+            }
+        }
+
+        private static readonly ChunkState CurrStateGenericWork = ChunkState.GenericWork;
+        private static readonly ChunkState NextStateGenericWork = ChunkState.Idle;
+
+        private static void OnGenericWork(ref SGenericWorkItem item)
+        {
+            Chunk chunk = item.Chunk;
+
+            // Perform the action
+            item.Action();
+
+            int cnt = Interlocked.Decrement(ref chunk.m_genericWorkItemsBeingProcessed);
+            
+            // Something is very wrong if we go below zero
+            Assert.IsTrue(cnt == 0);
+            
+            if (cnt==0)
+            {
+                // All generic work is done
+                lock (chunk.m_lock)
+                {
+                    OnFinalizeDataDone(chunk);
+                }
+            }
+        }
+
+        private static void OnGenericWorkDone(Chunk chunk)
+        {
+            chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateGenericWork);
+            chunk.m_notifyState = NextStateGenericWork;
+            chunk.m_taskRunning = false;
+        }
+
+        private bool PerformGenericWork()
+        {
+            m_pendingTasks = m_pendingTasks.Reset(CurrStateGenericWork);
+
+            if (m_completedTasks.Check(CurrStateGenericWork))
+            {
+                OnGenericWorkDone(this);
+                return false;
+            }
+
+            m_refreshTasks = m_refreshTasks.Reset(CurrStateGenericWork);
+            m_completedTasks = m_completedTasks.Reset(CurrStateGenericWork);
+
+            m_genericWorkItemsBeingProcessed = 0;
+            if (m_genericWorkItems.Count > 0)
+            {
+                m_taskRunning = true;
+                for (int i = 0; i < m_genericWorkItems.Count; i++)
+                {
+                    SGenericWorkItem workItem = new SGenericWorkItem(this, m_genericWorkItems[i]);
+
+                    WorkPoolManager.Add(
+                        new ThreadItem(
+                            m_threadID,
+                            arg =>
+                            {
+                                SGenericWorkItem item = (SGenericWorkItem)arg;
+                                OnGenericWork(ref item);
+                            },
+                            workItem)
+                        );
+                }
+                m_genericWorkItems.Clear();
+            }
+            else
+                OnGenericWorkDone(this);
+
+            return true;
+        }
+
+        public void EnqueueGenericWork(Action action)
+        {
+            Assert.IsTrue(action!=null);
+            m_genericWorkItems.Add(action);
+        }
+
+#endregion
+
+        #region Generate chunk data
+
+        private static readonly ChunkState CurrStateGenerateData = ChunkState.Generate;
 #if ENABLE_BLUEPRINTS
 		private static readonly ChunkState NextStateGenerateData = ChunkState.GenerateBlueprints;
 #else
@@ -855,9 +945,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
             return true;
 		}
 
-#endregion Finalize chunk data
+        #endregion Finalize chunk data
 
-#region Serialize chunk
+        #region Serialize chunk
 
 		private struct SSerializeWorkItem
 		{
@@ -942,9 +1032,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
             return true;
 		}
 
-#endregion Serialize chunk
+        #endregion Serialize chunk
 
-#region Generate vertices
+        #region Generate vertices
 
 		private struct SGenerateVerticesWorkItem
 		{
@@ -981,7 +1071,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             int offsetY = (chunk.Pos.Y << EngineSettings.ChunkConfig.LogSize) << map.VoxelLogScaleY;
             int offsetZ = (chunk.Pos.Z << EngineSettings.ChunkConfig.LogSize) << map.VoxelLogScaleZ;
 
-            map.MeshBuilder.BuildMesh(map, chunk.SolidRenderBuffer, offsetX, offsetY, offsetZ, minX, maxX, minY, maxY, minZ, maxZ, lod, chunk.Pools);
+            map.MeshBuilder.BuildMesh(map, chunk.m_drawCallBatcher, offsetX, offsetY, offsetZ, minX, maxX, minY, maxY, minZ, maxZ, lod, chunk.Pools);
 
 		    lock (chunk.m_lock)
 		    {
@@ -1045,9 +1135,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			}
 		}
 
-#endregion Generate vertices
+        #endregion Generate vertices
 
-#region Remove chunk
+        #region Remove chunk
 
 		private static readonly ChunkState CurrStateRemoveChunk = ChunkState.Remove;
 
@@ -1080,7 +1170,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		    return true;
 		}
 
-#endregion Remove chunk
+        #endregion Remove chunk
 
 #endregion Chunk generation
 

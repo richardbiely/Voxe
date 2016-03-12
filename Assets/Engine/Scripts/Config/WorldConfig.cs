@@ -1,5 +1,4 @@
 ﻿using System.Runtime.Serialization;
-using UnityEngine;
 
 namespace Assets.Engine.Scripts.Config
 {

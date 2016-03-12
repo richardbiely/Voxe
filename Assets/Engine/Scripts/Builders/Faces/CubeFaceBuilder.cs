@@ -1,12 +1,11 @@
 using System.Collections.Generic;
+using Assets.Engine.Plugins.CoherentNoise.Scripts.Generation;
 using Assets.Engine.Scripts.Atlas;
-using Assets.Engine.Scripts.Common.Extensions;
 using Assets.Engine.Scripts.Core;
 using Assets.Engine.Scripts.Core.Blocks;
 using Assets.Engine.Scripts.Rendering;
 using Assets.Engine.Scripts.Utils;
 using UnityEngine;
-using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
 namespace Assets.Engine.Scripts.Builders.Faces
 {
@@ -18,9 +17,10 @@ namespace Assets.Engine.Scripts.Builders.Faces
         #region Private vars
         
         private readonly Rect[] m_faceTextures;
+        private readonly ValueNoise m_noise = new ValueNoise(0);
 
         #endregion Private vars
-        
+
         #region Constructor
 
         public CubeFaceBuilder(IList<BlockTexture> textures)
@@ -73,28 +73,38 @@ namespace Assets.Engine.Scripts.Builders.Faces
             return m_faceTextures[face];
         }
 
-        public void Build(RenderBuffer targetBuffer, ref BlockData block, BlockFace face, bool backFace, ref Vector3[] vecs, LocalPools pools)
+        public void Build(DrawCallBatcher batcher, ref BlockData block, BlockFace face, bool backFace, ref Vector3[] vecs, LocalPools pools)
         {
             int iface = (int)face;
+
+            // Randomize the color a bit
             Color32 color = BlockDatabase.GetBlockInfo(block.BlockType).Color;
 
-            targetBuffer.AddIndices(backFace);
-
-            VertexData[] vertexData;
-            pools.PopVertexDataArray(4, out vertexData);
-
+            /*if (block.BlockType!=BlockType.None)
+            {
+                float value = m_noise.GetValue(vecs[0]+vecs[1]+vecs[2]+vecs[3]) * 0.001f;
+                float noise = (255.0f/Mathf.Max(1, value))*0.1f;
+                int n = (int)noise;
+                byte r = (byte)Math.Max(0, Math.Min(color.r+n, 255));
+                byte g = (byte)Math.Max(0, Math.Min(color.g+n, 255));
+                byte b = (byte)Math.Max(0, Math.Min(color.b+n, 255));
+                color = new Color32(r, g, b, color.a);
+            }*/
+            
+            VertexData[] vertexData = pools.PopVertexDataArray(4);
+            
             for (int i = 0; i<4; i++)
             {
-                VertexData data = vertexData[i] ?? new VertexData();
+                VertexData data = vertexData[i] = pools.PopVertexData();
                 data.Vertex = vecs[i];
                 data.Color = color;
                 data.UV = AddFaceUV(i, GetTexture(iface), backFace);
                 data.Normal = SNormals[iface][i];
-
-                targetBuffer.Vertices.Add(data);
             }
 
-            pools.PushVertexDataArray(ref vertexData);
+            batcher.AddFace(vertexData, backFace);
+
+            pools.PushVertexDataArray(vertexData);
         }
 
         /// <summary>

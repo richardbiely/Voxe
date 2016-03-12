@@ -14,7 +14,7 @@ namespace Assets.Engine.Scripts.Core.Pooling
             return rounded == size ? rounded : rounded + RoundSizeBy;
         }
 
-        protected static void PopArray<T>(int size, IDictionary<int, IArrayPool<T>> pools, out T[] item)
+        protected static T[] PopArray<T>(int size, IDictionary<int, IArrayPool<T>> pools)
         {
             int length = GetRoundedSize(size);
 
@@ -25,10 +25,10 @@ namespace Assets.Engine.Scripts.Core.Pooling
                 pools.Add(length, pool);
             }
 
-            pool.Pop(out item);
+            return pool.Pop();
         }
 
-        protected static void PushArray<T>(ref T[] array, IDictionary<int, IArrayPool<T>> pools)
+        protected static void PushArray<T>(T[] array, IDictionary<int, IArrayPool<T>> pools)
         {
             int length = array.Length;
 
@@ -36,7 +36,7 @@ namespace Assets.Engine.Scripts.Core.Pooling
             if (!pools.TryGetValue(length, out pool))
                 throw new VoxeException("Couldn't find an array pool of length " + length);
 
-            pool.Push(ref array);
+            pool.Push(array);
         }
     }
 }

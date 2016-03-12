@@ -153,7 +153,7 @@ Prefab:
     - target: {fileID: 11465964, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: MeshBuilder
       value: 
-      objectReference: {fileID: 524235168}
+      objectReference: {fileID: 2047744661}
     - target: {fileID: 11465964, guid: a4db001565d61294aae75f13fc68c869, type: 2}
       propertyPath: VoxelLogScaleX
       value: 0
@@ -162,15 +162,25 @@ Prefab:
       propertyPath: VoxelLogScaleZ
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 11465964, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: ShowChunkBounds
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11465964, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: ChunkGenerator
+      value: 
+      objectReference: {fileID: 1103951677}
+    - target: {fileID: 11465964, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: CachedRange
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 11465964, guid: a4db001565d61294aae75f13fc68c869, type: 2}
+      propertyPath: MaxMapY
+      value: 5
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: a4db001565d61294aae75f13fc68c869, type: 2}
   m_IsPrefabParent: 0
---- !u!114 &524235168 stripped
-MonoBehaviour:
-  m_PrefabParentObject: {fileID: 11435848, guid: a4db001565d61294aae75f13fc68c869,
-    type: 2}
-  m_PrefabInternal: {fileID: 297728905}
-  m_Script: {fileID: 11500000, guid: bfe42fce6d47f8e419120f3d17d227ae, type: 3}
 --- !u!1 &583099778
 GameObject:
   m_ObjectHideFlags: 0
@@ -237,6 +247,12 @@ Camera:
   m_PrefabParentObject: {fileID: 2000000, guid: 276ec6ff205a51947bd7ffda6065715a,
     type: 2}
   m_PrefabInternal: {fileID: 1324421060}
+--- !u!114 &1103951677 stripped
+MonoBehaviour:
+  m_PrefabParentObject: {fileID: 11455494, guid: a4db001565d61294aae75f13fc68c869,
+    type: 2}
+  m_PrefabInternal: {fileID: 297728905}
+  m_Script: {fileID: 11500000, guid: bddd13805c0442d45805e26defc2d558, type: 3}
 --- !u!1001 &1324421060
 Prefab:
   m_ObjectHideFlags: 0
@@ -250,7 +266,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
       propertyPath: m_LocalPosition.y
-      value: 150
+      value: 450
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
       propertyPath: m_LocalPosition.z
@@ -274,7 +290,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
       propertyPath: m_RootOrder
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
       propertyPath: m_Name
@@ -311,3 +327,9 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
   m_IsPrefabParent: 0
+--- !u!114 &2047744661 stripped
+MonoBehaviour:
+  m_PrefabParentObject: {fileID: 11412266, guid: a4db001565d61294aae75f13fc68c869,
+    type: 2}
+  m_PrefabInternal: {fileID: 297728905}
+  m_Script: {fileID: 11500000, guid: c6f92a5d4f7f76444b78e6ee5392a085, type: 3}

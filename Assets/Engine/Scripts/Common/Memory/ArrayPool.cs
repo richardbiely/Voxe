@@ -20,7 +20,7 @@ namespace Assets.Engine.Scripts.Common.Memory
 
                 for (int i = 0; i<initialSize; ++i)
                 {
-                    var item = Helpers.CreateAndInitArray1D<T>(length);
+                    var item = Helpers.CreateArray1D<T>(length);
                     m_arrays.Push(item);
                 }
             }
@@ -40,17 +40,9 @@ namespace Assets.Engine.Scripts.Common.Memory
         }
 
         /// <summary>
-        ///     Retrieves an array from the top of the pool
-        /// </summary>
-        public void Pop(out T[] item)
-        {
-            item = m_arrays.Count==0 ? new T[m_arrLength] : m_arrays.Pop();
-        }
-
-        /// <summary>
         ///     Returns an array back to the pool
         /// </summary>
-        public void Push(ref T[] item)
+        public void Push(T[] item)
         {
             if (item==null)
                 return;

@@ -15,18 +15,13 @@ namespace Assets.Engine.Scripts.Builders.Mesh
         public void BuildMesh(UnityEngine.Mesh mesh, RenderBuffer buffer)
         {
             int size = buffer.Vertices.Count;
-            Vector3[] vertices;
-            Vector2[] uvs;
-            Color32[] colors;
-            Vector3[] normals;
-            Vector4[] tangents;
 
             // Avoid allocations by retrieving buffers from the pool
-            Globals.Pools.PopVector3Array(size, out vertices);
-            Globals.Pools.PopVector2Array(size, out uvs);
-            Globals.Pools.PopColor32Array(size, out colors);
-            Globals.Pools.PopVector3Array(size, out normals);
-            Globals.Pools.PopVector4Array(size, out tangents);
+            Vector3[] vertices = Globals.Pools.PopVector3Array(size);
+            Vector2[] uvs = Globals.Pools.PopVector2Array(size); ;
+            Color32[] colors = Globals.Pools.PopColor32Array(size);
+            Vector3[] normals = Globals.Pools.PopVector3Array(size);
+            Vector4[] tangents = Globals.Pools.PopVector4Array(size);
 
             // Fill buffers with data
             for (int i = 0; i<size; i++)
@@ -61,11 +56,11 @@ namespace Assets.Engine.Scripts.Builders.Mesh
             mesh.Optimize();
 
             // Return memory back to pool
-            Globals.Pools.PushVector3Array(ref vertices);
-            Globals.Pools.PushVector2Array(ref uvs);
-            Globals.Pools.PushColor32Array(ref colors);
-            Globals.Pools.PushVector3Array(ref normals);
-            Globals.Pools.PushVector4Array(ref tangents);
+            Globals.Pools.PushVector3Array(vertices);
+            Globals.Pools.PushVector2Array(uvs);
+            Globals.Pools.PushColor32Array(colors);
+            Globals.Pools.PushVector3Array(normals);
+            Globals.Pools.PushVector4Array(tangents);
         }
 
         #endregion
