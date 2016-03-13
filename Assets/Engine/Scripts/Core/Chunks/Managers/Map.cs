@@ -193,7 +193,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     chunk.SetPossiblyVisible(true);
 
                     // If occlusion culling is enabled we need to register it
-                    if (EngineSettings.WorldConfig.OcclusionCulling && Occlusion!=null)
+                    if (EngineSettings.CoreConfig.OcclusionCulling && Occlusion!=null)
                     {
                         chunk.Visible = false;
                         if (chunk.IsFinalized())
@@ -235,7 +235,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         protected override void OnPostProcessChunks()
         {
             // Perform occlussion culling
-            if (EngineSettings.WorldConfig.OcclusionCulling && Occlusion!=null)
+            if (EngineSettings.CoreConfig.OcclusionCulling && Occlusion!=null)
             {
                 Occlusion.PerformOcclusion();
             }

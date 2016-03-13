@@ -10,13 +10,15 @@ namespace Assets.Engine.Scripts.Config
         [DataMember] public bool Mutlithreading { get; set; }
         //! If enabled, IO-related tasks are executed on a separate thread
         [DataMember] public bool IOThread { get; set; }
+        [DataMember] public bool OcclusionCulling { get; set; }
 
         internal CoreConfig()
         {
             Mutlithreading = true;
             IOThread = true;
+            OcclusionCulling = false;
 
-            if(!Verify())
+            if (!Verify())
                 Debug.LogError("Error in CoreConfig");
         }
 

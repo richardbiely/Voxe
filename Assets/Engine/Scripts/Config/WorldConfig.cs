@@ -9,7 +9,6 @@ namespace Assets.Engine.Scripts.Config
         
         [DataMember] public bool Streaming { get; set; }
         [DataMember] public bool Infinite { get; set; }
-        [DataMember] public bool OcclusionCulling { get; set; }
 
         #endregion
 
@@ -17,7 +16,6 @@ namespace Assets.Engine.Scripts.Config
         {
             Streaming = false;
             Infinite = true;
-            OcclusionCulling = false;
 
             Init();
         }
