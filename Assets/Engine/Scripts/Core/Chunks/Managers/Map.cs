@@ -51,6 +51,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         [Header("Level of detail")]
         public float LODCoef = 1f;
         public int ForceLOD = -1;
+        public bool FrustumCulling = true;
 
         [Header("Voxel dimensions")]
         //! Scale of voxel on X axis
@@ -140,7 +141,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
         private bool IsChunkInViewFrustum(Chunk chunk)
         {
             // Check if the chunk lies within camera planes
+#if DEBUG
+            return !FrustumCulling || chunk.CheckFrustum(m_cameraPlanes);
+#else
             return chunk.CheckFrustum(m_cameraPlanes);
+#endif
         }
 
         private void UpdateRangeRects()
