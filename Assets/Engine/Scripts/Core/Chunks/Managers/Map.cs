@@ -275,6 +275,11 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         private void UpdateCache()
         {
+#if DEBUG
+            // Make it possible to see results in real-time
+            m_clipmap.Init(ForceLOD, LODCoef);
+#endif
+
             // Register new chunks in chunk manager
             foreach (var chunkPos in m_chunksToLoadByPos)
             {
@@ -422,7 +427,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             return false;
         }
         
-        #endregion Public Methods
+#endregion Public Methods
 
         private void OnDrawGizmosSelected()
         {
