@@ -62,9 +62,9 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 int absZ = Mathf.Abs(z+m_axes[2].Map.Offset);
 
                 if (absX>absZ)
-                    return absX>absY ? m_axes[0].Map[x] : m_axes[1].Map[y];
+                    return absX>absY ? m_axes[0].Map[absX] : m_axes[1].Map[absY];
 
-                return absZ>absY ? m_axes[2].Map[z] : m_axes[1].Map[y];
+                return absZ>absY ? m_axes[2].Map[absZ] : m_axes[1].Map[absY];
             }
         }
 
