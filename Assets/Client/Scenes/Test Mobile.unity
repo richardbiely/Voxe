@@ -444,6 +444,14 @@ Prefab:
       propertyPath: LocalMap
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 11400026, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
+      propertyPath: MoveSpeed
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400026, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
+      propertyPath: FastMultiplier
+      value: 8
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 11400024, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
   m_ParentPrefab: {fileID: 100100000, guid: 276ec6ff205a51947bd7ffda6065715a, type: 2}
