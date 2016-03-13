@@ -106,22 +106,22 @@ namespace Assets.Engine.Scripts.Rendering
                 }
             }
 
-            // Make vertex data available again
-            m_chunk.EnqueueGenericWork(FreeResources);
-        }
+            // Make vertex data available again. We need to make this a task because our pooling system works on a per-thread
+            // basis. Therefore, all Push()-es need to be called on the same thread as their respective Pop()-s.
+            m_chunk.EnqueueGenericTask(
+                () =>
+                {
+                    LocalPools pools = m_chunk.Pools;
 
-        public void FreeResources()
-        {
-            LocalPools pools = m_chunk.Pools;
+                    for (int i = 0; i<m_renderBuffers.Count; i++)
+                    {
+                        RenderBuffer buffer = m_renderBuffers[i];
+                        for (int v = 0; v<buffer.Vertices.Count; v++)
+                            pools.PushVertexData(buffer.Vertices[v]);
 
-            for (int i = 0; i < m_renderBuffers.Count; i++)
-            {
-                RenderBuffer buffer = m_renderBuffers[i];
-                for (int v = 0; v < buffer.Vertices.Count; v++)
-                    pools.PushVertexData(buffer.Vertices[v]);
-
-                buffer.Clear();
-            }
+                        buffer.Clear();
+                    }
+                });
         }
 
         public void SetVisible(bool show)

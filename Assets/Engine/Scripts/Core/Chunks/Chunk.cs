@@ -208,6 +208,13 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         public void Reset()
         {
+            // Make sure the number of items left to process is zero!
+            while (0!=Interlocked.CompareExchange(ref m_genericWorkItemsLeftToProcess, 0, 0))
+            {
+                Assert.IsTrue(false, "Attempting to release a chunk with unprocessed generic work items");
+            }
+            m_genericWorkItemsLeftToProcess = 0;
+
             UnregisterFromNeighbors();
             
             // Reset chunk events
@@ -216,7 +223,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 			RequestedRemoval = false;
 			m_taskRunning = false;
-            m_genericWorkItemsLeftToProcess = 0;
             m_firstFinalization = true;
 
             m_lod = 0;
@@ -706,11 +712,15 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         private bool PerformGenericWork()
         {
-            m_pendingTasks = m_pendingTasks.Reset(CurrStateGenericWork);
+            // When we get here we expect all generic tasks to be processed
+            Assert.IsTrue(Interlocked.CompareExchange(ref m_genericWorkItemsLeftToProcess, 0, 0) == 0);
 
+            m_pendingTasks = m_pendingTasks.Reset(CurrStateGenericWork);
+            
             // Nothing here for us to do if the chunk was not changed
             if (m_completedTasks.Check(CurrStateGenericWork) && !m_refreshTasks.Check(CurrStateGenericWork))
             {
+                m_genericWorkItemsLeftToProcess = 0;
                 OnGenericWorkDone(this);
                 return false;
             }
@@ -718,10 +728,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             m_refreshTasks = m_refreshTasks.Reset(CurrStateGenericWork);
             m_completedTasks = m_completedTasks.Reset(CurrStateGenericWork);
             
-            // If we get there we expect that all the tasks were properly finished
-            Assert.IsTrue(m_genericWorkItemsLeftToProcess==0);
-
-            // IF there's nothing to do we can skip this state
+            // If there's nothing to do we can skip this state
             if (m_genericWorkItems.Count<=0)
             {
                 m_genericWorkItemsLeftToProcess = 0;
@@ -752,7 +759,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             return true;
         }
 
-        public void EnqueueGenericWork(Action action)
+        public void EnqueueGenericTask(Action action)
         {
             Assert.IsTrue(action!=null);
             m_genericWorkItems.Add(action);
@@ -1152,7 +1159,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
 		private bool RemoveChunk()
 		{
-            // If chunk was generated we need to wait for other states with higher priority to finish first
+            // Wait until all generic tasks are processed
+		    if (Interlocked.CompareExchange(ref m_genericWorkItemsLeftToProcess, 0, 0)!=0)
+		    {
+                Assert.IsTrue(false);
+		        return false;
+		    }
+
+		    // If chunk was generated we need to wait for other states with higher priority to finish first
             if (m_completedTasks.Check(ChunkState.Generate))
             {
                 // Blueprints and FinalizeData need to finish first
