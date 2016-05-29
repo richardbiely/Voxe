@@ -2,7 +2,7 @@
 
 [![Join the chat at https://gitter.im/AlwaysGeeky/Vox](https://badges.gitter.im/richardbiely/Voxe.svg)](https://gitter.im/richardbiely/Voxe?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Repo Size](https://reposs.herokuapp.com/?path=richardbiely/Voxe)](https://github.com/richardbiely/Voxe)
-[![License](https://img.shields.io/badge/Licence-GNU-blue.svg)](https://github.com/Voxe/blob/master/LICENSE.md)
+[![License](https://img.shields.io/badge/Licence-GNU-blue.svg)](https://github.com/richardbiely/Voxe/blob/master/LICENSE.md)
 [![Stories in progress](https://badge.waffle.io/richardbiely/Voxe.png?label=In Progress&title=In Progress)](https://waffle.io/richardbiely/Voxe)
 
 Voxe is an open source voxel framework for Unity3D.
