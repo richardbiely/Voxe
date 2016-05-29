@@ -110,17 +110,17 @@ namespace Assets.Engine.Scripts.Core.Chunks
             OnPostProcessChunks();
         }
 
-        public void RegisterChunk(Vector3Int pos)
+        public void RegisterChunk(int cx, int cy, int cz)
         {
-            Chunk chunk = m_chunks[pos.X, pos.Y, pos.Z];
+            Chunk chunk = m_chunks[cx, cy, cz];
             if (chunk!=null)
                 return;
 
             // Let chunk provider hand us a new chunk
-            chunk = ChunkProvider.RequestChunk(this, pos.X, pos.Y, pos.Z);
+            chunk = ChunkProvider.RequestChunk(this, cx, cy, cz);
 
             // Add the chunk to chunk storage
-            m_chunks[pos.X, pos.Y, pos.Z] = chunk;
+            m_chunks[cx, cy, cz] = chunk;
 
             // Register for updates
             m_updateRequests.Add(chunk);

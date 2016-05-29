@@ -190,7 +190,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 else if (item.IsWithinVisibleRange)
                 {
                     chunk.LOD = item.LOD;
-                    chunk.SetPossiblyVisible(true);
+                    chunk.PossiblyVisible = true;
 
                     // If occlusion culling is enabled we need to register it
                     if (EngineSettings.CoreConfig.OcclusionCulling && Occlusion!=null)
@@ -200,14 +200,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
                             Occlusion.RegisterEntity(chunk);
                     }
                     else
-                        chunk.SetVisible(true);
+                        chunk.Visible = true;
                 }
                 // Chunk is within cached range. Full update except for geometry generation
                 else// if (item.IsWithinCachedRange)
                 {
                     chunk.LOD = item.LOD;
-                    chunk.SetPossiblyVisible(false);
-                    chunk.SetVisible(false);
+                    chunk.PossiblyVisible = false;
+                    chunk.Visible = false;
                 }
             }
             else
@@ -223,8 +223,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 else if (item.IsWithinCachedRange)
                 {
                     chunk.LOD = item.LOD;
-                    chunk.SetPossiblyVisible(false);
-                    chunk.SetVisible(false);
+                    chunk.PossiblyVisible = false;
+                    chunk.Visible = false;
                 }
             }
 
@@ -292,7 +292,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 int yy = ViewerChunkPos.Y+chunkPos.Y;
                 int zz = ViewerChunkPos.Z+chunkPos.Z;
                     
-                RegisterChunk(new Vector3Int(xx, yy, zz));
+                RegisterChunk(xx, yy, zz);
             }
 
             // Commit collected work items

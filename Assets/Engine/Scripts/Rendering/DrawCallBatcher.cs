@@ -126,15 +126,12 @@ namespace Assets.Engine.Scripts.Rendering
 
         public void SetVisible(bool show)
         {
-            bool visible = false;
             for (int i = 0; i<m_drawCallRenderers.Count; i++)
             {
                 Renderer renderer = m_drawCallRenderers[i];
                 renderer.enabled = show;
-                visible = visible|show; // Only set visible to true if there are any render calls to begin with
             }
-
-            m_visible = visible;
+            m_visible = show && m_drawCallRenderers.Count>0;
         }
 
         public bool IsVisible()

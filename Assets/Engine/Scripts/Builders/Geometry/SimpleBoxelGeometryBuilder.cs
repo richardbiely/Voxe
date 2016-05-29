@@ -7,7 +7,6 @@ using Assets.Engine.Scripts.Rendering;
 using Assets.Engine.Scripts.Utils;
 using UnityEngine;
 using UnityEngine.Assertions;
-using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
 
 namespace Assets.Engine.Scripts.Builders.Geometry
 {

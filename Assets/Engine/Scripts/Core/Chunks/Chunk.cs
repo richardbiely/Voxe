@@ -67,9 +67,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
         //! Number of blocks which not air (non-empty blocks)
         public int NonEmptyBlocks { get; set; }
 
-        public bool PossiblyVisible { get; private set; }
-
-        public bool RequestedRemoval;
+        //! Says whether or not building of geometry can be triggered
+        public bool PossiblyVisible { get; set; }        
 
 #if     DEBUG
         public bool IsUsed = false;
@@ -100,13 +99,16 @@ namespace Assets.Engine.Scripts.Core.Chunks
 		//! Tasks already executed
 		private ChunkState m_completedTasks;
 
+        //! True if removal has already been requested for this chunk
+        private bool m_requestedRemoval;
+
         //! First finalization differs from subsequent ones
         private bool m_firstFinalization;
 
         //! Chunk's current level of detail
         private int m_lod;
 
-		//! Specifies whether there's a task running
+		//! Specifies whether there's a task running on this chunk
 		private bool m_taskRunning;
 		private readonly object m_lock = new object();
 
@@ -221,7 +223,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             for (int i = 0; i<m_eventCnt.Length; i++)
 				m_eventCnt[i] = 0;
 
-			RequestedRemoval = false;
+			m_requestedRemoval = false;
 			m_taskRunning = false;
             m_firstFinalization = true;
 
@@ -257,20 +259,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             ResetEvent();
         }
-
-		/// <summary>
-		///     Changes chunk's visibility
-		/// </summary>
-        public void SetVisible(bool show)
-        {
-            Visible = show;
-        }
-
-        public void SetPossiblyVisible(bool show)
-        {
-            PossiblyVisible = show;
-        }
-
+        
 		/// <summary>
 		///     Changes a given block to a block of a different type
 		/// </summary>
@@ -431,10 +420,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         private void Restore()
         {
-			if (!RequestedRemoval)
+			if (!m_requestedRemoval)
 				return;
 
-			RequestedRemoval = false;
+			m_requestedRemoval = false;
 
 			if (EngineSettings.WorldConfig.Streaming)
 				m_pendingTasks = m_pendingTasks.Reset(ChunkState.Serialize);
@@ -443,10 +432,10 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         public void Finish()
         {
-            if (RequestedRemoval)
+            if (m_requestedRemoval)
                 return;
 
-            RequestedRemoval = true;
+            m_requestedRemoval = true;
 
             if (EngineSettings.WorldConfig.Streaming)
                 OnNotified(ChunkState.Serialize);
