@@ -5,6 +5,8 @@
 [![License](https://img.shields.io/badge/Licence-GNU-blue.svg)](https://github.com/richardbiely/Voxe/blob/master/LICENSE.md)
 [![Stories in progress](https://badge.waffle.io/richardbiely/Voxe.png?label=In Progress&title=In Progress)](https://waffle.io/richardbiely/Voxe)
 
+[![Build](https://travis-ci.org/richardbiely/Voxe.svg?branch=master)](https://travis-ci.org/richardbiely/Voxe)
+
 Voxe is an open source voxel framework for Unity3D.
 
 Even though voxels have become rather popular in the last few years there are still only quite a few open-source C# solutions of good quality out there. Voxe is an attempt to bring voxels to everyone. It's meant to bring the community together, be easy to use and yet feature rich.
