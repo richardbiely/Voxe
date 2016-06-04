@@ -142,7 +142,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         {
             // Check if the chunk lies within camera planes
 #if DEBUG
-            return !FrustumCulling || chunk.CheckFrustum(m_cameraPlanes);
+            return !FrustumCulling || GeometryUtility.TestPlanesAABB(m_cameraPlanes, chunk.WorldBounds);
 #else
             return chunk.CheckFrustum(m_cameraPlanes);
 #endif

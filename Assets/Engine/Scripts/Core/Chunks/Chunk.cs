@@ -280,14 +280,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
 			QueueSetBlock(this, x, y, z, blockData);
 		}
 
-        /// <summary>
-        ///     Chunks whether the chunk resides within camera frustum
-        /// </summary>
-        public bool CheckFrustum(Plane[] frustum)
-        {
-            return GeometryUtility.TestPlanesAABB(frustum, WorldBounds);
-        }
-
         public void ResetGeometryBoundingMesh()
         {
             GeometryBounds = new Bounds();
