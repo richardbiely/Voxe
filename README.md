@@ -9,6 +9,8 @@
 
 Voxe is an open source voxel framework for Unity3D.
 
+## NOTE: Any further work on this project has been moved to https://github.com/richardbiely/Voxelmetric!
+
 Even though voxels have become rather popular in the last few years there are still only quite a few open-source C# solutions of good quality out there. Voxe is an attempt to bring voxels to everyone. It's meant to bring the community together, be easy to use and yet feature rich.
 
 I am starting this project because I have come to realize (once again) how futile it is trying to create something great alone with only the little spare time one has. Frankly, in its current form it is far from greatness - it lacks many features, proper documention and its design is not finished still. However, that is not something which can not be changed in the following months given enough talented people decide to give a hand.
