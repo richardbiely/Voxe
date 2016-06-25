@@ -1,4 +1,4 @@
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Interpolation
+namespace Engine.Plugins.CoherentNoise.Scripts.Interpolation
 {
 	///<summary>
 	/// Linear interpolator is the fastest and has the lowest quality, only ensuring continuity of noise values, not their derivatives.

@@ -1,10 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using Assets.Engine.Scripts.Common.IO;
-using Assets.Engine.Scripts.Utils;
+using Engine.Scripts.Common.IO;
 
-namespace Assets.Engine.Scripts.Core.Blocks
+namespace Engine.Scripts.Core.Blocks
 {
     /// <summary>
     /// Represents data about a block

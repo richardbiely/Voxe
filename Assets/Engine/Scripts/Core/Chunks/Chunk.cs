@@ -1,25 +1,23 @@
-using System;
-using Assets.Engine.Scripts.Common.DataTypes;
-using Assets.Engine.Scripts.Common.Extensions;
-using Assets.Engine.Scripts.Common.Threading;
-using Assets.Engine.Scripts.Core.Blocks;
-using Assets.Engine.Scripts.Core.Threading;
-using UnityEngine;
-using Assert = UnityEngine.Assertions.Assert;
 using System.Collections.Generic;
-using System.Threading;
-using Assets.Engine.Scripts.Builders;
-using Assets.Engine.Scripts.Core.Chunks.Providers;
-using Assets.Engine.Scripts.Rendering;
+using Engine.Scripts.Builders;
+using Engine.Scripts.Common;
+using Engine.Scripts.Common.DataTypes;
+using Engine.Scripts.Core.Blocks;
+using Engine.Scripts.Core.Chunks.Managers;
+using Engine.Scripts.Core.Chunks.States;
+using Engine.Scripts.Core.Pooling;
+using Engine.Scripts.Rendering;
+using Engine.Scripts.Rendering.Batchers;
+using UnityEngine;
 
-namespace Assets.Engine.Scripts.Core.Chunks
+namespace Engine.Scripts.Core.Chunks
 {
     /// <summary>
     ///     Represents a chunk consisting of several even sized mini chunks
     /// </summary>
-	public class Chunk: ChunkEvent, IOcclusionEntity
+	public class Chunk: IOcclusionEntity
     {
-        private static int s_id = 0;
+        private static int s_id;
 
         #region Public variables
         
@@ -32,6 +30,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         // Chunk coordinates
         public Vector3Int Pos { get; private set; }
+
+        public ChunkStateManagerClient StateManager { get; private set; }
 
         //! Chunk bound in terms of geometry
         public int MaxRenderY { get; set; }
@@ -56,87 +56,68 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     m_lod = value;
 
                     // Request an update of geometry
-                    RefreshState(ChunkState.BuildVertices);
+                    StateManager.OnNotified(StateManager, ChunkState.BuildVertices);
                 }
             }
         }
-
-        //! True if MiniSection has already been built
-        public bool IsBuilt { get; set; }
-
+        
         //! Number of blocks which not air (non-empty blocks)
         public int NonEmptyBlocks { get; set; }
 
         //! Says whether or not building of geometry can be triggered
         public bool PossiblyVisible { get; set; }        
-
-#if     DEBUG
-        public bool IsUsed = false;
-#endif
+        
+        //! Manager taking care of render calls
+        public RenderGeometryBatcher RenderGeometryBatcher { get; private set; }
 
         #endregion Public variables
 
         #region Private variables
 
-        //! ID of a thread from a thread pool - each chunk is associated with a specific thread pool thread
-        private readonly int m_threadID;
+        //! ThreadID associated with this chunk. Used when working with object pools in MT environment. Resources
+        //! need to be release where they were allocated. Thanks to this, associated containers could be made lock-free
+        public int ThreadID { get; private set; }
 
         //! Object pools used by this chunk
         public LocalPools Pools { get; private set; }
-
-        //! A list of event requiring counter
-        private readonly int [] m_eventCnt = {0, 0};
         
         //! Queue of setBlock operations to execute
         private readonly List<SetBlockContext> m_setBlockQueue = new List<SetBlockContext>();
-
-        //! Next state after currently finished state
-        private ChunkState m_notifyState;
-		//! Tasks waiting to be executed
-		private ChunkState m_pendingTasks;
-        //! States to be refreshed
-        private ChunkState m_refreshTasks;
-		//! Tasks already executed
-		private ChunkState m_completedTasks;
-
-        //! True if removal has already been requested for this chunk
-        private bool m_requestedRemoval;
+        
+        //! If true, removal of chunk has been requested and no further requests are going to be accepted
+        private bool m_removalRequested;
 
         //! First finalization differs from subsequent ones
         private bool m_firstFinalization;
 
         //! Chunk's current level of detail
         private int m_lod;
-
-		//! Specifies whether there's a task running on this chunk
-		private bool m_taskRunning;
-		private readonly object m_lock = new object();
-
-        //! A list of generic tasks a chunk has to perform
-        private readonly List<Action> m_genericWorkItems = new List<Action>();
-        //! Number of generic tasks waiting to be finished
-        private int m_genericWorkItemsLeftToProcess;
-
-        //! Manager taking care of render calls
-        private readonly DrawCallBatcher m_drawCallBatcher;
-
+        
         #endregion Private variables
 
         #region Constructors
 
-        public Chunk():
-			base(6)
+        public static Chunk CreateChunk(Map map, int cx, int cy, int cz)
+        {
+            Chunk chunk = Globals.MemPools.ChunkPool.Pop();
+            chunk.Init(map, cx, cy, cz, new ChunkStateManagerClient(chunk));
+            return chunk;
+        }
+
+        public Chunk()
         {
             Blocks = new BlockStorage();
 
-            m_threadID = Globals.WorkPool.GetThreadIDFromIndex(s_id++);
-            Pools = Globals.WorkPool.GetPool(m_threadID);
+            // Associate Chunk with a certain thread and make use of its memory pool
+            // This is necessary in order to have lock-free caches
+            ThreadID = Globals.WorkPool.GetThreadIDFromIndex(s_id++);
+            Pools = Globals.WorkPool.GetPool(ThreadID);
 
-            m_drawCallBatcher = new DrawCallBatcher(Globals.CubeMeshBuilder, this);
+            RenderGeometryBatcher = new RenderGeometryBatcher(Globals.CubeMeshGeometryBuilder, this);
             BBoxVertices = new List<Vector3>();
             BBoxVerticesTransformed = new List<Vector3>();
 
-            Reset();
+            StateManager = new ChunkStateManagerClient(this);
         }
 
         #endregion Constructors
@@ -160,11 +141,12 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
         #endregion Accessors
         
-        public void Init(Map map, int cx, int cy, int cz)
+        public void Init(Map map, int cx, int cy, int cz, IChunkStateManager stateManager)
         {
             Map = map;
             Pos = new Vector3Int(cx, cy, cz);
             m_lod = 0;
+            StateManager = (ChunkStateManagerClient)stateManager;
 
             int sizeX = EngineSettings.ChunkConfig.Size<<map.VoxelLogScaleX;
             int sizeY = EngineSettings.ChunkConfig.Size<<map.VoxelLogScaleY;
@@ -173,66 +155,41 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 new Vector3(sizeX*(cx+0.5f), sizeY*(cy+0.5f), sizeZ*(cz+0.5f)),
                 new Vector3(sizeX, sizeY, sizeZ)
                 );
+
+            Reset();
+
+            StateManager.Init();
         }
-
-		public void RegisterNeighbors()
-		{
-            // Retrieve neighbors
-			Chunk left = Map.GetChunk(Pos.X - 1, Pos.Y, Pos.Z);
-			Chunk right = Map.GetChunk(Pos.X + 1, Pos.Y, Pos.Z);
-			Chunk front = Map.GetChunk(Pos.X, Pos.Y, Pos.Z - 1);
-			Chunk behind = Map.GetChunk(Pos.X, Pos.Y, Pos.Z + 1);
-		    Chunk top = Map.GetChunk(Pos.X, Pos.Y+1, Pos.Z);
-		    Chunk bottom = Map.GetChunk(Pos.X, Pos.Y-1, Pos.Z);
-
-			// Register neighbors
-			RegisterNeighbor(left);
-			RegisterNeighbor(right);
-			RegisterNeighbor(front);
-			RegisterNeighbor(behind);
-            RegisterNeighbor(top);
-            RegisterNeighbor(bottom);
-        }
-
+       
         #region Public Methods
-        
+
         public void UpdateChunk()
         {
-            if (!m_pendingTasks.Check(ChunkState.Remove))
-                Restore();
+            if (!StateManager.CanUpdate())
+                return;
 
-			ProcessSetBlockQueue();
-			ProcessPendingTasks(PossiblyVisible);
+            // Do not update blocks until the chunk has all its data prepared
+            if (StateManager.IsStateCompleted(ChunkState.FinalizeData))
+            {
+                ProcessSetBlockQueue();
+            }
 
-            if (m_completedTasks.Check(ChunkState.BuildVertices))
+            if (StateManager.IsStateCompleted(ChunkState.BuildVertices))
+            {
+                StateManager.SetMeshBuilt();
                 Build();
-        }
+            }
 
+            StateManager.Update();
+        }
+        
         public void Reset()
         {
-            // Make sure the number of items left to process is zero!
-            while (0!=Interlocked.CompareExchange(ref m_genericWorkItemsLeftToProcess, 0, 0))
-            {
-                Assert.IsTrue(false, "Attempting to release a chunk with unprocessed generic work items");
-            }
-            m_genericWorkItemsLeftToProcess = 0;
-
-            UnregisterFromNeighbors();
-            
             // Reset chunk events
-            for (int i = 0; i<m_eventCnt.Length; i++)
-				m_eventCnt[i] = 0;
-
-			m_requestedRemoval = false;
-			m_taskRunning = false;
+			m_removalRequested = false;
             m_firstFinalization = true;
 
             m_lod = 0;
-
-            m_notifyState = m_notifyState.Reset();            
-			m_pendingTasks = m_pendingTasks.Reset();            
-            m_completedTasks = m_completedTasks.Reset();
-            m_refreshTasks = m_refreshTasks.Reset();
             
             m_setBlockQueue.Clear();
 
@@ -251,34 +208,121 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
             // Reset sections
             NonEmptyBlocks = 0;
-            IsBuilt = false;
 
-            m_drawCallBatcher.Clear();
+            RenderGeometryBatcher.Clear();
 
             ResetGeometryBoundingMesh();
 
-            ResetEvent();
+            StateManager.Reset();
         }
-        
-		/// <summary>
-		///     Changes a given block to a block of a different type
-		/// </summary>
-		public void ModifyBlock(int x, int y, int z, BlockData blockData)
+
+        /// <summary>
+        ///     Changes a given block to a block of a different type
+        /// </summary>
+        public void ModifyBlock(int x, int y, int z, BlockData blockData)
 		{
-			BlockData thisBlock = this[x, y, z];
+            int index = Helpers.GetIndex1DFrom3D(x, y, z);
 
-			// Do nothing if there's no change
-			if (blockData.CompareTo(thisBlock)==0)
+            // Nothing for us to do if block did not change
+            BlockData thisBlock = this[x,y,z];
+            if (blockData.Equals(thisBlock))
 				return;
+            
+            m_setBlockQueue.Add(new SetBlockContext(index, blockData, true));
+        }
 
-			// Meta data must be different as well
-			// TODO: Not good. When trying to change an undamaged block into a different
-			// undamaged block the following condition would be hit.
-			//if (blockData.GetMeta()==thisBlock.GetMeta())
-				//return;
+        private void ProcessSetBlockQueue()
+        {
+            if (m_setBlockQueue.Count <= 0)
+                return;
+            
+            StateManager.RequestState(ChunkState.FinalizeData | ChunkState.BuildVerticesNow);
 
-			QueueSetBlock(this, x, y, z, blockData);
-		}
+            int rebuildMask = 0;
+
+            // Modify blocks
+            for (int j = 0; j < m_setBlockQueue.Count; j++)
+            {
+                SetBlockContext context = m_setBlockQueue[j];
+                
+                int x, y, z;
+                Helpers.GetIndex3DFrom1D(context.Index, out x, out y, out z);
+                this[x,y,z] = context.Block;
+                
+                if (
+                    // Only check neighbors if it is still needed
+                    rebuildMask == 0x3f ||
+                    // Only check neighbors when it is a change of a block on a chunk's edge
+                    (((x + 1) & EngineSettings.ChunkConfig.Mask) > 1 &&
+                     ((y + 1) & EngineSettings.ChunkConfig.Mask) > 1 &&
+                     ((z + 1) & EngineSettings.ChunkConfig.Mask) > 1)
+                    )
+                    continue;
+
+                int cx = Pos.X;
+                int cy = Pos.Y;
+                int cz = Pos.Z;
+
+                // If it is an edge position, notify neighbor as well
+                // Iterate over neighbors and decide which ones should be notified to rebuild                
+                for (int i = 0; i < StateManager.Listeners.Length; i++)
+                {
+                    ChunkEvent listener = StateManager.Listeners[i];
+                    if (listener == null)
+                        continue;
+
+                    // No further checks needed once we know all neighbors need to be notified
+                    if (rebuildMask == 0x3f)
+                        break;
+
+                    ChunkStateManagerClient listenerChunk = (ChunkStateManagerClient)listener;
+
+                    int lx = listenerChunk.chunk.Pos.X;
+                    int ly = listenerChunk.chunk.Pos.Y;
+                    int lz = listenerChunk.chunk.Pos.Z;
+
+                    if ((ly == cy || lz == cz) &&
+                        (
+                            // Section to the left
+                            ((x == 0) && (lx + EngineSettings.ChunkConfig.Mask == cx)) ||
+                            // Section to the right
+                            ((x == EngineSettings.ChunkConfig.Mask) && (lx - EngineSettings.ChunkConfig.Mask == cx))
+                        ))
+                        rebuildMask = rebuildMask | (1 << i);
+
+                    if ((lx == cx || lz == cz) &&
+                        (
+                            // Section to the bottom
+                            ((y == 0) && (ly + EngineSettings.ChunkConfig.Mask == cy)) ||
+                            // Section to the top
+                            ((y == EngineSettings.ChunkConfig.Mask) && (ly - EngineSettings.ChunkConfig.Mask == cy))
+                        ))
+                        rebuildMask = rebuildMask | (1 << i);
+
+                    if ((ly == cy || lx == cx) &&
+                        (
+                            // Section to the back
+                            ((z == 0) && (lz + EngineSettings.ChunkConfig.Mask == cz)) ||
+                            // Section to the front
+                            ((z == EngineSettings.ChunkConfig.Mask) && (lz - EngineSettings.ChunkConfig.Mask == cz))
+                        ))
+                        rebuildMask = rebuildMask | (1 << i);
+                }
+            }
+
+            m_setBlockQueue.Clear();
+
+            // Notify neighbors that they need to rebuilt their geometry
+            if (rebuildMask > 0)
+            {
+                for (int j = 0; j < StateManager.Listeners.Length; j++)
+                {
+                    ChunkStateManagerClient listener = (ChunkStateManagerClient)StateManager.Listeners[j];
+                    if (listener != null && ((rebuildMask >> j) & 1) != 0)
+                        listener.RequestState(ChunkState.FinalizeData | ChunkState.BuildVerticesNow);
+                }
+            }
+        }
 
         public void ResetGeometryBoundingMesh()
         {
@@ -289,14 +333,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
        
         public void Build()
         {
-            if (IsBuilt)
-                return;
-
-            // Make sure the data is not regenerated all the time
-            IsBuilt = true;
-
             // Prepare chunk for rendering
-            m_drawCallBatcher.Commit();
+            RenderGeometryBatcher.Commit();
         }
 
         public void BuildGeometryBoundingMesh(ref Bounds bounds)
@@ -409,880 +447,22 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 ResetGeometryBoundingMesh();
             }
         }
-
-        private void Restore()
-        {
-			if (!m_requestedRemoval)
-				return;
-
-			m_requestedRemoval = false;
-
-			if (EngineSettings.WorldConfig.Streaming)
-				m_pendingTasks = m_pendingTasks.Reset(ChunkState.Serialize);
-			m_pendingTasks = m_pendingTasks.Reset(ChunkState.Remove);
-        }
-
+        
         public void Finish()
         {
-            if (m_requestedRemoval)
+            if (m_removalRequested)
                 return;
 
-            m_requestedRemoval = true;
+            m_removalRequested = true;
 
             if (EngineSettings.WorldConfig.Streaming)
-                OnNotified(ChunkState.Serialize);
-            OnNotified(ChunkState.Remove);            
-        }
-
-#region ChunkEvent implementation
-
-		public override void OnRegistered(bool registerListener)
-		{
-			// Nothing to do when unsubscribing
-			if (!registerListener)
-				return;
-
-			OnNotified(ChunkState.Generate);
-		}
-
-		public override void OnNotified(ChunkState state)
-		{
-		    int eventIndex = -1;
-		    switch (state)
-		    {
-#if ENABLE_BLUEPRINTS
-                case ChunkState.GenerateBlueprints:
-                    eventIndex = 0;
-                break;
-#endif
-                case ChunkState.BuildVertices:
-		            eventIndex = 1;
-                break;
-		    }
-
-		    if (eventIndex>=0)
-		    {
-                // Check completition
-                int cnt = ++m_eventCnt[eventIndex];
-                if (cnt < Subscribers.Length)
-                    return;
-
-                // Reset counter and process/queue event
-                m_eventCnt[eventIndex] = 0;
-            }
-
-            // Queue operation
-            m_pendingTasks = m_pendingTasks.Set(state);
-		}
-
-#endregion ChunkEvent implementation
-
-#region Chunk generation
-        
-        public void MarkAsLoaded()
-		{
-			m_completedTasks = m_completedTasks.Set(
-                ChunkState.Generate|
-#if ENABLE_BLUEPRINTS
-                ChunkState.GenerateBlueprints|
-#endif
-                ChunkState.FinalizeData
-                );
-		}
-
-		private void RegisterNeighbor(Chunk neighbor)
-        {
-            if (neighbor == null)
-                return;
-            
-            bool neighborWasRegistered = neighbor.IsRegistered();
-
-            // Registration needs to be done both ways
-            neighbor.Register(this, true);
-            Register(neighbor, true);
-
-            // Neighbor just got registered
-            if (neighbor.IsRegistered() && !neighborWasRegistered)
-            {
-                ChunkState currState;
-                lock (m_lock)
-                {
-                    currState = m_completedTasks;
-                }
-                // We have to take a special here for there are events which are distributed to all neighbors once a specific task completes.
-                // For instance, once Generate is finished, GenerateBlueprints is sent to all neighbors. If a chunk gets unregistered
-                // and registered back again, it would no longer receive the event. We therefore need to notify it again
-#if ENABLE_BLUEPRINTS
-                if (currState.Check(ChunkState.Generate))
-                    neighbor.OnNotified(ChunkState.GenerateBlueprints);
-#endif
-                if (currState.Check(ChunkState.FinalizeData))
-                    neighbor.OnNotified(ChunkState.BuildVertices);
-            }
-        }
-
-		private void UnregisterFromNeighbors()
-		{
-			// Remove this section from its subscribers
-			foreach (var info in Subscribers)
-			{
-				ChunkEvent subscriber = info;
-				if (subscriber==null)
-					continue;
-
-				// Unregistration needs to be done both ways
-				subscriber.Register(this, false);
-				Register(subscriber, false);
-			}
-		}
-
-        private bool IsFinished_Internal()
-        {
-            return m_completedTasks.Check(ChunkState.Remove);
-        }
-
-		public bool IsFinished()
-		{
-		    lock (m_lock)
-		    {
-                return IsFinished_Internal();
-		    }
-		}
-
-        public bool IsFinalized()
-        {
-            lock (m_lock)
-            {
-                return m_completedTasks.Check(ChunkState.FinalizeData);
-            }
-        }
-
-        private bool IsExecutingTask_Internal()
-        {
-            return m_taskRunning;
-        }
-
-        public bool IsExecutingTask()
-        {
-            lock (m_lock)
-            {
-                return IsExecutingTask_Internal();
-            }
-        }
-
-        private void ProcessNotifyState()
-        {
-            if (m_notifyState==ChunkState.Idle)
-                return;
-
-            // Notify neighbors about our state.
-            // States after GenerateBlueprints are handled differently because they are related only
-            // to the chunk itself rather than chunk's neighbors
-            switch (m_notifyState)
-            {
-#if ENABLE_BLUEPRINTS
-                case ChunkState.GenerateBlueprints:
-#endif
-                case ChunkState.BuildVertices:
-                    NotifyAll(m_notifyState);
-                    break;
-                default:
-                    OnNotified(m_notifyState);
-                    break;
-            }
-
-            m_notifyState = ChunkState.Idle;
+                StateManager.OnNotified(StateManager, ChunkState.SaveData);
+            StateManager.OnNotified(StateManager, ChunkState.Remove);
         }
         
-        public void ProcessPendingTasks(bool possiblyVisible)
-        {
-            lock (m_lock)
-            {
-                // We are not allowed to check anything as long as there is a task still running
-                if (IsExecutingTask_Internal())
-                    return;
+#endregion Public Methods
 
-                // Once this chunk is marked as finished we stop caring about everything else
-                if (IsFinished_Internal())
-                    return;
-            }
-
-            // Go from the least important bit to most important one. If a given bit it set
-            // we execute the task tied with it
-            
-            ProcessNotifyState();
-            if (m_pendingTasks.Check(ChunkState.GenericWork) && PerformGenericWork())
-                return;
-
-#if ENABLE_BLUEPRINTS
-            ProcessNotifyState();
-            if (m_pendingTasks.Check(ChunkState.GenerateBlueprints) && GenerateBlueprints())
-                return;
-#endif
-
-            ProcessNotifyState();
-            if (m_pendingTasks.Check(ChunkState.FinalizeData) && FinalizeData())
-                return;
-
-            // TODO: Consider making it possible to serialize section and generate vertices at the same time
-            ProcessNotifyState();
-            if (m_pendingTasks.Check(ChunkState.Serialize) && SerializeChunk())
-                return;
-
-            ProcessNotifyState();
-            if (m_pendingTasks.Check(ChunkState.Remove) && RemoveChunk())
-                return;
-
-            ProcessNotifyState();
-            if (m_pendingTasks.Check(ChunkState.Generate) && GenerateData(possiblyVisible))
-                return;
-
-            // Building vertices has the lowest priority for us. It's just the data we see.
-            if (possiblyVisible)
-			{
-                ProcessNotifyState();
-                if (m_pendingTasks.Check(ChunkState.BuildVertices))
-                    GenerateVertices();
-			}
-		}
-
-        #region Generic work
-
-        private struct SGenericWorkItem
-        {
-            public readonly Chunk Chunk;
-            public readonly Action Action;
-
-            public SGenericWorkItem(Chunk chunk, Action action)
-            {
-                Chunk = chunk;
-                Action = action;
-            }
-        }
-
-        private static readonly ChunkState CurrStateGenericWork = ChunkState.GenericWork;
-        private static readonly ChunkState NextStateGenericWork = ChunkState.Idle;
-
-        private static void OnGenericWork(ref SGenericWorkItem item)
-        {
-            Chunk chunk = item.Chunk;
-
-            // Perform the action
-            item.Action();
-
-            int cnt = Interlocked.Decrement(ref chunk.m_genericWorkItemsLeftToProcess);
-            if (cnt<=0)
-            {
-                // Something is very wrong if we go below zero
-                Assert.IsTrue(cnt == 0);
-
-                // All generic work is done
-                lock (chunk.m_lock)
-                {
-                    OnGenericWorkDone(chunk);
-                }
-            }
-        }
-
-        private static void OnGenericWorkDone(Chunk chunk)
-        {
-            chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateGenericWork);
-            chunk.m_notifyState = NextStateGenericWork;
-            chunk.m_taskRunning = false;
-        }
-
-        private bool PerformGenericWork()
-        {
-            // When we get here we expect all generic tasks to be processed
-            Assert.IsTrue(Interlocked.CompareExchange(ref m_genericWorkItemsLeftToProcess, 0, 0) == 0);
-
-            m_pendingTasks = m_pendingTasks.Reset(CurrStateGenericWork);
-            
-            // Nothing here for us to do if the chunk was not changed
-            if (m_completedTasks.Check(CurrStateGenericWork) && !m_refreshTasks.Check(CurrStateGenericWork))
-            {
-                m_genericWorkItemsLeftToProcess = 0;
-                OnGenericWorkDone(this);
-                return false;
-            }
-
-            m_refreshTasks = m_refreshTasks.Reset(CurrStateGenericWork);
-            m_completedTasks = m_completedTasks.Reset(CurrStateGenericWork);
-            
-            // If there's nothing to do we can skip this state
-            if (m_genericWorkItems.Count<=0)
-            {
-                m_genericWorkItemsLeftToProcess = 0;
-                OnGenericWorkDone(this);
-                return false;
-            }
-
-            m_taskRunning = true;
-            m_genericWorkItemsLeftToProcess = m_genericWorkItems.Count;
-
-            for (int i = 0; i<m_genericWorkItems.Count; i++)
-            {
-                SGenericWorkItem workItem = new SGenericWorkItem(this, m_genericWorkItems[i]);
-
-                WorkPoolManager.Add(
-                    new ThreadItem(
-                        m_threadID,
-                        arg =>
-                        {
-                            SGenericWorkItem item = (SGenericWorkItem)arg;
-                            OnGenericWork(ref item);
-                        },
-                        workItem)
-                    );
-            }
-            m_genericWorkItems.Clear();
-
-            return true;
-        }
-
-        public void EnqueueGenericTask(Action action)
-        {
-            Assert.IsTrue(action!=null);
-            m_genericWorkItems.Add(action);
-            RefreshState(ChunkState.GenericWork);
-        }
-
-#endregion
-
-        #region Generate chunk data
-
-        private static readonly ChunkState CurrStateGenerateData = ChunkState.Generate;
-#if ENABLE_BLUEPRINTS
-		private static readonly ChunkState NextStateGenerateData = ChunkState.GenerateBlueprints;
-#else
-        private static readonly ChunkState NextStateGenerateData = ChunkState.FinalizeData;
-#endif
-
-        private static void OnGenerateData(Chunk chunk)
-		{
-			chunk.Map.ChunkGenerator.Generate(chunk);
-
-		    lock (chunk.m_lock)
-		    {
-		        OnGenerateDataDone(chunk);
-		    }
-		}
-
-		private static void OnGenerateDataDone(Chunk chunk)
-		{
-			chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateGenerateData);
-			chunk.m_notifyState = NextStateGenerateData;
-			chunk.m_taskRunning = false;
-        }
-
-		private bool GenerateData(bool possiblyVisible)
-        {
-			if (m_completedTasks.Check(CurrStateGenerateData))
-			{
-                m_pendingTasks = m_pendingTasks.Reset(CurrStateGenerateData);
-
-                OnGenerateDataDone(this);
-                return false;
-            }
-
-            // In order to save performance only generate data on-demand
-            if (!possiblyVisible)
-                return true;
-
-            m_pendingTasks = m_pendingTasks.Reset(CurrStateGenerateData);
-            m_completedTasks = m_completedTasks.Reset(CurrStateGenerateData);
-
-            m_taskRunning = true;
-			WorkPoolManager.Add(new ThreadItem(
-                m_threadID,
-				arg =>
-				{
-					Chunk chunk = (Chunk)arg;
-					OnGenerateData(chunk);
-				},
-				this)
-			);
-
-            return true;
-		}
-
-        #endregion Generate chunk data
-
-#if ENABLE_BLUEPRINTS
-        #region Generate blueprints
-
-		private static readonly ChunkState CurrStateGenerateBlueprints = ChunkState.GenerateBlueprints;
-		private static readonly ChunkState NextStateGenerateBlueprints = ChunkState.FinalizeData;
-
-		private static void OnGenerateBlueprints(Chunk chunk)
-		{
-		    lock (chunk.m_lock)
-		    {
-		        OnGenerateBlueprintsDone(chunk);
-		    }
-		}
-
-		private static void OnGenerateBlueprintsDone(Chunk chunk)
-		{
-			chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateGenerateBlueprints);
-			chunk.m_notifyState = NextStateGenerateBlueprints;
-			chunk.m_taskRunning = false;
-		}
-
-		private bool GenerateBlueprints()
-		{
-			Assert.IsTrue(m_completedTasks.Check(ChunkState.Generate),
-				string.Format("[{0},{1},{2}] - GenerateBlueprints set sooner than Generate completed. Pending:{3}, Completed:{4}", Pos.X, Pos.Y, Pos.Z, m_pendingTasks, m_completedTasks)
-            );
-			if (!m_completedTasks.Check(ChunkState.Generate))
-				return true;
-
-			m_pendingTasks = m_pendingTasks.Reset(CurrStateGenerateBlueprints);
-
-			if (m_completedTasks.Check(CurrStateGenerateBlueprints))
-			{
-				OnGenerateBlueprintsDone(this);
-				return false;
-			}
-
-			m_completedTasks = m_completedTasks.Reset(CurrStateGenerateBlueprints);
-
-            m_taskRunning = true;
-			WorkPoolManager.Add(new ThreadItem(
-                m_threadID,
-				arg =>
-				{
-					Chunk chunk = (Chunk)arg;
-					OnGenerateBlueprints(chunk);
-				},
-				this)
-			);
-
-            return true;
-		}
-
-        #endregion Generate blueprints
-#endif
-
-        #region Finalize chunk data
-
-        private static readonly ChunkState CurrStateFinalizeData = ChunkState.FinalizeData;
-		private static readonly ChunkState NextStateFinalizeData = ChunkState.BuildVertices;
-
-		private static void OnFinalizeData(Chunk chunk)
-		{
-			// Generate height limits
-			chunk.CalculateProperties();
-            // Compress chunk data
-            //chunk.Blocks.IsCompressed = true;
-            // Compress chunk data
-            // Only do this when streaming is enabled for now
-            if (EngineSettings.WorldConfig.Streaming)
-            {
-                chunk.Blocks.RLE.Reset();
-                BlockData[] compressedData = chunk.Blocks.ToArray();
-                chunk.Blocks.RLE.Compress(ref compressedData);
-            }
-
-            lock (chunk.m_lock)
-		    {
-		        OnFinalizeDataDone(chunk);
-		    }
-		}
-
-		private static void OnFinalizeDataDone(Chunk chunk)
-		{
-			chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateFinalizeData);
-			chunk.m_notifyState = NextStateFinalizeData;
-			chunk.m_taskRunning = false;
-		}
-
-		private bool FinalizeData()
-		{
-#if ENABLE_BLUEPRINTS
-            // All sections must have blueprints generated first
-		    Assert.IsTrue(
-				m_completedTasks.Check(ChunkState.GenerateBlueprints),
-				string.Format("[{0},{1},{2}] - FinalizeData set sooner than GenerateBlueprints completed. Pending:{3}, Completed:{4}", Pos.X, Pos.Y, Pos.Z, m_pendingTasks, m_completedTasks)
-            );
-		    if (!m_completedTasks.Check(ChunkState.GenerateBlueprints))
-                return true;
-#else
-            Assert.IsTrue(
-                m_completedTasks.Check(ChunkState.Generate),
-                string.Format("[{0},{1},{2}] - FinalizeData set sooner than Generate completed. Pending:{3}, Completed:{4}", Pos.X, Pos.Y, Pos.Z, m_pendingTasks, m_completedTasks)
-            );
-            if (!m_completedTasks.Check(ChunkState.Generate))
-                return true;
-#endif
-
-			m_pendingTasks = m_pendingTasks.Reset(CurrStateFinalizeData);
-
-            // Nothing here for us to do if the chunk was not changed
-            if (m_completedTasks.Check(CurrStateFinalizeData) && !m_refreshTasks.Check(CurrStateFinalizeData))
-            {
-                OnFinalizeDataDone(this);
-                return false;
-            }
-
-            m_refreshTasks = m_refreshTasks.Reset(CurrStateFinalizeData);
-            m_completedTasks = m_completedTasks.Reset(CurrStateFinalizeData);
-
-            m_taskRunning = true;
-			WorkPoolManager.Add(new ThreadItem(
-                m_threadID,
-				arg =>
-				{
-					Chunk chunk = (Chunk)arg;
-					OnFinalizeData(chunk);
-				},
-				this)
-			);
-
-            return true;
-		}
-
-        #endregion Finalize chunk data
-
-        #region Serialize chunk
-
-		private struct SSerializeWorkItem
-		{
-			public readonly Chunk Chunk;
-			public readonly string FilePath;
-
-			public SSerializeWorkItem(Chunk chunk, string filePath)
-			{
-				Chunk = chunk;
-				FilePath = filePath;
-			}
-		}
-
-		private static readonly ChunkState CurrStateSerializeChunk = ChunkState.Serialize;
-
-		private static void OnSerializeChunk(Chunk chunk, string filePath)
-		{
-			// !TODO: Handle failure
-			ChunkProvider.StoreChunkToDisk(
-				chunk,
-				filePath
-			);
-
-		    lock (chunk.m_lock)
-		    {
-		        OnSerialzeChunkDone(chunk);
-		    }
-		}
-
-		private static void OnSerialzeChunkDone(Chunk chunk)
-		{
-			chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateSerializeChunk);
-			chunk.m_taskRunning = false;
-        }
-
-		private bool SerializeChunk()
-		{
-			// This state should only be set it streaming is enabled
-			Assert.IsTrue(EngineSettings.WorldConfig.Streaming);
-
-			// If chunk was generated...
-			if (m_completedTasks.Check(ChunkState.Generate))
-			{
-				// ...  we need to wait until blueprints are generated and chunk is finalized
-				if (!m_completedTasks.Check(
-#if ENABLE_BLUEPRINTS
-                    ChunkState.GenerateBlueprints |
-#endif
-                    ChunkState.FinalizeData
-                    ))
-					return true;
-			}
-
-			m_pendingTasks = m_pendingTasks.Reset(CurrStateSerializeChunk);
-
-            // Nothing here for us to do if the chunk was not changed since the last serialization
-            if (m_completedTasks.Check(CurrStateSerializeChunk) && !m_refreshTasks.Check(CurrStateSerializeChunk))
-            {
-                OnSerialzeChunkDone(this);
-                return false;
-            }
-
-            m_refreshTasks = m_refreshTasks.Reset(CurrStateSerializeChunk);
-			m_completedTasks = m_completedTasks.Reset(CurrStateSerializeChunk);
-
-		    ChunkProvider provider = (ChunkProvider)Map.ChunkProvider;
-			SSerializeWorkItem workItem = new SSerializeWorkItem(
-				this,
-                provider.GetFilePathFromIndex(Pos.X, Pos.Y, Pos.Z)
-			);
-
-            m_taskRunning = true;
-			IOPoolManager.Add(new ThreadItem(
-				arg =>
-				{
-					SSerializeWorkItem item = (SSerializeWorkItem)arg;
-					OnSerializeChunk(item.Chunk, item.FilePath);
-				},
-				workItem)
-			);
-
-            return true;
-		}
-
-        #endregion Serialize chunk
-
-        #region Generate vertices
-
-		private struct SGenerateVerticesWorkItem
-		{
-			public readonly Chunk Chunk;
-		    public readonly int MinX;
-		    public readonly int MaxX;
-			public readonly int MinY;
-			public readonly int MaxY;
-            public readonly int MinZ;
-            public readonly int MaxZ;
-            public readonly int LOD;
-
-			public SGenerateVerticesWorkItem(Chunk chunk, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod)
-			{
-				Chunk = chunk;
-			    MinX = minX;
-			    MaxX = maxX;
-				MinY = minY;
-				MaxY = maxY;
-			    MinZ = minZ;
-			    MaxZ = maxZ;
-			    LOD = lod;
-			}
-		}
-
-		private static readonly ChunkState CurrStateGenerateVertices = ChunkState.BuildVertices;
-		private static readonly ChunkState NextStateGenerateVertices = ChunkState.Idle;
-        
-		private static void OnGenerateVerices(Chunk chunk, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod)
-		{
-            Map map = chunk.Map;
-
-            int offsetX = (chunk.Pos.X << EngineSettings.ChunkConfig.LogSize) << map.VoxelLogScaleX;
-            int offsetY = (chunk.Pos.Y << EngineSettings.ChunkConfig.LogSize) << map.VoxelLogScaleY;
-            int offsetZ = (chunk.Pos.Z << EngineSettings.ChunkConfig.LogSize) << map.VoxelLogScaleZ;
-
-            map.MeshBuilder.BuildMesh(map, chunk.m_drawCallBatcher, offsetX, offsetY, offsetZ, minX, maxX, minY, maxY, minZ, maxZ, lod, chunk.Pools);
-
-		    lock (chunk.m_lock)
-		    {
-		        OnGenerateVerticesDone(chunk);
-		    }
-		}
-
-		private static void OnGenerateVerticesDone(Chunk chunk)
-		{
-			chunk.m_completedTasks = chunk.m_completedTasks.Set(CurrStateGenerateVertices);
-			chunk.m_notifyState = NextStateGenerateVertices;
-			chunk.m_taskRunning = false;
-        }
-
-		/// <summary>
-		///     Build this minichunk's render buffers
-		/// </summary>
-		private void GenerateVertices()
-		{
-			/*Assert.IsTrue(
-				m_completedTasks.Check(ChunkState.FinalizeData),
-				string.Format("[{0},{1},{2}] - GenerateVertices set sooner than FinalizeData completed. Pending:{3}, Completed:{4}", Pos.X, Pos.Y, Pos.Z, m_pendingTasks, m_completedTasks)
-            );*/
-            if (!m_completedTasks.Check(ChunkState.FinalizeData))
-                return;
-
-			m_pendingTasks = m_pendingTasks.Reset(CurrStateGenerateVertices);
-
-            // Nothing here for us to do if the chunk was not changed since the last time geometry was built
-            if (m_completedTasks.Check(CurrStateGenerateVertices) && !m_refreshTasks.Check(CurrStateGenerateVertices))
-            {
-                OnGenerateVerticesDone(this);
-                return;
-            }
-
-            m_refreshTasks = m_refreshTasks.Reset(CurrStateGenerateVertices);
-            m_completedTasks = m_completedTasks.Reset(CurrStateGenerateVertices);
-            
-			if (NonEmptyBlocks>0)
-			{
-			    IsBuilt = false;
-                
-				var workItem = new SGenerateVerticesWorkItem(
-                    this, MinRenderX, MaxRenderX, MinRenderY, MaxRenderY, MinRenderZ, MaxRenderZ, LOD
-                    );
-                
-                m_taskRunning = true;
-				WorkPoolManager.Add(new ThreadItem(
-                    m_threadID,
-					arg =>
-					{
-						SGenerateVerticesWorkItem item = (SGenerateVerticesWorkItem)arg;
-                        OnGenerateVerices(item.Chunk, item.MinX, item.MaxX, item.MinY, item.MaxY, item.MinZ, item.MaxZ, item.LOD);
-                    },
-					workItem)
-				);
-			}
-			else
-			{
-				OnGenerateVerticesDone(this);
-			}
-		}
-
-        #endregion Generate vertices
-
-        #region Remove chunk
-
-		private static readonly ChunkState CurrStateRemoveChunk = ChunkState.Remove;
-
-		private bool RemoveChunk()
-		{
-            // Wait until all generic tasks are processed
-		    if (Interlocked.CompareExchange(ref m_genericWorkItemsLeftToProcess, 0, 0)!=0)
-		    {
-                Assert.IsTrue(false);
-		        return false;
-		    }
-
-		    // If chunk was generated we need to wait for other states with higher priority to finish first
-            if (m_completedTasks.Check(ChunkState.Generate))
-            {
-                // Blueprints and FinalizeData need to finish first
-                if (!m_completedTasks.Check(
-#if ENABLE_BLUEPRINTS
-                    ChunkState.GenerateBlueprints|
-#endif
-                    ChunkState.FinalizeData
-                    ))
-                    return false;
-
-                // With streaming enabled we have to wait for serialization to finish as well
-                if (EngineSettings.WorldConfig.Streaming && !m_completedTasks.Check(ChunkState.Serialize))
-                    return false;
-            }
-            else
-            // No work on chunk started yet. Reset its' state completely
-            {
-                m_pendingTasks = m_pendingTasks.Reset();
-                m_completedTasks = m_completedTasks.Reset();
-            }
-                        
-            m_completedTasks = m_completedTasks.Set(CurrStateRemoveChunk);
-		    return true;
-		}
-
-        #endregion Remove chunk
-
-#endregion Chunk generation
-
-#region Chunk modification
-
-        private void RefreshState(ChunkState state)
-        {
-            m_refreshTasks = m_refreshTasks.Set(state);
-            m_pendingTasks = m_pendingTasks.Set(state);
-        }
-
-		private void QueueSetBlock(Chunk chunk, int bx, int by, int bz, BlockData block)
-		{
-            // Ignore attempts to change the block into the same one
-            if (block.BlockType==Blocks[bx, by, bz].BlockType)
-                return;
-
-            int cx = chunk.Pos.X;
-		    int cy = chunk.Pos.Y;
-			int cz = chunk.Pos.Z;
-
-            int subscribersMask = 0;
-
-			// Iterate over neighbors and decide which ones should be notified to rebuild
-			for (int i = 0; i < Subscribers.Length; i++)
-			{
-				ChunkEvent subscriber = Subscribers[i];
-				if (subscriber == null)
-					continue;
-
-				Chunk subscriberChunk = (Chunk)subscriber;
-
-                if (subscriberChunk.Pos.X == cx && (
-                    // Section to the left
-                    ((bx == 0) && (subscriberChunk.Pos.X + 1 == cx)) ||
-                    // Section to the right
-                    ((bx == EngineSettings.ChunkConfig.Mask) && (subscriberChunk.Pos.X - 1 == cx))
-                ))
-                    subscribersMask = subscribersMask | (1 << i);
-
-                if (subscriberChunk.Pos.Y == cy && (
-                    // Section to the bottom
-                    ((by == 0) && (subscriberChunk.Pos.Y + 1 == cy)) ||
-                    // Section to the top
-                    ((by == EngineSettings.ChunkConfig.Mask) && (subscriberChunk.Pos.Y - 1 == cy))
-                ))
-                    subscribersMask = subscribersMask | (1 << i);
-
-                if (subscriberChunk.Pos.Z == cz && (
-                    // Section to the back
-                    ((bz == 0) && (subscriberChunk.Pos.Z + 1 == cz)) ||
-                    // Section to the front
-                    ((bz == EngineSettings.ChunkConfig.Mask) && (subscriberChunk.Pos.Z - 1 == cz))
-                ))
-                    subscribersMask = subscribersMask | (1 << i);
-            }
-
-            // Request update for the block
-            m_setBlockQueue.Add(
-                new SetBlockContext(chunk, bx, by, bz, block, subscribersMask)
-                );
-        }
-
-		public void ProcessSetBlockQueue()
-		{
-            // Modify blocks
-            for (int i = 0; i < m_setBlockQueue.Count; i++)
-            {
-                SetBlockContext context = m_setBlockQueue[i];
-                
-                Blocks[context.BX, context.BY, context.BZ] = context.Block;
-
-                // Chunk needs to be finialized again
-                /*
-                    TODO: This can be optimized. There's no need to recompute min/max chunk index
-                    everytime we update a block. An update is only required when we delete/add a block.
-                    The best would be having two 2D [chunkWidth,chunkHeight] arrays storing min and
-                    max height indexes respectively. This would be helpful for other things as well.
-                */
-                RefreshState(ChunkState.FinalizeData);
-
-                // Let us know that there was a change in data since the last time the chunk
-                // was loaded so we can enqueue serialization only when it is really necessary.
-                m_refreshTasks = m_refreshTasks.Set(ChunkState.Serialize);
-
-                // Ask for rebuild of geometry
-                RefreshState(ChunkState.BuildVertices);
-
-                // Notify subscribers
-                if (context.SubscribersMask > 0)
-                {
-                    for (int j = 0; j < Subscribers.Length; j++)
-                    {
-                        Chunk subscriber = (Chunk)Subscribers[j];
-                        if (subscriber!=null && ((context.SubscribersMask >> j)&1)!=0)
-                            subscriber.RefreshState(ChunkState.BuildVertices);
-                    }
-                }
-            }
-
-            m_setBlockQueue.Clear();
-		}
-
-        #endregion Chunk modification
-
-        #endregion Public Methods
-
-        #region IOcclusionEntity
+#region IOcclusionEntity
 
         //! Boundaries of the mini chunk
         public Bounds GeometryBounds { get; set; }
@@ -1290,8 +470,8 @@ namespace Assets.Engine.Scripts.Core.Chunks
         //! Make the occluder visible/invisible
         public bool Visible
         {
-            get { return m_drawCallBatcher.IsVisible(); }
-            set { m_drawCallBatcher.SetVisible(value); }
+            get { return RenderGeometryBatcher.IsEnabled(); }
+            set { RenderGeometryBatcher.Enable(value); }
         }
 
         public bool IsOccluder()
@@ -1301,14 +481,14 @@ namespace Assets.Engine.Scripts.Core.Chunks
             return BBoxVertices.Count > 0;
         }
 
-        #endregion
+#endregion
 
-        #region IRasterizationEntity
+#region IRasterizationEntity
 
         public List<Vector3> BBoxVertices { get; set; }
 
         public List<Vector3> BBoxVerticesTransformed { get; set; }
 
-        #endregion
+#endregion
     }
 }

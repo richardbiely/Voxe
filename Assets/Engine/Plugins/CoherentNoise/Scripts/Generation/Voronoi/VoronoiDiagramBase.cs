@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Voronoi
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Voronoi
 {
     /// <summary>
     /// Base class for Voronoi diagrams generators. Voronoi diagrams use a set of control points, that are somehow distributed, and for every point calculate distances to the closest control points.

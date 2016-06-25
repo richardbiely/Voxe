@@ -1,4 +1,4 @@
-namespace Assets.Engine.Scripts.Atlas
+namespace Engine.Scripts.Core.Blocks
 {
     /// <summary>
     /// Enum of block textures.

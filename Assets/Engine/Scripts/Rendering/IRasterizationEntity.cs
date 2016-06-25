@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Rendering
+namespace Engine.Scripts.Rendering
 {
     public interface IRasterizationEntity
     {

@@ -1,9 +1,7 @@
-using Assets.Engine.Scripts.Atlas;
-using Assets.Engine.Scripts.Builders.Faces;
-using Assets.Engine.Scripts.Core.Blocks;
+using Engine.Scripts.Builders.Faces;
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Utils
+namespace Engine.Scripts.Core.Blocks
 {
     // TODO: Make this configurable
     public static class BlockDatabase

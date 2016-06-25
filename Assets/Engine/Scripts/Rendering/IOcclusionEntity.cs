@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Engine.Scripts.Rendering
+namespace Engine.Scripts.Rendering
 {
     public interface IOcclusionEntity: IRasterizationEntity
     {

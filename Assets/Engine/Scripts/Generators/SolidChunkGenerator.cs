@@ -1,7 +1,7 @@
-using Assets.Engine.Scripts.Core.Blocks;
-using Assets.Engine.Scripts.Core.Chunks;
+using Engine.Scripts.Core.Blocks;
+using Engine.Scripts.Core.Chunks;
 
-namespace Assets.Engine.Scripts.Generators
+namespace Engine.Scripts.Generators
 {
     /// <summary>
     ///     Simple generator which produces completely solid chunks

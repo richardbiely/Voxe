@@ -2,7 +2,7 @@ using System;
 using System.Text;
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Common.DataTypes
+namespace Engine.Scripts.Common.DataTypes
 {
     public struct Vector2Int: IEquatable<Vector2Int>, IComparable<Vector2Int>
     {

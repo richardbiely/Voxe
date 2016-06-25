@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using Engine.Scripts.Core.Chunks.Managers;
+using UnityEngine;
 
-namespace Assets.Engine.Scripts.Core.Chunks.Providers
+namespace Engine.Scripts.Core.Chunks.Providers
 {
     public abstract class AChunkProvider: MonoBehaviour, IChunkProvider
     {

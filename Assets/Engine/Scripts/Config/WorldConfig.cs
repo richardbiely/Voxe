@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace Assets.Engine.Scripts.Config
+namespace Engine.Scripts.Config
 {
     [DataContract]
     public class WorldConfig: IEngineConfig

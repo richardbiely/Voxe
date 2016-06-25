@@ -1,4 +1,4 @@
-﻿namespace Assets.Engine.Scripts.Core.Chunks
+﻿namespace Engine.Scripts.Core.Chunks.Managers
 {
     public interface IChunkManager
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Assets.Engine.Scripts.Common.IO.RLE
+namespace Engine.Scripts.Common.IO.RLE
 {
     public class RLE<T>: IBinarizable where T : IComparable<T>, IBinarizable, new ()
     {

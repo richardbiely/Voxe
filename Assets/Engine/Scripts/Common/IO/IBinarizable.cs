@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace Assets.Engine.Scripts.Common.IO
+namespace Engine.Scripts.Common.IO
 {
     public interface IBinarizable
     {

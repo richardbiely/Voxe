@@ -1,18 +1,18 @@
 ﻿using System.Collections.Generic;
-using Assets.Engine.Scripts.Common;
-using Assets.Engine.Scripts.Common.DataTypes;
-using Assets.Engine.Scripts.Core.Blocks;
-using Assets.Engine.Scripts.Physics;
+using System.Linq;
+using Engine.Scripts.Builders.Geometry;
+using Engine.Scripts.Common;
+using Engine.Scripts.Common.DataTypes;
+using Engine.Scripts.Common.Math;
+using Engine.Scripts.Core.Blocks;
+using Engine.Scripts.Core.Chunks.States;
+using Engine.Scripts.Generators;
+using Engine.Scripts.Physics;
+using Engine.Scripts.Rendering;
 using UnityEngine;
 using UnityEngine.Assertions;
-using System.Linq;
-using Assets.Engine.Scripts.Builders.Geometry;
-using Assets.Engine.Scripts.Common.Math;
-using Assets.Engine.Scripts.Core.Threading;
-using Assets.Engine.Scripts.Generators;
-using Assets.Engine.Scripts.Rendering;
 
-namespace Assets.Engine.Scripts.Core.Chunks
+namespace Engine.Scripts.Core.Chunks.Managers
 {
     public class Map: ChunkManager
     {
@@ -141,11 +141,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
         private bool IsChunkInViewFrustum(Chunk chunk)
         {
             // Check if the chunk lies within camera planes
-#if DEBUG
             return !FrustumCulling || GeometryUtility.TestPlanesAABB(m_cameraPlanes, chunk.WorldBounds);
-#else
-            return chunk.CheckFrustum(m_cameraPlanes);
-#endif
         }
 
         private void UpdateRangeRects()
@@ -196,7 +192,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     if (EngineSettings.CoreConfig.OcclusionCulling && Occlusion!=null)
                     {
                         chunk.Visible = false;
-                        if (chunk.IsFinalized())
+                        if (chunk.StateManager.IsStateCompleted(ChunkState.FinalizeData))
                             Occlusion.RegisterEntity(chunk);
                     }
                     else
@@ -294,10 +290,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
                     
                 RegisterChunk(xx, yy, zz);
             }
-
-            // Commit collected work items
-            WorkPoolManager.Commit();
-            IOPoolManager.Commit();
         }
         
         public void Shutdown()
@@ -440,7 +432,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
             {
                 foreach (Chunk chunk in m_chunks.Values)
                 {
-                    if (ShowGeomBounds && chunk.IsFinalized())
+                    if (ShowGeomBounds && chunk.StateManager.IsStateCompleted(ChunkState.FinalizeData))
                     {
                         Gizmos.color = Color.white;
 

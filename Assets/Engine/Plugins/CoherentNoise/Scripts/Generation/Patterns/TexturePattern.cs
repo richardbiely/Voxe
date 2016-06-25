@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Patterns
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Patterns
 {
 	///<summary>
 	/// This generator does the opposite of texture generation. It takes a texture and returns its red channel as a noise value.

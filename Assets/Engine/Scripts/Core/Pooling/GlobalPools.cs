@@ -1,11 +1,9 @@
-﻿using Assets.Engine.Scripts.Common.Collections;
-using Assets.Engine.Scripts.Common.Memory;
-using Assets.Engine.Scripts.Core.Chunks;
-using System.Collections.Generic;
-using Assets.Engine.Scripts.Core.Pooling;
+﻿using System.Collections.Generic;
+using Engine.Scripts.Common.Memory;
+using Engine.Scripts.Core.Chunks;
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Core
+namespace Engine.Scripts.Core.Pooling
 {
     /// <summary>
     ///     Global object pools for often used heap objects.

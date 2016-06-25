@@ -1,4 +1,4 @@
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Voronoi
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Voronoi
 {
 	/// <summary>
 	/// This generator creates a "pits" Voronoi diargam, that simply returns distance to closest control point. Resulting noise has value 0 at control points (forming pits) and higher values away from control points.

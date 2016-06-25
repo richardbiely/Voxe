@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace Assets.Engine.Scripts.Common.Collections
+namespace Engine.Scripts.Common.Collections
 {
     /// <summary>
     ///     Represents a circular 2D array

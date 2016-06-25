@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Assets.Client.Scripts.Signals
+namespace Client.Scripts.Signals
 {
     [Serializable]
     public class Signal

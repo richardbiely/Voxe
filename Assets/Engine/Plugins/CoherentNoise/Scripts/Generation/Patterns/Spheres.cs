@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Patterns
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Patterns
 {
 	///<summary>
 	/// Generates concentric spheres centered in (0,0,0). Resulting "noise" has value -1 in the center, 1 at radius, -1 at 2*radius etc. 

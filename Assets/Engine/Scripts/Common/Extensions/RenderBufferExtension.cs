@@ -1,16 +1,21 @@
-﻿using Assets.Engine.Scripts.Core;
-using Assets.Engine.Scripts.Rendering;
+﻿using Engine.Scripts.Core.Pooling;
+using Engine.Scripts.Rendering;
 using UnityEngine;
-using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
+using GeometryBuffer = Engine.Scripts.Rendering.GeometryBuffer;
 
-namespace Assets.Engine.Scripts.Common.Extensions
+namespace Engine.Scripts.Common.Extensions
 {
     public static class RenderBufferExtension
     {
+        public static void AddIndex(this GeometryBuffer target, int offset)
+        {
+            target.Triangles.Add(offset);
+        }
+
         /// <summary>
         ///     Adds triangle indices for a quad
         /// </summary>
-        public static void AddIndices(this RenderBuffer target, int offset, bool backFace)
+        public static void AddIndices(this GeometryBuffer target, int offset, bool backFace)
         {
             // 0--1
             // |\ |
@@ -39,20 +44,20 @@ namespace Assets.Engine.Scripts.Common.Extensions
             }
         }
 
-        /// <summary>
-        ///     Adds the vertices to the render buffer.
-        /// </summary>
-        public static void AddVertices(this RenderBuffer target, VertexData[] vertices)
-        {
-            target.Vertices.AddRange(vertices);
-        }
-
-        public static void AddVertex(this RenderBuffer target, VertexData vertex)
+        public static void AddVertex(this GeometryBuffer target, ref VertexDataFixed vertex)
         {
             target.Vertices.Add(vertex);
         }
 
-        public static void GenerateTangents(this RenderBuffer buffer, LocalPools pools)
+        /// <summary>
+        ///     Adds the vertices to the render buffer.
+        /// </summary>
+        public static void AddVertices(this GeometryBuffer target, VertexDataFixed[] vertices)
+        {
+            target.Vertices.AddRange(vertices);
+        }
+
+        public static void GenerateTangents(this GeometryBuffer buffer, LocalPools pools)
         {
             var vertices = buffer.Vertices;
             var triangles = buffer.Triangles;
@@ -66,9 +71,9 @@ namespace Assets.Engine.Scripts.Common.Extensions
                 int i2 = triangles[t + 1];
                 int i3 = triangles[t + 2];
 
-                VertexData vd1 = vertices[i1];
-                VertexData vd2 = vertices[i2];
-                VertexData vd3 = vertices[i3];
+                VertexDataFixed vd1 = vertices[i1];
+                VertexDataFixed vd2 = vertices[i2];
+                VertexDataFixed vd3 = vertices[i3];
 
                 Vector3 v1 = vd1.Vertex;
                 Vector3 v2 = vd2.Vertex;
@@ -110,7 +115,7 @@ namespace Assets.Engine.Scripts.Common.Extensions
 
             for (int v = 0; v < vertices.Count; ++v)
             {
-                VertexData vd = vertices[v];
+                VertexDataFixed vd = vertices[v];
 
                 Vector3 n = vd.Normal;
                 Vector3 t = tan1[v];

@@ -1,9 +1,9 @@
 using System;
 using System.Collections;
-using Assets.Engine.Scripts.Core.Chunks;
+using Engine.Scripts.Core.Chunks.Managers;
 using UnityEngine;
 
-namespace Assets.Client.Scripts
+namespace Client.Scripts
 {
     public class GameDriver: MonoBehaviour
     {

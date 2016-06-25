@@ -1,9 +1,9 @@
-﻿using Assets.Engine.Scripts.Physics;
+﻿using Engine.Scripts.Core.Blocks;
+using Engine.Scripts.Core.Chunks.Managers;
+using Engine.Scripts.Physics;
 using UnityEngine;
-using Assets.Engine.Scripts.Core.Blocks;
-using Assets.Engine.Scripts.Core.Chunks;
 
-namespace Assets.Client.Scripts
+namespace Client.Scripts
 {
     public class BlockPicker : MonoBehaviour
     {

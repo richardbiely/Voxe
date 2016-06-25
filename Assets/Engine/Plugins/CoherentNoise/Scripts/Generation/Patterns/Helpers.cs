@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Patterns
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Patterns
 {
 	internal class Helpers
 	{

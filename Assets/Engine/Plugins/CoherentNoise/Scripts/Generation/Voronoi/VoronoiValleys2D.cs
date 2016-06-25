@@ -1,4 +1,4 @@
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Voronoi
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Voronoi
 {
 	/// <summary>
 	/// This generator creates a "valleys" Voronoi diargam, that returns difference between two closest distances. Resulting noise has highest value at control points and 0 away from control points.

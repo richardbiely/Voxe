@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Assets.Engine.Scripts.Core.Chunks
+namespace Engine.Scripts.Core.Chunks
 {
     public interface IChunkStorage
     {

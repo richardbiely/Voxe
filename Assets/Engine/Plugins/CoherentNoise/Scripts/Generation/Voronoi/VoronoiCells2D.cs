@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Voronoi
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Voronoi
 {
     /// <summary>
     /// Voronoi cell diagram uses a set of control points to partition space into cells. Each point in space belongs to a cell that corresponds to closest control point.

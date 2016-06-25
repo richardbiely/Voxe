@@ -1,13 +1,16 @@
 using System;
 using System.IO;
 using System.Text;
-using Assets.Engine.Scripts.Common.IO;
-using Assets.Engine.Scripts.Common.IO.RLE;
-using Assets.Engine.Scripts.Core.Blocks;
+using Engine.Scripts.Common.IO;
+using Engine.Scripts.Common.IO.RLE;
+using Engine.Scripts.Common.Threading;
+using Engine.Scripts.Core.Blocks;
+using Engine.Scripts.Core.Chunks.Managers;
+using Engine.Scripts.Core.Chunks.States;
+using Engine.Scripts.Core.Threading;
 using UnityEngine;
-using UnityEngine.Assertions;
 
-namespace Assets.Engine.Scripts.Core.Chunks.Providers
+namespace Engine.Scripts.Core.Chunks.Providers
 {
     /// <summary>
     ///     A purely local chunk provider
@@ -146,12 +149,12 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
         
         private static void RequestChunkFromDisk(Chunk chunk, string filePath)
         {
-            Globals.IOPool.AddItem(arg =>
+            IOPoolManager.Add(new TaskPoolItem(
+                arg =>
                 {
                     if (LoadChunkFromDisk(chunk, filePath))
                     {
-                        chunk.MarkAsLoaded();
-                        chunk.RegisterNeighbors();
+                        chunk.StateManager.MarkAsGenerated();
                         return;
                     }
 
@@ -159,9 +162,9 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
                     File.Delete(filePath);
 
                     // Request new data from the internet
-                    GenerateChunk(chunk);
+                    chunk.StateManager.RequestState(ChunkState.Generate);
                 },
-                chunk);
+                chunk));
         }
 
         #endregion Threading
@@ -171,12 +174,7 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
         // load or generate a chunk
         public override Chunk RequestChunk(ChunkManager map, int cx, int cy, int cz)
         {
-            Chunk chunk = Globals.Pools.ChunkPool.Pop();
-#if DEBUG
-            Assert.IsTrue(!chunk.IsUsed, "Popped a chunk which is still in use!");
-#endif
-
-            chunk.Init((Map)map, cx, cy, cz);
+            Chunk chunk = Chunk.CreateChunk((Map)map, cx, cy, cz);
 
             if (EngineSettings.WorldConfig.Streaming)
             {
@@ -189,13 +187,13 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
                 else
                 {
                     // Data is not on disk, it cannot be open or decompressed or timestamp is too old
-                    GenerateChunk(chunk);
+                    chunk.StateManager.RequestState(ChunkState.Generate);
                 }
 
             }
             else
             {
-                GenerateChunk(chunk);
+                chunk.StateManager.RequestState(ChunkState.Generate);
             }
 
             return chunk;
@@ -205,19 +203,12 @@ namespace Assets.Engine.Scripts.Core.Chunks.Providers
         public override bool ReleaseChunk(Chunk chunk)
         {
             chunk.Reset();
-#if DEBUG
-            chunk.IsUsed = false;
-#endif
-            Globals.Pools.ChunkPool.Push(chunk);
+
+            Globals.MemPools.ChunkPool.Push(chunk);
 
             return true;
         }
 
         #endregion IChunkProvider implementation
-
-        private static void GenerateChunk(Chunk chunk)
-        {
-            chunk.RegisterNeighbors();
-        }
     }
 }

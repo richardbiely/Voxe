@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Displacement
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Displacement
 {
 	/// <summary>
 	/// This generator rotates its source around origin.

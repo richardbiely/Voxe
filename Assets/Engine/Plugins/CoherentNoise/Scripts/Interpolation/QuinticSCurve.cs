@@ -1,4 +1,4 @@
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Interpolation
+namespace Engine.Plugins.CoherentNoise.Scripts.Interpolation
 {
 	internal class QuinticSCurve: SCurve
 	{

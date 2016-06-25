@@ -1,4 +1,4 @@
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation
 {
 	///<summary>
 	/// Constant "noise". This generator returns constant value, ignoring input coordinates. Used for arithmetic operations on noise generators

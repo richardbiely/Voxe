@@ -1,137 +1,184 @@
 ﻿using System;
-using Assets.Engine.Scripts.Common;
+using System.Collections.Generic;
+using Engine.Scripts.Common;
+using Engine.Scripts.Common.Events;
+using Engine.Scripts.Core.Chunks.States;
 using UnityEngine.Assertions;
 
-namespace Assets.Engine.Scripts.Core.Chunks
+namespace Engine.Scripts.Core.Chunks
 {
-    public class ChunkEvent: IEventBase<ChunkState>
+    public class ChunkEvent :
+        IEventSource<ChunkState>, IEventListener<ChunkState>,
+        IEventSource<ChunkStateExternal>
     {
-        //! List of subscribers. Fixed-size with 4 items
-        protected readonly ChunkEvent[] Subscribers;
-        //! Index of greatest usable subscriber index in subscriber array
-        protected int SubscribersCurr { get; private set; }
+        //! List of chunk listeners
+        public ChunkEvent[] Listeners { get; private set; }
+        //! Number of registered listeners
+        protected int ListenerCount { get; private set; }
 
-        protected ChunkEvent(int subscribers)
+        //! List of external listeners
+        private readonly Dictionary<ChunkStateExternal, List<IEventListener<ChunkStateExternal>>> m_listenersExternal;
+
+        protected ChunkEvent()
         {
-            Subscribers = Helpers.CreateArray1D<ChunkEvent>(subscribers);
+            Listeners = Helpers.CreateArray1D<ChunkEvent>(6);
+            m_listenersExternal = new Dictionary<ChunkStateExternal, List<IEventListener<ChunkStateExternal>>>
+            {
+                {ChunkStateExternal.Saved, new List<IEventListener<ChunkStateExternal>>()}
+            };
 
-            ResetEvent();
+            Clear();
         }
 
-        protected void ResetEvent()
+        public void Clear()
         {
-            SubscribersCurr = 0;
-            for (int i = 0; i<Subscribers.Length; i++)
-                Subscribers[i] = null;
+            ListenerCount = 0;
+            for (int i = 0; i < Listeners.Length; i++)
+                Listeners[i] = null;
+
+            foreach (var pair in m_listenersExternal)
+                pair.Value.Clear();
         }
 
-        public bool IsRegistered()
+        public bool Subscribe(IEventListener<ChunkState> listener, ChunkState evt, bool registerListener)
         {
-            return SubscribersCurr == Subscribers.Length;
-        }
+            if (listener == null || listener == this)
+                return false;
 
-        public bool Register(IEventBase<ChunkState> section, bool registerListener)
-        {
-            // The idea here is to register each neighbor on the main thread. Once a section gathers
-            // 4 notifications from its' neighbors chunk generation can be started.
-
-            // Expect the input to be correct
-            Assert.IsTrue(section!=null);
+            ChunkEvent chunkListener = (ChunkEvent)listener;
 
             // Register
             if (registerListener)
             {
                 // Make sure this section is not registered yet
-                ChunkEvent newSection = (ChunkEvent)section;
-                int firstNullIndex = -1;
-                for (int i = 0; i<Subscribers.Length; i++)
+                for (int i = 0; i < Listeners.Length; i++)
                 {
-                    ChunkEvent s = Subscribers[i];
-                    if (s==null)
-                    {
-                        firstNullIndex = i;
-                        continue;
-                    }
+                    ChunkEvent l = Listeners[i];
 
-                    if (s==newSection)
+                    // Do not register if already registred
+                    if (l == listener)
                         return false;
                 }
 
-                if (firstNullIndex < 0)
-                    return false;
+                // Subscribe in the first free slot
+                for (int i = 0; i < Listeners.Length; i++)
+                {
+                    ChunkEvent l = Listeners[i];
+                    if (l == null)
+                    {
+                        ++ListenerCount;
+                        Assert.IsTrue(ListenerCount <= 6);
+                        Listeners[i] = chunkListener;
+                        return true;
+                    }
+                }
 
-                Assert.IsTrue(section != this, "Trying to register the section to itself");
-                Assert.IsTrue(SubscribersCurr < Subscribers.Length, string.Format("ChunkEvent.Register: Condition {0} < {1} not met", SubscribersCurr, Subscribers.Length));
-                
-                // New registration, remember the subscriber and increase subscriber count
-                Subscribers[firstNullIndex] = (ChunkEvent)section;
-
-                ++SubscribersCurr;
-                if (SubscribersCurr!=Subscribers.Length)
-                    return false;
+                // We want to register but there is no free space
+                Assert.IsTrue(false);
             }
             // Unregister
             else
             {
                 // Only unregister already registered sections
-                int i;
-                for (i = 0; i < Subscribers.Length; i++)
+                for (int i = 0; i < Listeners.Length; i++)
                 {
-                    var item = Subscribers[i];
-                    if (item != section)
-                        continue;
+                    ChunkEvent l = Listeners[i];
 
-                    break;
+                    if (l == listener)
+                    {
+                        --ListenerCount;
+                        Assert.IsTrue(ListenerCount >= 0);
+                        Listeners[i] = null;
+                        return true;
+                    }
                 }
-                if (i >= Subscribers.Length)
-                    return false;
-
-                Assert.IsTrue(section != this, "Trying to unregister the section from itself");
-                Assert.IsTrue(SubscribersCurr > 0, string.Format("ChunkEvent.Unregister: Condition '{0} > 0' not met", SubscribersCurr));
-
-                // Unregister
-                --SubscribersCurr;
-                Subscribers[i] = null;
-                if (SubscribersCurr!=0)
-                    return false;
             }
 
-            OnRegistered(registerListener);
-            return true;
+            return false;
         }
 
-		public void NotifyAll(ChunkState state)
+        public void NotifyAll(ChunkState state)
         {
             // Notify each registered listener
-            for (int i = 0; i < Subscribers.Length; i++)
+            for (int i = 0; i < Listeners.Length; i++)
             {
-                if (Subscribers[i]!=null)
-					Subscribers[i].OnNotified(state);
+                ChunkEvent l = Listeners[i];
+                if (l != null)
+                    l.OnNotified(this, state);
             }
         }
 
-		public void NotifyOne(IEventBase<ChunkState> receiver, ChunkState state)
+        public void NotifyOne(IEventListener<ChunkState> listener, ChunkState state)
         {
             // Notify one of the listeners
-            for (int i = 0; i < Subscribers.Length; i++)
+            for (int i = 0; i < Listeners.Length; i++)
             {
-                var listener = Subscribers[i];
-                if (listener==null || listener!=receiver)
-                    continue;
-
-				Subscribers[i].OnNotified(state);
-                break;
+                ChunkEvent l = Listeners[i];
+                if (l == listener)
+                {
+                    l.OnNotified(this, state);
+                    return;
+                }
             }
         }
 
-        public virtual void OnRegistered(bool registerListener)
+        public virtual void OnNotified(IEventSource<ChunkState> source, ChunkState state)
         {
             throw new NotImplementedException();
         }
 
-        public virtual void OnNotified(ChunkState state)
+        public bool Subscribe(IEventListener<ChunkStateExternal> listener, ChunkStateExternal evt, bool register)
         {
-            throw new NotImplementedException();
+            // Retrieve a list of listeners for a given event
+            List<IEventListener<ChunkStateExternal>> evtListeners;
+            m_listenersExternal.TryGetValue(evt, out evtListeners);
+
+            // Add/remove listener if possible
+            bool listenerRegistered = evtListeners.Contains(listener);
+            if (register && !listenerRegistered)
+            {
+                evtListeners.Add(listener);
+                return true;
+            }
+            if (!register && listenerRegistered)
+            {
+                evtListeners.Remove(listener);
+                return true;
+            }
+
+            return false;
+        }
+
+        public void NotifyAll(ChunkStateExternal evt)
+        {
+            // Retrieve a list of listeners for a given event
+            List<IEventListener<ChunkStateExternal>> evtListeners;
+            m_listenersExternal.TryGetValue(evt, out evtListeners);
+
+            // Nofity each listener
+            for (int i = 0; i < evtListeners.Count; i++)
+            {
+                IEventListener<ChunkStateExternal> listener = evtListeners[i];
+                listener.OnNotified(this, evt);
+            }
+        }
+
+        public void NotifyOne(IEventListener<ChunkStateExternal> listener, ChunkStateExternal evt)
+        {
+            // Retrieve a list of listeners for a given event
+            List<IEventListener<ChunkStateExternal>> evtListeners;
+            m_listenersExternal.TryGetValue(evt, out evtListeners);
+
+            // Notify our listener
+            for (int i = 0; i < evtListeners.Count; i++)
+            {
+                IEventListener<ChunkStateExternal> l = evtListeners[i];
+                if (l == listener)
+                {
+                    listener.OnNotified(this, evt);
+                    return;
+                }
+            }
         }
     }
 }

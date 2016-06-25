@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Assets.Engine.Scripts.Common.Extensions
+namespace Engine.Scripts.Common.Extensions
 {
     public static class DateTimeExtensions
     {

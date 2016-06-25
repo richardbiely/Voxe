@@ -1,6 +1,6 @@
 using System;
 
-namespace Assets.Client.Scripts.Signals
+namespace Client.Scripts.Signals
 {
     public class SignalAttribute : Attribute
     {

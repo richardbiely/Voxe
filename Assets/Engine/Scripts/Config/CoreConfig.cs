@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Config
+namespace Engine.Scripts.Config
 {
     [DataContract]
     public class CoreConfig: IEngineConfig

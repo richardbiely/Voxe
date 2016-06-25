@@ -1,14 +1,13 @@
-﻿using Assets.Engine.Scripts.Builders.Faces;
-using Assets.Engine.Scripts.Common.DataTypes;
-using Assets.Engine.Scripts.Core;
-using Assets.Engine.Scripts.Core.Blocks;
-using Assets.Engine.Scripts.Core.Chunks;
-using Assets.Engine.Scripts.Rendering;
-using Assets.Engine.Scripts.Utils;
+﻿using Engine.Scripts.Builders.Faces;
+using Engine.Scripts.Common.DataTypes;
+using Engine.Scripts.Core.Blocks;
+using Engine.Scripts.Core.Chunks.Managers;
+using Engine.Scripts.Core.Pooling;
+using Engine.Scripts.Rendering.Batchers;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace Assets.Engine.Scripts.Builders.Geometry
+namespace Engine.Scripts.Builders.Geometry
 {
     /// <summary>
     /// Generates a typical cubical voxel geometry for a chunk. Faces will be merged, however, to decrease its complexity.
@@ -16,7 +15,7 @@ namespace Assets.Engine.Scripts.Builders.Geometry
     public class BoxelGeometryBuilder: AVoxelGeometryBuilder
     {
         public override void BuildMesh(
-            Map map, DrawCallBatcher batcher, int offsetX, int offsetY, int offsetZ,
+            Map map, RenderGeometryBatcher batcher, int offsetX, int offsetY, int offsetZ,
             int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int lod,
             LocalPools pools
             )

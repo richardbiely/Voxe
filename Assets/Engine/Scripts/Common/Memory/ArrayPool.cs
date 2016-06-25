@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Assets.Engine.Scripts.Common.Memory
+namespace Engine.Scripts.Common.Memory
 {
     public sealed class ArrayPool<T>: IArrayPool<T>
     {

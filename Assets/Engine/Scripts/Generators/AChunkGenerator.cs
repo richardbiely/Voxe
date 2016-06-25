@@ -1,9 +1,8 @@
 ﻿using System;
-using Assets.Engine.Scripts.Core.Blocks;
-using Assets.Engine.Scripts.Core.Chunks;
+using Engine.Scripts.Core.Chunks;
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Generators
+namespace Engine.Scripts.Generators
 {
     public abstract class AChunkGenerator: MonoBehaviour, IChunkGenerator
     {

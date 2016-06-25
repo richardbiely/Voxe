@@ -1,6 +1,6 @@
-using Assets.Engine.Scripts.Core.Chunks;
+using Engine.Scripts.Core.Chunks;
 
-namespace Assets.Engine.Scripts.Generators
+namespace Engine.Scripts.Generators
 {
     /// <summary>
     /// Base interface for chunk generators.

@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
-using Assets.Engine.Scripts.Common.Threading;
+using Engine.Scripts.Common.Threading;
 
-namespace Assets.Engine.Scripts.Core.Threading
+namespace Engine.Scripts.Core.Threading
 {
     public static class IOPoolManager
     {
-        private static readonly List<ThreadItem> WorkItems = new List<ThreadItem>();
+        private static readonly List<TaskPoolItem> WorkItems = new List<TaskPoolItem>();
 
-        public static void Add(ThreadItem action)
+        public static void Add(TaskPoolItem action)
         {
             WorkItems.Add(action);
         }
@@ -17,10 +17,12 @@ namespace Assets.Engine.Scripts.Core.Threading
             // Commit all the work we have
             if (EngineSettings.CoreConfig.IOThread)
             {
-                for (int i = 0; i<WorkItems.Count; i++)
+                TaskPool pool = Globals.IOPool;
+
+                for (int i = 0; i < WorkItems.Count; i++)
                 {
                     var item = WorkItems[i];
-                    Globals.IOPool.AddItem(item.Action, item.Arg);
+                    pool.AddItem(item.Action, item.Arg);
                 }
             }
             else

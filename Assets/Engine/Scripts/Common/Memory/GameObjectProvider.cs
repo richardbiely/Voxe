@@ -1,10 +1,8 @@
 ﻿using System;
-using Assets.Engine.Scripts.Common;
-using Assets.Engine.Scripts.Common.Collections;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace Assets.Engine.Scripts.Provider
+namespace Engine.Scripts.Common.Memory
 {
     [AddComponentMenu("Voxe/Singleton/GameObjectProvider")]
     public sealed class GameObjectProvider: MonoSingleton<GameObjectProvider>

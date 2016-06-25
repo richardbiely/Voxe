@@ -1,9 +1,9 @@
-using Assets.Engine.Plugins.CoherentNoise.Scripts.Generation;
-using Assets.Engine.Scripts.Core.Blocks;
-using Assets.Engine.Scripts.Core.Chunks;
+using Engine.Plugins.CoherentNoise.Scripts.Generation;
+using Engine.Scripts.Core.Blocks;
+using Engine.Scripts.Core.Chunks;
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Generators
+namespace Engine.Scripts.Generators
 {
     /// <summary>
     ///     Produces a simple Minecraft-like terrain

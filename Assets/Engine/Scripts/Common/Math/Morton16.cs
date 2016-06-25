@@ -1,6 +1,6 @@
 ﻿using UnityEngine.Assertions;
 
-namespace Assets.Engine.Scripts.Common.Math
+namespace Engine.Scripts.Common.Math
 {
     // Morton encoding class capable of encoding 3 numbers each of which are at most 16 bits long
     public static class Morton16

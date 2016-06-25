@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Fractal
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Fractal
 {
 	///<summary>
 	/// base class for fractal noise generators. Fractal generators use a source noise, that is sampled at several frequencies. 

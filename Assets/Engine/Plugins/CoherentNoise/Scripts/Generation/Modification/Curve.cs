@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Modification
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Modification
 {
 	///<summary>
 	/// This generator modifies source noise by applying a curve transorm to it. Curves can be edited using Unity editor's CurveFields, or created procedurally.

@@ -1,4 +1,4 @@
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Combination
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Combination
 {
 	/// <summary>
 	/// Generator that multiplies two noise values

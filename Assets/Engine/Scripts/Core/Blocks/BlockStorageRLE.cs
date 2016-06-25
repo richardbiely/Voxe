@@ -1,8 +1,7 @@
-﻿using System;
-using Assets.Engine.Scripts.Common;
-using Assets.Engine.Scripts.Common.IO.RLE;
+﻿using Engine.Scripts.Common;
+using Engine.Scripts.Common.IO.RLE;
 
-namespace Assets.Engine.Scripts.Core.Blocks
+namespace Engine.Scripts.Core.Blocks
 {
     public class BlockStorageRLE: IBlockStorage
     {

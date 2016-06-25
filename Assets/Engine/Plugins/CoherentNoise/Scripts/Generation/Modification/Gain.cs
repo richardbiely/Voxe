@@ -1,6 +1,6 @@
 using System;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Modification
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Modification
 {
     /// <summary>
     /// This generator is used to "sharpen" noise, shifting extreme values closer to -1 and 1, while leaving 0 in place. Source noise is

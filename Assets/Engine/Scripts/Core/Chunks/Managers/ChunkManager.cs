@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
-using Assets.Engine.Scripts.Common.DataTypes;
-using Assets.Engine.Scripts.Core.Chunks.Providers;
-using Assets.Engine.Scripts.Core.Threading;
+using Engine.Scripts.Core.Chunks.Providers;
+using Engine.Scripts.Core.Chunks.States;
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Core.Chunks
+namespace Engine.Scripts.Core.Chunks.Managers
 {
     public class ChunkManager: MonoBehaviour, IChunkManager
     {
@@ -46,7 +45,7 @@ namespace Assets.Engine.Scripts.Core.Chunks
                 Blocks += chunk.NonEmptyBlocks;
 
                 // Automatically collect chunks which are ready to be removed form the world
-                if (chunk.IsFinished())
+                if (chunk.StateManager.IsStateCompleted(ChunkState.Remove))
                 {
                     // Remove the chunk from our provider and unregister it from chunk storage
                     ChunkProvider.ReleaseChunk(chunk);
@@ -59,10 +58,6 @@ namespace Assets.Engine.Scripts.Core.Chunks
 
                 ++i;
             }
-
-            // Commit collected work items
-            WorkPoolManager.Commit();
-            IOPoolManager.Commit();
         }
 
         #endregion

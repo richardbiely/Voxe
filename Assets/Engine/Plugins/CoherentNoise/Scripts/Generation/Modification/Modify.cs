@@ -1,6 +1,6 @@
 using System;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Modification
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Modification
 {
 	/// <summary>
 	/// This generator takes a source generator and applies a function to its output.

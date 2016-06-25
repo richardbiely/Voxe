@@ -1,8 +1,8 @@
 ﻿#if DEBUG
 using System;
 using System.IO;
-using Assets.Engine.Scripts.Common.IO;
-using Assets.Engine.Scripts.Common.IO.RLE;
+using Engine.Scripts.Common.IO;
+using Engine.Scripts.Common.IO.RLE;
 using NUnit.Framework;
 
 namespace Assets.Engine.Scripts.UnitTesting

@@ -1,4 +1,6 @@
-﻿namespace Assets.Engine.Scripts.Core.Chunks.Providers
+﻿using Engine.Scripts.Core.Chunks.Managers;
+
+namespace Engine.Scripts.Core.Chunks.Providers
 {
     /// <summary>
     /// 	Interface for chunk providers

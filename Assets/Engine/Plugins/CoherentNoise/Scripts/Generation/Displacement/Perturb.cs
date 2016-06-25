@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Displacement
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Displacement
 {
 	/// <summary>
 	/// This generator perturbs its source, using a user-supplied function to obtain displacement values. In other words, <see cref="Perturb"/> nonuniformly displaces each value of

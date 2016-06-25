@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Combination
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Combination
 {
 	/// <summary>
 	/// This generator blends two noises together, using third as a blend weight. Note that blend weight's value is clamped to [0,1] range

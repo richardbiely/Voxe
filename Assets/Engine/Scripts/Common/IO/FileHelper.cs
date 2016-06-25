@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace Assets.Engine.Scripts.Common.IO
+namespace Engine.Scripts.Common.IO
 {
     public static class FileHelpers
     {
@@ -53,6 +53,44 @@ namespace Assets.Engine.Scripts.Common.IO
             finally
             {
                 if (fs!=null)
+                    fs.Dispose();
+            }
+        }
+
+        public static void BinarizeToFile(string targetFilePath, IBinarizable stream)
+        {
+            FileStream fs = null;
+            try
+            {
+                fs = new FileStream(targetFilePath, FileMode.Create);
+                using (var bw = new BinaryWriter(fs))
+                {
+                    fs = null;
+                    stream.Binarize(bw);
+                }
+            }
+            finally
+            {
+                if (fs != null)
+                    fs.Dispose();
+            }
+        }
+
+        public static void DebinarizeFromFile(string targetFilePath, IBinarizable stream)
+        {
+            FileStream fs = null;
+            try
+            {
+                fs = new FileStream(targetFilePath, FileMode.Open);
+                using (var br = new BinaryReader(fs))
+                {
+                    fs = null;
+                    stream.Debinarize(br);
+                }
+            }
+            finally
+            {
+                if (fs != null)
                     fs.Dispose();
             }
         }

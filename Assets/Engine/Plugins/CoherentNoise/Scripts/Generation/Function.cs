@@ -1,6 +1,6 @@
 using System;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation
 {
 	/// <summary>
 	/// This generator creates "noise" that is actually a function of coordinates. Use it to create regular patterns that are then perturbed by noise

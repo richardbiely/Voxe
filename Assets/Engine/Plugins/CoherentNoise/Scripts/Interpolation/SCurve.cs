@@ -1,4 +1,4 @@
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Interpolation
+namespace Engine.Plugins.CoherentNoise.Scripts.Interpolation
 {
 	/// <summary>
 	/// Base class for all S-curves. S-curves determine the interpolation algorithm. Using different curves, quality-speed balance may be tweaked,

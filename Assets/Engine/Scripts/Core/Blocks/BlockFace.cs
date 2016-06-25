@@ -1,4 +1,4 @@
-namespace Assets.Engine.Scripts.Utils
+namespace Engine.Scripts.Core.Blocks
 {
     public enum BlockFace: byte
     {

@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using Assets.Engine.Scripts.Common;
-using Assets.Engine.Scripts.Common.Memory;
+using Engine.Scripts.Common;
+using Engine.Scripts.Common.Memory;
 
-namespace Assets.Engine.Scripts.Core.Pooling
+namespace Engine.Scripts.Core.Pooling
 {
     public abstract class AObjectPool
     {

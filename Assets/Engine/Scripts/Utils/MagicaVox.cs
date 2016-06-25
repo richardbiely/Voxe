@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Utils
+namespace Engine.Scripts.Utils
 {
     class MagicaVox
     {

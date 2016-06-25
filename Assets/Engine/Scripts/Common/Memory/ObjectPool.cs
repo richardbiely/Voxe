@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Assets.Engine.Scripts.Common.Collections
+namespace Engine.Scripts.Common.Memory
 {
     public sealed class ObjectPool<T> where T: class
     {

@@ -1,7 +1,7 @@
-using Assets.Engine.Plugins.CoherentNoise.Scripts.Interpolation;
+using Engine.Plugins.CoherentNoise.Scripts.Interpolation;
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation
 {
 	/// <summary>
 	/// This is the same noise as <see cref="GradientNoise"/>, but it does not change in Z direction. This is more efficient if you're only interested in 2D noise anyway.

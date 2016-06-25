@@ -1,4 +1,4 @@
-﻿namespace Assets.Engine.Scripts.Config
+﻿namespace Engine.Scripts.Config
 {
     public interface IEngineConfig
     {

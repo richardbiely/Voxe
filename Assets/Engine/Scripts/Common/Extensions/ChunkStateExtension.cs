@@ -1,6 +1,6 @@
-﻿using Assets.Engine.Scripts.Core.Chunks;
+﻿using Engine.Scripts.Core.Chunks.States;
 
-namespace Assets.Engine.Scripts.Common.Extensions
+namespace Engine.Scripts.Common.Extensions
 {
     public static class ChunkStateExtension
     {
@@ -15,11 +15,6 @@ namespace Assets.Engine.Scripts.Common.Extensions
         }
 
         public static bool Check(this ChunkState state, ChunkState flag)
-        {
-            return (state & flag) == flag;
-        }
-
-        public static bool CheckAny(this ChunkState state, ChunkState flag)
         {
             return (state & flag) != 0;
         }

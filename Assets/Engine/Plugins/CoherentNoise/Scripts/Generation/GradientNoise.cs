@@ -1,7 +1,7 @@
-using Assets.Engine.Plugins.CoherentNoise.Scripts.Interpolation;
+using Engine.Plugins.CoherentNoise.Scripts.Interpolation;
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation
 {
 	/// <summary>
 	/// Gradient noise is a smoother variant of coherent noise. Instead of assingning random values to integer points, it assigns random gradient vectros, and interpolates values

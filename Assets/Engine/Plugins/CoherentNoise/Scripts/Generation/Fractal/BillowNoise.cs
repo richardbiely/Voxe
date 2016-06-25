@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Fractal
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Fractal
 {
 	/// <summary>
 	/// A variation of Perlin noise, this generator creates billowy shapes useful for cloud generation. It uses the same formula as Perlin noise, but adds 

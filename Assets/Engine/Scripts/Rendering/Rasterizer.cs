@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Assets.Engine.Scripts.Common;
+using Engine.Scripts.Common;
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Rendering
+namespace Engine.Scripts.Rendering
 {
     public class Rasterizer: MonoBehaviour
     {

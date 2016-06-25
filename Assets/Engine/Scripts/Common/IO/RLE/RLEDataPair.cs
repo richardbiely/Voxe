@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Assets.Engine.Scripts.Common.IO.RLE
+namespace Engine.Scripts.Common.IO.RLE
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct RLEDataPair<T>

@@ -1,6 +1,6 @@
 #if DEBUG
 using System.Collections.Generic;
-using Assets.Engine.Scripts.Common.Collections;
+using Engine.Scripts.Common.Memory;
 using NUnit.Framework;
 
 namespace Assets.Engine.Scripts.UnitTesting

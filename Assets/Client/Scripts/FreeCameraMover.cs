@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityStandardAssets.CrossPlatformInput;
 
-namespace Assets.Client.Scripts
+namespace Client.Scripts
 {
     public class FreeCameraMover : MonoBehaviour
     {

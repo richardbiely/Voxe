@@ -1,32 +1,31 @@
-﻿using Assets.Engine.Scripts.Core;
-using Assets.Engine.Scripts.Rendering;
+﻿using Engine.Scripts.Rendering;
 using UnityEngine;
-using RenderBuffer = Assets.Engine.Scripts.Rendering.RenderBuffer;
+using GeometryBuffer = Engine.Scripts.Rendering.GeometryBuffer;
 
-namespace Assets.Engine.Scripts.Builders.Mesh
+namespace Engine.Scripts.Builders.Mesh
 {
-    public class CubeMeshBuilder: IMeshBuilder
+    public class CubeMeshGeometryBuilder: IMeshGeometryBuilder
     {
         #region IMeshBuilder implementation
 
         /// <summary>
         ///     Copy the data to a Unity mesh
         /// </summary>
-        public void BuildMesh(UnityEngine.Mesh mesh, RenderBuffer buffer)
+        public void BuildMesh(UnityEngine.Mesh mesh, GeometryBuffer buffer)
         {
             int size = buffer.Vertices.Count;
 
             // Avoid allocations by retrieving buffers from the pool
-            Vector3[] vertices = Globals.Pools.PopVector3Array(size);
-            Vector2[] uvs = Globals.Pools.PopVector2Array(size);
-            Color32[] colors = Globals.Pools.PopColor32Array(size);
-            Vector3[] normals = Globals.Pools.PopVector3Array(size);
-            Vector4[] tangents = Globals.Pools.PopVector4Array(size);
+            Vector3[] vertices = Globals.MemPools.PopVector3Array(size);
+            Vector2[] uvs = Globals.MemPools.PopVector2Array(size);
+            Color32[] colors = Globals.MemPools.PopColor32Array(size);
+            Vector3[] normals = Globals.MemPools.PopVector3Array(size);
+            Vector4[] tangents = Globals.MemPools.PopVector4Array(size);
 
             // Fill buffers with data
             for (int i = 0; i<size; i++)
             {
-                VertexData vertexData = buffer.Vertices[i];
+                VertexDataFixed vertexData = buffer.Vertices[i];
                 vertices[i] = vertexData.Vertex;
                 uvs[i] = vertexData.UV;
                 colors[i] = vertexData.Color;
@@ -56,11 +55,11 @@ namespace Assets.Engine.Scripts.Builders.Mesh
             mesh.Optimize();
 
             // Return memory back to pool
-            Globals.Pools.PushVector3Array(vertices);
-            Globals.Pools.PushVector2Array(uvs);
-            Globals.Pools.PushColor32Array(colors);
-            Globals.Pools.PushVector3Array(normals);
-            Globals.Pools.PushVector4Array(tangents);
+            Globals.MemPools.PushVector3Array(vertices);
+            Globals.MemPools.PushVector2Array(uvs);
+            Globals.MemPools.PushColor32Array(colors);
+            Globals.MemPools.PushVector3Array(normals);
+            Globals.MemPools.PushVector4Array(tangents);
         }
 
         #endregion

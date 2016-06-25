@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Texturing
+namespace Engine.Plugins.CoherentNoise.Scripts.Texturing
 {
 		/// <summary>
 		/// Use methods in this class to create Unity textures with noise generators. All textures are created using 2D noise (i.e, Z coordinate is always 0), and sample source noise in

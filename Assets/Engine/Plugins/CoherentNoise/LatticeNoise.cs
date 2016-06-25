@@ -1,4 +1,4 @@
-namespace Assets.Engine.Plugins.CoherentNoise
+namespace Engine.Plugins.CoherentNoise
 {
 	internal class LatticeNoise
 	{

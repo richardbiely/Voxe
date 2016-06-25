@@ -4,7 +4,7 @@ using System;
 using System.IO;
 using Ionic.BZip2;
 
-namespace Assets.Engine.Scripts.Common.IO
+namespace Engine.Plugins.Compression
 {
     public static class DataCompressor
     {

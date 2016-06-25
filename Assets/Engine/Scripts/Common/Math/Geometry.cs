@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Engine.Scripts.Common.Math
+namespace Engine.Scripts.Common.Math
 {
     public static class Geometry
     {

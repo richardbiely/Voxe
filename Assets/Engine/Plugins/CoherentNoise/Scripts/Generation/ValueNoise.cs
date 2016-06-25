@@ -1,7 +1,7 @@
-using Assets.Engine.Plugins.CoherentNoise.Scripts.Interpolation;
+using Engine.Plugins.CoherentNoise.Scripts.Interpolation;
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation
 {
 	/// <summary>
 	/// Most basic coherent noise: value noise. This algorithm generates random values in integer coordinates and smoothly interpolates between them.

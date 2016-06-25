@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
-using Assets.Engine.Plugins.CoherentNoise.Scripts.Generation;
-using Assets.Engine.Scripts.Atlas;
-using Assets.Engine.Scripts.Core;
-using Assets.Engine.Scripts.Core.Blocks;
-using Assets.Engine.Scripts.Rendering;
-using Assets.Engine.Scripts.Utils;
+using Engine.Plugins.CoherentNoise.Scripts.Generation;
+using Engine.Scripts.Core.Blocks;
+using Engine.Scripts.Core.Pooling;
+using Engine.Scripts.Rendering;
+using Engine.Scripts.Rendering.Batchers;
+using Engine.Scripts.Utils;
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Builders.Faces
+namespace Engine.Scripts.Builders.Faces
 {
     /// <summary>
     ///     Builds solid cubic blocks
@@ -74,7 +74,7 @@ namespace Assets.Engine.Scripts.Builders.Faces
             return m_faceTextures[face];
         }
 
-        public void Build(DrawCallBatcher batcher, ref BlockData block, BlockFace face, bool backFace, ref Vector3[] vecs, LocalPools pools)
+        public void Build(RenderGeometryBatcher batcher, ref BlockData block, BlockFace face, bool backFace, ref Vector3[] vecs, LocalPools pools)
         {
             int iface = (int)face;
 
@@ -93,18 +93,27 @@ namespace Assets.Engine.Scripts.Builders.Faces
             }
             
             VertexData[] vertexData = pools.PopVertexDataArray(4);
-            
-            for (int i = 0; i<4; i++)
+            VertexDataFixed[] vertexDataFixed = pools.PopVertexDataFixedArray(4);
             {
-                VertexData data = vertexData[i] = pools.PopVertexData();
-                data.Vertex = vecs[i];
-                data.Color = color;
-                data.UV = AddFaceUV(i, GetTexture(iface), backFace);
-                data.Normal = SNormals[iface][i];
+                for (int i = 0; i < 4; i++)
+                    vertexData[i] = pools.PopVertexData();
+
+                for (int i = 0; i<4; i++)
+                {
+                    vertexData[i].Vertex = vecs[i];
+                    vertexData[i].Color = color;
+                    vertexData[i].UV = AddFaceUV(i, GetTexture(iface), backFace);
+                    vertexData[i].Normal = SNormals[iface][i];
+                }
+
+                for (int i = 0; i < 4; i++)
+                    vertexDataFixed[i] = VertexDataUtils.ClassToStruct(vertexData[i]);
+                batcher.AddFace(vertexDataFixed, backFace);
+
+                for (int i = 0; i < 4; i++)
+                    pools.PushVertexData(vertexData[i]);
             }
-
-            batcher.AddFace(vertexData, backFace);
-
+            pools.PushVertexDataFixedArray(vertexDataFixed);
             pools.PushVertexDataArray(vertexData);
         }
 

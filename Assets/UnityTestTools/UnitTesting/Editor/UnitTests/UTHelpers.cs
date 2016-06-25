@@ -1,5 +1,5 @@
 #if DEBUG
-using Assets.Engine.Scripts.Common;
+using Engine.Scripts.Common;
 using NUnit.Framework;
 
 namespace Assets.Engine.Scripts.UnitTesting

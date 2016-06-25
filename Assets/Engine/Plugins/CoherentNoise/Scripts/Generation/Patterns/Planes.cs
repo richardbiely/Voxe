@@ -1,6 +1,6 @@
 using System;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Patterns
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Patterns
 {
 	///<summary>
 	/// Generates planes parallel to YZ plane. Resulting "noise" has value -1 on YZ plane, 1 at step distance, -1 at 2*step etc. 

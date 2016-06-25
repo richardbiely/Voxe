@@ -2,7 +2,7 @@
 using System.Runtime.Serialization;
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Config
+namespace Engine.Scripts.Config
 {
     [DataContract]
     public class ChunkConfig: IEngineConfig
@@ -33,7 +33,7 @@ namespace Assets.Engine.Scripts.Config
         {
             Volume = Size*Size*Size;
             LogSize = Convert.ToInt32(Mathf.Log(Size, 2f));
-            LogSize2 = LogSize + LogSize;
+            LogSize2 = 2*LogSize;
             Mask = Size-1;
 
             if(!Verify())

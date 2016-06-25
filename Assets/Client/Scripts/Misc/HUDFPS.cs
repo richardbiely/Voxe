@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Text;
-using Assets.Engine.Scripts;
-using Assets.Engine.Scripts.Core;
+using Engine.Scripts;
+using Engine.Scripts.Common.Extensions;
+using Engine.Scripts.Core.Chunks.Managers;
 using UnityEngine;
-using Assets.Engine.Scripts.Common.Extensions;
-using Assets.Engine.Scripts.Core.Chunks;
 
-namespace Assets.Client.Scripts.Misc
+namespace Client.Scripts.Misc
 {
     [ExecuteInEditMode]
     public class HUDFPS : MonoBehaviour
@@ -21,12 +20,12 @@ namespace Assets.Client.Scripts.Misc
         private float m_lastCollectNum = 0;
         private float m_delta = 0;
         private float m_lastDeltaTime = 0;
-        private int m_allocRate = 0;
-        private int m_lastAllocMemory = 0;
+        private long m_allocRate = 0;
+        private long m_lastAllocMemory = 0;
         private float m_lastAllocSet = -9999;
-        private int m_allocMem = 0;
-        private int m_collectAlloc = 0;
-        private int m_peakAlloc = 0;
+        private long m_allocMem = 0;
+        private long m_collectAlloc = 0;
+        private long m_peakAlloc = 0;
 
         private readonly StringBuilder m_text = new StringBuilder();
 
@@ -57,14 +56,14 @@ namespace Assets.Client.Scripts.Misc
                     m_collectAlloc = m_allocMem;
                 }
 
-                m_allocMem = (int)GC.GetTotalMemory(false);
+                m_allocMem = GC.GetTotalMemory(false);
 
                 m_peakAlloc = m_allocMem > m_peakAlloc ? m_allocMem : m_peakAlloc;
 
                 if (!(Time.realtimeSinceStartup - m_lastAllocSet > 0.3f))
                     yield return new WaitForSeconds(1.0f);
 
-                int diff = m_allocMem - m_lastAllocMemory;
+                long diff = m_allocMem - m_lastAllocMemory;
                 m_lastAllocMemory = m_allocMem;
                 m_lastAllocSet = Time.realtimeSinceStartup;
 

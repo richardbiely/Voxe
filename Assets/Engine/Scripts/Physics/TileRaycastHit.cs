@@ -1,7 +1,6 @@
-﻿using Assets.Engine.Scripts.Common.DataTypes;
-using UnityEngine;
+﻿using Engine.Scripts.Common.DataTypes;
 
-namespace Assets.Engine.Scripts.Physics
+namespace Engine.Scripts.Physics
 {
     /// <summary>
     /// Represents data about a raycast performed against voxels

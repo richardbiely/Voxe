@@ -1,4 +1,4 @@
-namespace Assets.Engine.Scripts.Common
+namespace Engine.Scripts.Common
 {
     public static class Helpers
     {
@@ -14,7 +14,7 @@ namespace Assets.Engine.Scripts.Common
 
         public static int GetIndex1DFrom3D(int x, int y, int z, int sizeX, int sizeZ)
         {
-            return x + z*sizeX + y*sizeX*sizeZ;
+            return x + sizeX*(z + y*sizeZ);
         }
 
         public static int GetIndex1DFrom3D(int x, int y, int z)

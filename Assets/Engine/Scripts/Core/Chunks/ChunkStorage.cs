@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using Assets.Engine.Scripts.Common.DataTypes;
+using Engine.Scripts.Common.DataTypes;
 
-namespace Assets.Engine.Scripts.Core.Chunks
+namespace Engine.Scripts.Core.Chunks
 {
     public class ChunkStorage: IChunkStorage
     {

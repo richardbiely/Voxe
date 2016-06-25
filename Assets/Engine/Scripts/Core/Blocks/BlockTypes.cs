@@ -1,4 +1,4 @@
-﻿namespace Assets.Engine.Scripts.Core.Blocks
+﻿namespace Engine.Scripts.Core.Blocks
 {
     /// <summary>
     /// Represents the type of a block

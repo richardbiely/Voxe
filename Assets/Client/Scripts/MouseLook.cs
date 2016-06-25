@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityStandardAssets.CrossPlatformInput;
 
-namespace Assets.Client.Scripts
+namespace Client.Scripts
 {
     /// MouseLook rotates the transform based on the mouse delta.
     /// Minimum and Maximum values can be used to constrain the possible rotation

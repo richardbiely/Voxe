@@ -1,10 +1,10 @@
 using System;
-using Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Combination;
-using Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Displacement;
-using Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Modification;
+using Engine.Plugins.CoherentNoise.Scripts.Generation.Combination;
+using Engine.Plugins.CoherentNoise.Scripts.Generation.Displacement;
+using Engine.Plugins.CoherentNoise.Scripts.Generation.Modification;
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise
+namespace Engine.Plugins.CoherentNoise
 {
 	/// <summary>
 	/// This class defines a number of useful extension methods for <see cref="Generator"/> class, that apply common noise transformations

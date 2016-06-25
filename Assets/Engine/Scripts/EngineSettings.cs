@@ -1,6 +1,6 @@
-﻿using Assets.Engine.Scripts.Config;
+﻿using Engine.Scripts.Config;
 
-namespace Assets.Engine.Scripts
+namespace Engine.Scripts
 {
     public static class EngineSettings
     {

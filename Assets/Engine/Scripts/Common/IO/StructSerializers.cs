@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace Assets.Engine.Scripts.Common.IO
+namespace Engine.Scripts.Common.IO
 {
     public static class StructSerializers
     {

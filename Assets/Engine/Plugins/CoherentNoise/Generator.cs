@@ -1,7 +1,7 @@
-using Assets.Engine.Plugins.CoherentNoise.Scripts.Generation;
+using Engine.Plugins.CoherentNoise.Scripts.Generation;
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise
+namespace Engine.Plugins.CoherentNoise
 {
 	/// <summary>
 	/// A noise generator. 

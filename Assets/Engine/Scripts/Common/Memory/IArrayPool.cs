@@ -1,4 +1,4 @@
-﻿namespace Assets.Engine.Scripts.Common.Memory
+﻿namespace Engine.Scripts.Common.Memory
 {
     public interface IArrayPool<T>
     {

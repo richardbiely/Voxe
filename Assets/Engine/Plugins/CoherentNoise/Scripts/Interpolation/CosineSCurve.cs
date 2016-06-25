@@ -1,6 +1,6 @@
 using System;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Interpolation
+namespace Engine.Plugins.CoherentNoise.Scripts.Interpolation
 {
 	internal class CosineSCurve: SCurve
 	{

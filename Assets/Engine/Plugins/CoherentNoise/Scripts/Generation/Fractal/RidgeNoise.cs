@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Fractal
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Fractal
 {
     /// <summary>
     ///     This generator adds samples with weight decreasing with frequency, like Perlin noise; however, each signal is taken

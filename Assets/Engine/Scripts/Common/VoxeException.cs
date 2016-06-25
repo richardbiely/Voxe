@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Assets.Engine.Scripts.Common
+namespace Engine.Scripts.Common
 {
     public class VoxeException : Exception
     {

@@ -1,6 +1,6 @@
 using System;
 
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Modification
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Modification
 {
 	/// <summary>
 	/// Bias generator is used to "shift" mean value of source noise. Source is assumed to have values between -1 and 1; after Bias is applied,

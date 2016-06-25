@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Assets.Engine.Scripts.Common.Collections
+namespace Engine.Scripts.Common.Memory
 {
     public sealed class ObjectPoolAllocator<T> where T: class
     {

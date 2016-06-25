@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
 
-namespace Assets.Engine.Scripts.Rendering
+namespace Engine.Scripts.Rendering
 {
     /// <summary>
     ///     A simple intermediate container for mesh data
     /// </summary>
-    public class RenderBuffer
+    public class GeometryBuffer
     {
-        public readonly List<VertexData> Vertices = new List<VertexData>();
+        public readonly List<VertexDataFixed> Vertices = new List<VertexDataFixed>();
         public readonly List<int> Triangles = new List<int>();
         
         /// <summary>

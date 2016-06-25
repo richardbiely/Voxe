@@ -1,4 +1,4 @@
-namespace Assets.Engine.Plugins.CoherentNoise.Scripts.Generation.Fractal
+namespace Engine.Plugins.CoherentNoise.Scripts.Generation.Fractal
 {
 	/// <summary>
 	/// Pink noise is a fractal noise that adds together weighted signals sampled at different frequencies, with weight inversely proportional to frequency. .

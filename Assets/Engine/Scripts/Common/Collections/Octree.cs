@@ -1,4 +1,4 @@
-﻿namespace Assets.Engine.Scripts.Common.Collections
+﻿namespace Engine.Scripts.Common.Collections
 {
     public class Octree
     {

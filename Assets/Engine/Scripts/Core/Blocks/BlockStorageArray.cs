@@ -1,7 +1,7 @@
 ﻿using System;
-using Assets.Engine.Scripts.Common;
+using Engine.Scripts.Common;
 
-namespace Assets.Engine.Scripts.Core.Blocks
+namespace Engine.Scripts.Core.Blocks
 {
     public class BlockStorageArray: IBlockStorage
     {

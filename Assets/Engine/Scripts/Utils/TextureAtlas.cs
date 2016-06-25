@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Atlas
+namespace Engine.Scripts.Utils
 {
     /// <summary>
     /// Utility class for retrieving texture rectangles

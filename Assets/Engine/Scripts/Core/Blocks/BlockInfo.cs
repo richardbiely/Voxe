@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Engine.Scripts.Core.Blocks
+namespace Engine.Scripts.Core.Blocks
 {
     public class BlockInfo
     {

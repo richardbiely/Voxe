@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using Assets.Engine.Scripts.Core;
+using Engine.Scripts.Core.Pooling;
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Builders
+namespace Engine.Scripts.Builders
 {
     public static class CubeBuilderSimple
     {

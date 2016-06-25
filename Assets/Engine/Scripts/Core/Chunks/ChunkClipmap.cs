@@ -1,7 +1,8 @@
-﻿using Assets.Engine.Scripts.Common.Collections;
+﻿using Engine.Scripts.Common.Collections;
+using Engine.Scripts.Core.Chunks.Managers;
 using UnityEngine;
 
-namespace Assets.Engine.Scripts.Core.Chunks
+namespace Engine.Scripts.Core.Chunks
 {
     public struct ChunkClipmapItem
     {
