@@ -96,7 +96,8 @@ namespace Engine.Scripts.Rendering.Batchers
                 if (go != null)
                 {
 #if DEBUG
-                    go.name = m_chunk.Pos.ToString();
+                    if(EngineSettings.CoreConfig.Mutlithreading==false)
+                        go.name = m_chunk.Pos.ToString();
 #endif
 
                     Mesh mesh = Globals.MemPools.MeshPool.Pop();
